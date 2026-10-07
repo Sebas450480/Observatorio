@@ -88,3 +88,44 @@ describe('Alertas por correo', () => {
     expect((await usuario.post('/api/alertas/ejecutar').send({ frecuencia: 'Semanal' })).status).toBe(403);
   });
 });
+
+describe('Panel de estadísticas', () => {
+  it('entrega las tarjetas del resumen con contenidos por módulo', async () => {
+    const { agente } = await sesion('SuperAdmin');
+    const r = await agente.get('/api/estadisticas/panel');
+    expect(r.status).toBe(200);
+    expect(r.body.usuarios.total).toBeGreaterThan(0);
+    const c = r.body.contenidos;
+    expect(c.total).toBe(c.flash + c.faro + c.eventos + c.tendencias);
+    expect(c.flash).toBeGreaterThanOrEqual(6);
+    expect(r.body.visitas).toHaveProperty('variacion_pct');
+    expect(r.body.suscriptores).toHaveProperty('tasa_apertura_pct');
+  });
+
+  it('solo lo ve el SuperAdmin', async () => {
+    const { agente } = await sesion('Usuario');
+    expect((await agente.get('/api/estadisticas/panel')).status).toBe(403);
+  });
+});
+
+describe('Búsqueda global', () => {
+  it('busca en todos los módulos a la vez', async () => {
+    const r = await invitado().get('/api/buscar?q=innovación');
+    expect(r.status).toBe(200);
+    const tipos = new Set(r.body.resultados.map((x: { tipo: string }) => x.tipo));
+    expect(tipos.has('Flash')).toBe(true);
+    expect(tipos.has('Evento')).toBe(true);
+    expect(r.body.resultados[0]).toHaveProperty('titulo');
+  });
+
+  it('no muestra registros inactivos a un invitado, pero sí al gestor', async () => {
+    const { agente } = await sesion('Gestor Faro Empresarial');
+    await agente.post('/api/faro').send({ titulo: 'Convocatoria secreta zafiro', tipo: 'Convocatorias', estado_fe: 'Inactivo' });
+    expect((await invitado().get('/api/buscar?q=zafiro')).body.total).toBe(0);
+    expect((await agente.get('/api/buscar?q=zafiro')).body.total).toBe(1);
+  });
+
+  it('exige al menos 2 caracteres', async () => {
+    expect((await invitado().get('/api/buscar?q=a')).status).toBe(400);
+  });
+});

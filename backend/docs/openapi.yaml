@@ -29,6 +29,7 @@ tags:
   - name: Calendario
   - name: Estadísticas
   - name: Alertas
+  - name: Búsqueda
 components:
   securitySchemes:
     cookieSesion:
@@ -776,6 +777,12 @@ paths:
                 id_contenido: { type: integer }
                 accion: { type: string, enum: [Vista, Clic_acceder, Compartir] }
       responses: { '201': { description: Registrado } }
+  /api/estadisticas/panel:
+    get:
+      tags: [Estadísticas]
+      summary: Tarjetas del Panel con variación frente al mes anterior (SuperAdmin)
+      description: Usuarios registrados, contenidos publicados (por módulo), visitas del mes y suscriptores a alertas.
+      responses: { '200': { description: Panel } }
   /api/estadisticas/resumen:
     get: { tags: [Estadísticas], summary: Resumen del mes (SuperAdmin), responses: { '200': { description: Resumen } } }
   /api/estadisticas/top-contenidos:
@@ -804,3 +811,14 @@ paths:
         - { name: id, in: path, required: true, schema: { type: integer } }
         - { name: firma, in: path, required: true, schema: { type: string } }
       responses: { '200': { description: GIF 1x1 } }
+
+  # ------------------------------------------------------------------ Búsqueda
+  /api/buscar:
+    get:
+      tags: [Búsqueda]
+      summary: Búsqueda global en Flash, Faro, Empresas, Tendencias y Eventos
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2 } }
+        - { name: limite, in: query, description: Máximo por módulo, schema: { type: integer, default: 5, maximum: 20 } }
+      responses:
+        '200': { description: 'Resultados: { q, total, resultados: [{ tipo, id, titulo, detalle, fecha }] }' }
