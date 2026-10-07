@@ -235,6 +235,6 @@ erDiagram
   - Restricciones nuevas: tendencia única por megatendencia, un solo contacto principal, costos no negativos, fecha de fin posterior a la de inicio, gratuito sin costo.
 - **Gestores:** pueden ver los demás módulos como un usuario (solo registros activos), porque el
   Figma les muestra todas las pantallas. El Word decía que no tenían acceso a otras tablas.
-- **Datos de ejemplo:** `seed.sql` no crea usuarios. El SuperAdmin inicial se crea en la Fase 2 con
-  un script del backend, para que ninguna contraseña quede en el repositorio. Las empresas distintas
+- **Datos de ejemplo:** `seed.sql` no crea usuarios. El SuperAdmin inicial se crea con
+  `npm run crear-superadmin` del backend, para que ninguna contraseña quede en el repositorio. Las empresas distintas
   de TecnoSoluciones y sus NIT son ficticios.
