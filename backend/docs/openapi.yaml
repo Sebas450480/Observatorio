@@ -294,6 +294,7 @@ paths:
               properties:
                 correo: { type: string }
                 contrasena: { type: string }
+                recordar: { type: boolean, default: true, description: 'Si es false, la sesión termina al cerrar el navegador.' }
       responses:
         '200': { description: Sesión iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
         '401': { $ref: '#/components/responses/Error' }
@@ -652,6 +653,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/q'
         - { name: megatendencia, in: query, schema: { type: string } }
+        - { name: desde, in: query, description: Publicadas desde esta fecha, schema: { type: string, format: date } }
         - $ref: '#/components/parameters/categoria'
         - $ref: '#/components/parameters/estado'
         - { name: orden, in: query, schema: { type: string, enum: [publicacion, tendencia, megatendencia] } }

@@ -29,6 +29,8 @@ const esquema = z.object({
 const esquemaFiltros = z.object({
   q: z.string().trim().min(1).max(100).optional(),
   megatendencia: z.string().trim().max(60).optional(),
+  /** Publicadas desde esta fecha (filtro "Todas las fechas" del Figma). */
+  desde: fecha.optional(),
 });
 
 const soloGestor = requiereRol('obs_gestor_tendencias');
@@ -256,6 +258,7 @@ export const rutasTendencias = crearRecurso({
       f.texto(['t.tendencia', 't.megatendencia', 't.descripcion', 't.comportamiento_mundo', 't.comportamiento_colombia'], v.q as string);
     }
     if (v.megatendencia) f.y(`t.megatendencia ilike ${f.param(v.megatendencia)}`);
+    if (v.desde) f.y(`t.fecha_publicacion >= ${f.param(v.desde)}::date`);
   },
   ordenes: { publicacion: 't.fecha_publicacion', tendencia: 't.tendencia', megatendencia: 't.megatendencia' },
   ordenDefecto: 'publicacion',
