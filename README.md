@@ -8,7 +8,7 @@ Faro Empresarial, Empresas Coformadoras, Tendencias y Calendario de eventos.
 | Fase | Estado | Carpeta |
 |---|---|---|
 | 1. Base de datos (PostgreSQL en Supabase) | Lista | [`supabase/`](supabase/README.md) |
-| 2. Backend (Node.js) | Pendiente | — |
+| 2. Backend (Node.js + TypeScript) | Lista | [`backend/`](backend/README.md) |
 | 3. Frontend (React) | Pendiente | — |
 
 ## Ramas
@@ -22,4 +22,10 @@ Flujo: rama de trabajo → PR a `pruebas` → validación → PR de `pruebas` a 
 
 ## Variables de entorno
 
-Copia `.env.example` como `.env` y completa los valores. El archivo `.env` nunca se sube a GitHub.
+Cada parte tiene su `.env.example` (por ejemplo [`backend/.env.example`](backend/.env.example)). Cópialo como `.env`
+y completa los valores. Los archivos `.env` nunca se suben a GitHub.
+
+## Pruebas automáticas
+
+Cada PR ejecuta en GitHub Actions las pruebas de la base de datos y del backend
+([`.github/workflows/pruebas.yml`](.github/workflows/pruebas.yml)).

@@ -1,0 +1,806 @@
+openapi: 3.0.3
+info:
+  title: API Observatorio Empresarial
+  version: 1.0.0
+  description: |
+    API REST del Observatorio Empresarial (Uniempresarial).
+
+    **Sesión.** `POST /api/auth/login` deja una cookie `obs_sesion` (HttpOnly). También se acepta
+    `Authorization: Bearer <token>`. Sin sesión, las peticiones se atienden como **Invitado**.
+
+    **Permisos.** Cada petición se ejecuta en PostgreSQL con el rol del usuario:
+    Invitado y Usuario solo ven registros **activos** y no ven el campo de estado; cada gestor
+    administra su módulo; el SuperAdmin administra todo.
+
+    **Errores.** Respuesta `{ "error": "mensaje", "detalles": ... }` con el código HTTP correspondiente
+    (400 datos inválidos, 401 sin sesión, 403 sin permiso, 404 no existe, 409 duplicado, 413/415 archivo, 422 importación).
+servers:
+  - url: /
+tags:
+  - name: Autenticación
+  - name: Mi perfil
+  - name: Usuarios
+    description: Solo SuperAdmin.
+  - name: Catálogos
+  - name: Flash Informativo
+  - name: Faro Empresarial
+  - name: Empresas Coformadoras
+  - name: Tendencias
+  - name: Calendario
+  - name: Estadísticas
+  - name: Alertas
+components:
+  securitySchemes:
+    cookieSesion:
+      type: apiKey
+      in: cookie
+      name: obs_sesion
+    bearer:
+      type: http
+      scheme: bearer
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+    pagina:
+      name: pagina
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    limite:
+      name: limite
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    direccion:
+      name: direccion
+      in: query
+      schema: { type: string, enum: [asc, desc] }
+    estado:
+      name: estado
+      in: query
+      description: Solo para el gestor del módulo y el SuperAdmin.
+      schema: { type: string, enum: [Activo, Inactivo] }
+    categoria:
+      name: categoria
+      in: query
+      description: Id de categoría; se puede repetir.
+      schema: { type: array, items: { type: integer } }
+      style: form
+      explode: true
+    q:
+      name: q
+      in: query
+      description: Búsqueda de texto.
+      schema: { type: string }
+    formato:
+      name: formato
+      in: query
+      schema: { type: string, enum: [xlsx, pdf], default: xlsx }
+    campoImagen:
+      name: campo
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        detalles: {}
+    Pagina:
+      type: object
+      properties:
+        datos: { type: array, items: { type: object } }
+        total: { type: integer }
+        pagina: { type: integer }
+        limite: { type: integer }
+        paginas: { type: integer }
+    Categoria:
+      type: object
+      properties:
+        id_categoria: { type: integer }
+        nombre: { type: string }
+    Perfil:
+      type: object
+      properties:
+        id_usuario: { type: integer }
+        apodo_usuario: { type: string, nullable: true }
+        nombre_usuario: { type: string }
+        apellido_usuario: { type: string }
+        correo: { type: string }
+        ciudad: { type: string, nullable: true }
+        frecuencia_alertas: { type: string, enum: [Inmediata, Semanal, Ninguna] }
+        estado_usuario: { type: string, enum: [Activo, Inactivo] }
+        id_rol: { type: integer }
+        nombre_rol: { type: string }
+        intereses: { type: array, items: { $ref: '#/components/schemas/Categoria' } }
+    Flash:
+      type: object
+      required: [titulo, fecha_inicio, modalidad, tipo_evento]
+      properties:
+        titulo: { type: string, maxLength: 150 }
+        descripcion: { type: string, nullable: true }
+        fecha_inicio: { type: string, format: date-time, example: '2026-10-20T08:00:00-05:00' }
+        fecha_fin: { type: string, format: date-time, nullable: true }
+        modalidad: { type: string, enum: [Virtual, Presencial, Hibrido] }
+        costo: { type: number, nullable: true }
+        es_gratuito: { type: boolean }
+        lugar: { type: string, nullable: true }
+        link: { type: string, format: uri, nullable: true }
+        info_adicional: { type: string, nullable: true, description: Información clave en viñetas. }
+        tipo_evento: { type: string, enum: [Congreso, Hackathon, Foro, Cumbre, Seminario, Taller, Otro] }
+        departamento: { type: string, nullable: true }
+        estado_fi: { type: string, enum: [Activo, Inactivo] }
+        categorias: { type: array, items: { type: integer } }
+    Faro:
+      type: object
+      required: [titulo, tipo]
+      properties:
+        titulo: { type: string, maxLength: 150 }
+        descripcion: { type: string, nullable: true }
+        tipo: { type: string, enum: [Becas, Convocatorias, Cursos, Talleres] }
+        fecha_publicacion: { type: string, format: date }
+        fecha_inicio: { type: string, format: date, nullable: true }
+        fecha_cierre: { type: string, format: date, nullable: true }
+        entidad: { type: string, nullable: true }
+        link: { type: string, format: uri, nullable: true }
+        modalidad: { type: string, enum: [Virtual, Presencial, Hibrido], nullable: true }
+        lugar: { type: string, nullable: true }
+        costo: { type: number, nullable: true }
+        es_gratuito: { type: boolean }
+        duracion: { type: string, nullable: true }
+        estado_fe: { type: string, enum: [Activo, Inactivo] }
+        categorias: { type: array, items: { type: integer } }
+    Empresa:
+      type: object
+      required: [nit, razon_social, sector_economico, departamento, municipio]
+      properties:
+        nit: { type: string }
+        razon_social: { type: string }
+        nombre_comercial: { type: string, nullable: true }
+        descripcion: { type: string, nullable: true }
+        sector_economico: { type: string }
+        tamano_empresa: { type: string, enum: [Micro, Pequeña, Mediana, Grande], nullable: true }
+        tiempo_coformadora: { type: string, nullable: true }
+        link: { type: string, format: uri, nullable: true }
+        estudiantes_recibidos: { type: integer }
+        premios_recibidos: { type: integer }
+        codigo_ciiu: { type: string, nullable: true }
+        naturaleza_juridica: { type: string, nullable: true }
+        departamento: { type: string }
+        municipio: { type: string }
+        direccion: { type: string, nullable: true }
+        telefono: { type: string, nullable: true }
+        correo: { type: string, format: email, nullable: true }
+        anio_constitucion: { type: integer, nullable: true }
+        estado_ec: { type: string, enum: [Activo, Inactivo] }
+    Contacto:
+      type: object
+      required: [nombre]
+      properties:
+        nombre: { type: string }
+        cargo: { type: string, nullable: true }
+        correo: { type: string, format: email, nullable: true }
+        telefono: { type: string, nullable: true }
+        es_principal: { type: boolean }
+    Tendencia:
+      type: object
+      required: [megatendencia, tendencia]
+      properties:
+        megatendencia: { type: string, maxLength: 60 }
+        tendencia: { type: string, maxLength: 80 }
+        descripcion: { type: string, nullable: true }
+        comportamiento_mundo: { type: string, nullable: true }
+        comportamiento_colombia: { type: string, nullable: true }
+        fecha_publicacion: { type: string, format: date }
+        estado_te: { type: string, enum: [Activo, Inactivo] }
+        categorias: { type: array, items: { type: integer } }
+        fuentes:
+          type: array
+          items:
+            type: object
+            properties:
+              nombre: { type: string }
+              link: { type: string, format: uri, nullable: true }
+    Evento:
+      type: object
+      required: [titulo, fecha_inicio, modalidad, tipo_evento]
+      properties:
+        titulo: { type: string }
+        descripcion: { type: string, nullable: true }
+        fecha_inicio: { type: string, format: date-time }
+        fecha_fin: { type: string, format: date-time, nullable: true }
+        modalidad: { type: string, enum: [Virtual, Presencial, Hibrido] }
+        lugar: { type: string, nullable: true }
+        link_externo: { type: string, format: uri, nullable: true }
+        tipo_evento: { type: string, enum: [Congreso, Hackathon, Foro, Cumbre, Seminario, Taller, Otro] }
+        costo: { type: number, nullable: true }
+        es_gratuito: { type: boolean }
+  requestBodies:
+    Imagen:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              imagen: { type: string, format: binary, description: JPG o PNG, máximo 5 MB. }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Pagina:
+      description: Listado paginado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Pagina' }
+    Archivo:
+      description: Archivo Excel o PDF
+      content:
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {}
+        application/pdf: {}
+    SinContenido:
+      description: Hecho, sin contenido
+security:
+  - {}
+  - cookieSesion: []
+  - bearer: []
+paths:
+  /api/salud:
+    get:
+      summary: Estado del servidor y de la base de datos
+      responses: { '200': { description: OK } }
+
+  # ------------------------------------------------------------------ Autenticación
+  /api/auth/registro:
+    post:
+      tags: [Autenticación]
+      summary: Registro en dos pasos (datos e intereses) con rol Usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre_usuario, apellido_usuario, correo, contrasena, acepta_tratamiento_datos]
+              properties:
+                nombre_usuario: { type: string }
+                apellido_usuario: { type: string }
+                apodo_usuario: { type: string }
+                correo: { type: string, format: email }
+                contrasena: { type: string, minLength: 8 }
+                ciudad: { type: string }
+                acepta_tratamiento_datos: { type: boolean, enum: [true], description: Ley 1581 de 2012 }
+                intereses: { type: array, items: { type: integer } }
+                frecuencia_alertas: { type: string, enum: [Inmediata, Semanal, Ninguna] }
+      responses:
+        '201': { description: Cuenta creada y sesión iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/auth/login:
+    post:
+      tags: [Autenticación]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo, contrasena]
+              properties:
+                correo: { type: string }
+                contrasena: { type: string }
+      responses:
+        '200': { description: Sesión iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/auth/logout:
+    post:
+      tags: [Autenticación]
+      summary: Cerrar sesión
+      responses: { '204': { $ref: '#/components/responses/SinContenido' } }
+  /api/auth/yo:
+    get:
+      tags: [Autenticación]
+      summary: Usuario de la sesión actual
+      responses:
+        '200': { description: Perfil, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/auth/recuperar:
+    post:
+      tags: [Autenticación]
+      summary: Enviar enlace para restablecer la contraseña
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [correo], properties: { correo: { type: string } } } } }
+      responses: { '200': { description: Respuesta igual exista o no el correo } }
+  /api/auth/restablecer:
+    post:
+      tags: [Autenticación]
+      summary: Crear nueva contraseña con el código del enlace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, contrasena]
+              properties:
+                codigo: { type: string }
+                contrasena: { type: string, minLength: 8 }
+      responses:
+        '200': { description: Contraseña actualizada }
+        '400': { $ref: '#/components/responses/Error' }
+
+  # ------------------------------------------------------------------ Mi perfil
+  /api/perfil:
+    get:
+      tags: [Mi perfil]
+      summary: Ver mi perfil
+      responses: { '200': { description: Perfil, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } } }
+    patch:
+      tags: [Mi perfil]
+      summary: Editar mi perfil
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                apodo_usuario: { type: string }
+                nombre_usuario: { type: string }
+                apellido_usuario: { type: string }
+                correo: { type: string }
+                ciudad: { type: string }
+                frecuencia_alertas: { type: string, enum: [Inmediata, Semanal, Ninguna] }
+      responses: { '200': { description: Perfil actualizado } }
+  /api/perfil/intereses:
+    put:
+      tags: [Mi perfil]
+      summary: Reemplazar mis intereses
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, properties: { intereses: { type: array, items: { type: integer } } } } } }
+      responses: { '200': { description: Perfil actualizado } }
+  /api/perfil/contrasena:
+    put:
+      tags: [Mi perfil]
+      summary: Cambiar mi contraseña (cierra las demás sesiones)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [actual, nueva], properties: { actual: { type: string }, nueva: { type: string } } }
+      responses: { '200': { description: Contraseña actualizada }, '400': { $ref: '#/components/responses/Error' } }
+
+  # ------------------------------------------------------------------ Usuarios
+  /api/usuarios:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - { name: id_rol, in: query, schema: { type: integer } }
+        - $ref: '#/components/parameters/estado'
+        - { name: ciudad, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses: { '200': { $ref: '#/components/responses/Pagina' } }
+    post:
+      tags: [Usuarios]
+      summary: Crear un usuario con cualquier rol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre_usuario, apellido_usuario, correo, contrasena, id_rol, acepta_tratamiento_datos]
+              properties:
+                nombre_usuario: { type: string }
+                apellido_usuario: { type: string }
+                apodo_usuario: { type: string }
+                correo: { type: string }
+                contrasena: { type: string }
+                ciudad: { type: string }
+                id_rol: { type: integer }
+                intereses: { type: array, items: { type: integer } }
+                acepta_tratamiento_datos: { type: boolean, enum: [true] }
+      responses: { '201': { description: Usuario creado } }
+  /api/usuarios/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get:
+      tags: [Usuarios]
+      summary: Ver un usuario
+      responses: { '200': { description: Usuario }, '404': { $ref: '#/components/responses/Error' } }
+    patch:
+      tags: [Usuarios]
+      summary: Cambiar rol, estado o datos de un usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_rol: { type: integer }
+                estado_usuario: { type: string, enum: [Activo, Inactivo] }
+                nombre_usuario: { type: string }
+                apellido_usuario: { type: string }
+                apodo_usuario: { type: string }
+                ciudad: { type: string }
+      responses: { '200': { description: Usuario actualizado } }
+    delete:
+      tags: [Usuarios]
+      summary: Eliminar un usuario
+      responses: { '204': { $ref: '#/components/responses/SinContenido' } }
+
+  # ------------------------------------------------------------------ Catálogos
+  /api/roles:
+    get:
+      tags: [Catálogos]
+      summary: Listar roles
+      responses: { '200': { description: Roles } }
+  /api/categorias:
+    get:
+      tags: [Catálogos]
+      summary: Listar categorías (intereses y etiquetas)
+      responses: { '200': { description: Categorías } }
+    post:
+      tags: [Catálogos]
+      summary: Crear categoría (SuperAdmin)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [nombre_categoria], properties: { nombre_categoria: { type: string } } } } }
+      responses: { '201': { description: Creada } }
+  /api/categorias/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch:
+      tags: [Catálogos]
+      summary: Renombrar categoría (SuperAdmin)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [nombre_categoria], properties: { nombre_categoria: { type: string } } } } }
+      responses: { '200': { description: Actualizada } }
+    delete:
+      tags: [Catálogos]
+      summary: Eliminar categoría (SuperAdmin)
+      responses: { '204': { $ref: '#/components/responses/SinContenido' } }
+
+  # ------------------------------------------------------------------ Flash Informativo
+  /api/flash:
+    get:
+      tags: [Flash Informativo]
+      summary: Listar
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - { name: tipo_evento, in: query, schema: { type: string } }
+        - { name: modalidad, in: query, schema: { type: string } }
+        - { name: departamento, in: query, schema: { type: string } }
+        - { name: gratuito, in: query, schema: { type: boolean } }
+        - { name: desde, in: query, schema: { type: string, format: date } }
+        - { name: hasta, in: query, schema: { type: string, format: date } }
+        - $ref: '#/components/parameters/categoria'
+        - $ref: '#/components/parameters/estado'
+        - { name: orden, in: query, schema: { type: string, enum: [fecha, titulo, creacion] } }
+        - $ref: '#/components/parameters/direccion'
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses: { '200': { $ref: '#/components/responses/Pagina' } }
+    post:
+      tags: [Flash Informativo]
+      summary: Crear (Gestor Flash Informativo o SuperAdmin)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Flash' } } } }
+      responses: { '201': { description: Creado } }
+  /api/flash/exportar:
+    get:
+      tags: [Flash Informativo]
+      summary: Exportar el listado (mismos filtros)
+      parameters: [{ $ref: '#/components/parameters/formato' }]
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/flash/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get:
+      tags: [Flash Informativo]
+      summary: Detalle
+      responses: { '200': { description: Detalle }, '404': { $ref: '#/components/responses/Error' } }
+    patch:
+      tags: [Flash Informativo]
+      summary: Editar (campos parciales)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Flash' } } } }
+      responses: { '200': { description: Actualizado } }
+    delete:
+      tags: [Flash Informativo]
+      summary: Eliminar
+      responses: { '204': { $ref: '#/components/responses/SinContenido' } }
+  /api/flash/{id}/imagen/{campo}:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/campoImagen' }]
+    post:
+      tags: [Flash Informativo]
+      summary: Subir imagen (campo = imagen)
+      requestBody: { $ref: '#/components/requestBodies/Imagen' }
+      responses: { '201': { description: Ruta de la imagen } }
+    delete:
+      tags: [Flash Informativo]
+      summary: Quitar imagen
+      responses: { '204': { $ref: '#/components/responses/SinContenido' } }
+
+  # ------------------------------------------------------------------ Faro Empresarial
+  /api/faro:
+    get:
+      tags: [Faro Empresarial]
+      summary: Listar (por defecto solo vigentes)
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - { name: tipo, in: query, schema: { type: string, enum: [Becas, Convocatorias, Cursos, Talleres] } }
+        - { name: modalidad, in: query, schema: { type: string } }
+        - { name: vigentes, in: query, schema: { type: boolean, default: true } }
+        - $ref: '#/components/parameters/categoria'
+        - $ref: '#/components/parameters/estado'
+        - { name: orden, in: query, schema: { type: string, enum: [cierre, publicacion, inicio, titulo] } }
+        - $ref: '#/components/parameters/direccion'
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses: { '200': { $ref: '#/components/responses/Pagina' } }
+    post:
+      tags: [Faro Empresarial]
+      summary: Crear (Gestor Faro Empresarial o SuperAdmin)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Faro' } } } }
+      responses: { '201': { description: Creado } }
+  /api/faro/exportar:
+    get:
+      tags: [Faro Empresarial]
+      summary: Exportar
+      parameters: [{ $ref: '#/components/parameters/formato' }]
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/faro/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Faro Empresarial], summary: Detalle, responses: { '200': { description: Detalle } } }
+    patch:
+      tags: [Faro Empresarial]
+      summary: Editar
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Faro' } } } }
+      responses: { '200': { description: Actualizado } }
+    delete: { tags: [Faro Empresarial], summary: Eliminar, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+  /api/faro/{id}/imagen/{campo}:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/campoImagen' }]
+    post:
+      tags: [Faro Empresarial]
+      summary: Subir imagen (campo = imagen)
+      requestBody: { $ref: '#/components/requestBodies/Imagen' }
+      responses: { '201': { description: Ruta de la imagen } }
+    delete: { tags: [Faro Empresarial], summary: Quitar imagen, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+
+  # ------------------------------------------------------------------ Empresas
+  /api/empresas:
+    get:
+      tags: [Empresas Coformadoras]
+      summary: Listar (incluye contactos)
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - { name: sector, in: query, schema: { type: string } }
+        - { name: tamano, in: query, schema: { type: string, enum: [Micro, Pequeña, Mediana, Grande] } }
+        - { name: departamento, in: query, schema: { type: string } }
+        - { name: municipio, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/estado'
+        - { name: orden, in: query, schema: { type: string, enum: [nombre, creacion, estudiantes] } }
+        - $ref: '#/components/parameters/direccion'
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses: { '200': { $ref: '#/components/responses/Pagina' } }
+    post:
+      tags: [Empresas Coformadoras]
+      summary: Crear (Gestor Empresas Coformadoras o SuperAdmin)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Empresa' } } } }
+      responses: { '201': { description: Creada } }
+  /api/empresas/resumen:
+    get:
+      tags: [Empresas Coformadoras]
+      summary: Contadores del dashboard (total, activas, por sector y tamaño)
+      responses: { '200': { description: Resumen } }
+  /api/empresas/exportar:
+    get:
+      tags: [Empresas Coformadoras]
+      summary: Exportar
+      parameters: [{ $ref: '#/components/parameters/formato' }]
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/empresas/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Empresas Coformadoras], summary: Detalle, responses: { '200': { description: Detalle } } }
+    patch:
+      tags: [Empresas Coformadoras]
+      summary: Editar
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Empresa' } } } }
+      responses: { '200': { description: Actualizada } }
+    delete: { tags: [Empresas Coformadoras], summary: Eliminar, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+  /api/empresas/{id}/imagen/{campo}:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/campoImagen' }]
+    post:
+      tags: [Empresas Coformadoras]
+      summary: Subir logo o portada (campo = logo_ec o imagen_portada)
+      requestBody: { $ref: '#/components/requestBodies/Imagen' }
+      responses: { '201': { description: Ruta de la imagen } }
+    delete: { tags: [Empresas Coformadoras], summary: Quitar imagen, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+  /api/empresas/{id}/contactos:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    post:
+      tags: [Empresas Coformadoras]
+      summary: Agregar contacto (si es principal, reemplaza al anterior principal)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Contacto' } } } }
+      responses: { '201': { description: Contacto creado } }
+  /api/empresas/{id}/contactos/{idContacto}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+      - { name: idContacto, in: path, required: true, schema: { type: integer } }
+    patch:
+      tags: [Empresas Coformadoras]
+      summary: Editar contacto
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Contacto' } } } }
+      responses: { '200': { description: Contacto actualizado } }
+    delete: { tags: [Empresas Coformadoras], summary: Eliminar contacto, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+
+  # ------------------------------------------------------------------ Tendencias
+  /api/tendencias:
+    get:
+      tags: [Tendencias]
+      summary: Listar (incluye fuentes y número de menciones)
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - { name: megatendencia, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/categoria'
+        - $ref: '#/components/parameters/estado'
+        - { name: orden, in: query, schema: { type: string, enum: [publicacion, tendencia, megatendencia] } }
+        - $ref: '#/components/parameters/direccion'
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses: { '200': { $ref: '#/components/responses/Pagina' } }
+    post:
+      tags: [Tendencias]
+      summary: Crear (Gestor Tendencias o SuperAdmin)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Tendencia' } } } }
+      responses: { '201': { description: Creada } }
+  /api/tendencias/mapa:
+    get:
+      tags: [Tendencias]
+      summary: Datos del mapa de árbol (menciones por periodo)
+      parameters: [{ name: periodo, in: query, schema: { type: string, enum: [semana, mes, anio, total], default: mes } }]
+      responses: { '200': { description: Megatendencias y tendencias con su número de menciones } }
+  /api/tendencias/top5:
+    get:
+      tags: [Tendencias]
+      summary: Top 5 tendencias en crecimiento
+      responses: { '200': { description: Top 5 } }
+  /api/tendencias/megatendencias:
+    get:
+      tags: [Tendencias]
+      summary: Lista de megatendencias
+      responses: { '200': { description: Nombres } }
+  /api/tendencias/plantilla:
+    get:
+      tags: [Tendencias]
+      summary: Descargar la plantilla de importación (Gestor Tendencias o SuperAdmin)
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/tendencias/importar:
+    post:
+      tags: [Tendencias]
+      summary: Importación masiva desde Excel (todo o nada)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, properties: { archivo: { type: string, format: binary } } }
+      responses:
+        '201': { description: 'Cantidad importada: { importadas: n }' }
+        '422': { description: 'Errores por fila; no se importa nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/tendencias/exportar:
+    get:
+      tags: [Tendencias]
+      summary: Exportar
+      parameters: [{ $ref: '#/components/parameters/formato' }]
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/tendencias/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Tendencias], summary: Detalle, responses: { '200': { description: Detalle } } }
+    patch:
+      tags: [Tendencias]
+      summary: Editar (si se envía "fuentes", reemplaza todas)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Tendencia' } } } }
+      responses: { '200': { description: Actualizada } }
+    delete: { tags: [Tendencias], summary: Eliminar, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+  /api/tendencias/{id}/menciones:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    post:
+      tags: [Tendencias]
+      summary: Registrar una mención
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { fuente: { type: string }, fecha: { type: string, format: date } } }
+      responses: { '201': { description: Mención registrada } }
+
+  # ------------------------------------------------------------------ Calendario
+  /api/calendario:
+    get:
+      tags: [Calendario]
+      summary: Listar eventos (usa desde/hasta para la vista semanal o mensual)
+      parameters:
+        - { name: desde, in: query, schema: { type: string, format: date } }
+        - { name: hasta, in: query, schema: { type: string, format: date } }
+        - $ref: '#/components/parameters/q'
+        - { name: tipo_evento, in: query, schema: { type: string } }
+        - { name: modalidad, in: query, schema: { type: string } }
+        - { name: orden, in: query, schema: { type: string, enum: [fecha, titulo] } }
+        - $ref: '#/components/parameters/direccion'
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses: { '200': { $ref: '#/components/responses/Pagina' } }
+    post:
+      tags: [Calendario]
+      summary: Crear (Gestor Calendario o SuperAdmin)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Evento' } } } }
+      responses: { '201': { description: Creado } }
+  /api/calendario/exportar:
+    get:
+      tags: [Calendario]
+      summary: Exportar
+      parameters: [{ $ref: '#/components/parameters/formato' }]
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/calendario/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Calendario], summary: Detalle, responses: { '200': { description: Detalle } } }
+    patch:
+      tags: [Calendario]
+      summary: Editar
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Evento' } } } }
+      responses: { '200': { description: Actualizado } }
+    delete: { tags: [Calendario], summary: Eliminar, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+
+  # ------------------------------------------------------------------ Estadísticas
+  /api/actividad:
+    post:
+      tags: [Estadísticas]
+      summary: Registrar una vista, clic en Acceder o compartir (cualquier perfil)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tipo_contenido, id_contenido, accion]
+              properties:
+                tipo_contenido: { type: string, enum: [Flash, Faro, Empresa, Tendencia, Evento] }
+                id_contenido: { type: integer }
+                accion: { type: string, enum: [Vista, Clic_acceder, Compartir] }
+      responses: { '201': { description: Registrado } }
+  /api/estadisticas/resumen:
+    get: { tags: [Estadísticas], summary: Resumen del mes (SuperAdmin), responses: { '200': { description: Resumen } } }
+  /api/estadisticas/top-contenidos:
+    get: { tags: [Estadísticas], summary: Top 5 contenidos más vistos en 30 días (SuperAdmin), responses: { '200': { description: Top 5 } } }
+  /api/estadisticas/modulos:
+    get: { tags: [Estadísticas], summary: Actividad por módulo en 30 días (SuperAdmin), responses: { '200': { description: Módulos } } }
+  /api/estadisticas/ciudades:
+    get: { tags: [Estadísticas], summary: Usuarios por ciudad (SuperAdmin), responses: { '200': { description: Ciudades } } }
+  /api/estadisticas/intereses:
+    get: { tags: [Estadísticas], summary: Distribución de intereses (SuperAdmin), responses: { '200': { description: Intereses } } }
+
+  # ------------------------------------------------------------------ Alertas
+  /api/alertas/ejecutar:
+    post:
+      tags: [Alertas]
+      summary: Ejecutar el envío de alertas ahora (SuperAdmin)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, properties: { frecuencia: { type: string, enum: [Inmediata, Semanal] } } } } }
+      responses: { '200': { description: 'Resultado: { enviados, errores }' } }
+  /api/alertas/abierto/{id}/{firma}:
+    get:
+      tags: [Alertas]
+      summary: Imagen invisible que marca un correo de alerta como abierto
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+        - { name: firma, in: path, required: true, schema: { type: string } }
+      responses: { '200': { description: GIF 1x1 } }
