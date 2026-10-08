@@ -30,7 +30,10 @@ const esquemaEntorno = z.object({
 
   // Imágenes subidas.
   UPLOADS_DIR: z.string().default('uploads'),
-  UPLOADS_MAX_MB: z.coerce.number().positive().default(5),
+  // En Vercel una petición puede pesar como máximo 4,5 MB.
+  UPLOADS_MAX_MB: z.coerce.number().positive().default(4),
+  // Vercel Blob: si está, las imágenes se guardan ahí en lugar de UPLOADS_DIR.
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
   // Correo. Sin SMTP_HOST los correos se muestran en la consola en lugar de enviarse.
   SMTP_HOST: z.string().optional(),
@@ -42,6 +45,8 @@ const esquemaEntorno = z.object({
 
   // Envío automático de alertas por correo (tareas programadas).
   ALERTAS_ACTIVAS: booleano.default(true),
+  // Vercel Cron llama a GET /api/alertas/cron con "Authorization: Bearer <CRON_SECRET>".
+  CRON_SECRET: z.string().min(16, 'CRON_SECRET debe tener al menos 16 caracteres').optional(),
   ZONA_HORARIA: z.string().default('America/Bogota'),
 });
 
@@ -72,6 +77,7 @@ export const config = {
   uploads: {
     directorio: path.resolve(env.UPLOADS_DIR),
     maxBytes: Math.round(env.UPLOADS_MAX_MB * 1024 * 1024),
+    tokenBlob: env.BLOB_READ_WRITE_TOKEN || undefined,
   },
   correo: {
     host: env.SMTP_HOST,
@@ -84,5 +90,6 @@ export const config = {
   alertas: {
     activas: env.ALERTAS_ACTIVAS,
     zonaHoraria: env.ZONA_HORARIA,
+    secretoCron: env.CRON_SECRET || undefined,
   },
 } as const;

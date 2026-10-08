@@ -226,7 +226,7 @@ components:
           schema:
             type: object
             properties:
-              imagen: { type: string, format: binary, description: JPG o PNG, máximo 5 MB. }
+              imagen: { type: string, format: binary, description: JPG o PNG, máximo 4 MB. }
   responses:
     Error:
       description: Error
