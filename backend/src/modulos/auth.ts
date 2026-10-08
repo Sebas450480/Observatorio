@@ -103,7 +103,12 @@ rutasAuth.post('/registro', limiteIntentos, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------- Inicio de sesión
-const esquemaLogin = z.object({ correo, contrasena: z.string().min(1).max(200) });
+const esquemaLogin = z.object({
+  correo,
+  contrasena: z.string().min(1).max(200),
+  /** "Recordar sesión": si es false, la cookie se borra al cerrar el navegador. */
+  recordar: z.boolean().default(true),
+});
 
 rutasAuth.post('/login', limiteIntentos, async (req, res) => {
   const datos = esquemaLogin.parse(req.body);
@@ -119,7 +124,8 @@ rutasAuth.post('/login', limiteIntentos, async (req, res) => {
   if (!usuario || !correcta) throw new ErrorApi(401, 'Correo o contraseña incorrectos');
   if (usuario.estado_usuario !== 'Activo') throw new ErrorApi(403, 'Tu cuenta está inactiva. Contacta al administrador.');
 
-  res.cookie(NOMBRE_COOKIE, firmarToken(usuario.id_usuario), opcionesCookie());
+  const { maxAge, ...sinVencimiento } = opcionesCookie();
+  res.cookie(NOMBRE_COOKIE, firmarToken(usuario.id_usuario), datos.recordar ? { ...sinVencimiento, maxAge } : sinVencimiento);
   res.json(await perfilPorId(usuario.id_usuario));
 });
 

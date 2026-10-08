@@ -29,6 +29,7 @@ tags:
   - name: Calendario
   - name: Estadísticas
   - name: Alertas
+  - name: Búsqueda
 components:
   securitySchemes:
     cookieSesion:
@@ -293,6 +294,7 @@ paths:
               properties:
                 correo: { type: string }
                 contrasena: { type: string }
+                recordar: { type: boolean, default: true, description: 'Si es false, la sesión termina al cerrar el navegador.' }
       responses:
         '200': { description: Sesión iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
         '401': { $ref: '#/components/responses/Error' }
@@ -651,6 +653,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/q'
         - { name: megatendencia, in: query, schema: { type: string } }
+        - { name: desde, in: query, description: Publicadas desde esta fecha, schema: { type: string, format: date } }
         - $ref: '#/components/parameters/categoria'
         - $ref: '#/components/parameters/estado'
         - { name: orden, in: query, schema: { type: string, enum: [publicacion, tendencia, megatendencia] } }
@@ -776,6 +779,12 @@ paths:
                 id_contenido: { type: integer }
                 accion: { type: string, enum: [Vista, Clic_acceder, Compartir] }
       responses: { '201': { description: Registrado } }
+  /api/estadisticas/panel:
+    get:
+      tags: [Estadísticas]
+      summary: Tarjetas del Panel con variación frente al mes anterior (SuperAdmin)
+      description: Usuarios registrados, contenidos publicados (por módulo), visitas del mes y suscriptores a alertas.
+      responses: { '200': { description: Panel } }
   /api/estadisticas/resumen:
     get: { tags: [Estadísticas], summary: Resumen del mes (SuperAdmin), responses: { '200': { description: Resumen } } }
   /api/estadisticas/top-contenidos:
@@ -804,3 +813,14 @@ paths:
         - { name: id, in: path, required: true, schema: { type: integer } }
         - { name: firma, in: path, required: true, schema: { type: string } }
       responses: { '200': { description: GIF 1x1 } }
+
+  # ------------------------------------------------------------------ Búsqueda
+  /api/buscar:
+    get:
+      tags: [Búsqueda]
+      summary: Búsqueda global en Flash, Faro, Empresas, Tendencias y Eventos
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2 } }
+        - { name: limite, in: query, description: Máximo por módulo, schema: { type: integer, default: 5, maximum: 20 } }
+      responses:
+        '200': { description: 'Resultados: { q, total, resultados: [{ tipo, id, titulo, detalle, fecha }] }' }

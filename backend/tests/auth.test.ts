@@ -107,6 +107,14 @@ describe('Inicio de sesión', () => {
     expect((await agente.get('/api/auth/yo')).status).toBe(401);
   });
 
+  it('sin "recordar sesión" la cookie no tiene vencimiento (se borra al cerrar el navegador)', async () => {
+    const u = await crearUsuario('Usuario');
+    const recordada = await invitado().post('/api/auth/login').send({ correo: u.correo, contrasena: CONTRASENA });
+    expect(String(recordada.headers['set-cookie'])).toMatch(/Max-Age=/);
+    const temporal = await invitado().post('/api/auth/login').send({ correo: u.correo, contrasena: CONTRASENA, recordar: false });
+    expect(String(temporal.headers['set-cookie'])).not.toMatch(/Max-Age=|Expires=/);
+  });
+
   it('un token inválido se atiende como invitado', async () => {
     const r = await invitado().get('/api/flash').set('Authorization', 'Bearer token-falso');
     expect(r.status).toBe(200);

@@ -1,0 +1,107 @@
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+/*
+ * Estilos del Observatorio Empresarial, tomados del prototipo en Figma.
+ * Cada valor se define una sola vez aquí y se usa con clases de Tailwind,
+ * por ejemplo: bg-rojo, text-azul-titulo, shadow-tarjeta, rounded-tarjeta.
+ */
+@theme {
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+
+  /* Azules institucionales */
+  --color-azul: #011f77;          /* barra lateral, paginación activa */
+  --color-azul-titulo: #0b247a;   /* títulos de página */
+  --color-azul-oscuro: #0e1f87;   /* encabezado de modales y avisos */
+  --color-azul-claro: #ebf3ff;
+  --color-azul-boton: #1739a6;    /* botón secundario azul ("Ver contacto principal") */
+
+  /* Rojos institucionales */
+  --color-rojo: #dd0034;          /* botones principales y píldora "Buscar" */
+  --color-rojo-activo: #eb0a1f;   /* opción activa de la barra lateral */
+  --color-rojo-sesion: #ef0221;   /* botón del menú de sesión */
+  --color-rojo-claro: #fff1f2;
+
+  /* Neutros */
+  --color-fondo: #f4f6f7;
+  --color-texto: #333333;
+  --color-texto-suave: #666666;
+  --color-texto-tenue: #8a94a6;
+  --color-borde: #e0e0e0;
+  --color-etiqueta: #f5f5f5;
+  --color-menu-tenue: #d9d9d9;
+
+  /* Estados */
+  --color-exito: #10b981;
+  --color-exito-claro: #ecfdf5;
+  --color-morado: #8b5cf6;
+  --color-morado-claro: #f5f3ff;
+  --color-naranja: #f97316;
+  --color-naranja-claro: #fff7ed;
+  --color-cian-claro: #ecfeff;
+
+  --radius-tarjeta: 12px;
+  --radius-control: 8px;
+
+  --shadow-tarjeta: 0 4px 12px 0 rgb(0 0 0 / 0.04);
+  --shadow-boton: 0 4px 6px 0 rgb(10 62 179 / 0.25);
+  --shadow-menu: 0 12px 32px 0 rgb(1 31 119 / 0.18);
+
+  /* Escala tipográfica del Figma (Observatorio/...) */
+  --text-caption: 14px;
+  --text-small: 16px;
+  --text-body: 18px;
+  --text-subtitle: 20px;
+  --text-titulo: 28px;
+  --text-display: 40px;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-fondo font-sans text-texto;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-azul-oscuro);
+    outline-offset: 2px;
+  }
+}
+
+/* FullCalendar con los colores del Observatorio */
+.fc {
+  --fc-border-color: #eceef1;
+  --fc-today-bg-color: rgb(221 0 52 / 0.04);
+  --fc-event-border-color: transparent;
+  --fc-page-bg-color: #fff;
+  font-size: 14px;
+}
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  color: var(--color-texto);
+  font-weight: 700;
+  text-decoration: none;
+}
+.fc .fc-day-sun .fc-col-header-cell-cushion,
+.fc .fc-day-sun .fc-daygrid-day-number {
+  color: var(--color-rojo);
+}
+.fc .fc-timegrid-slot-label-cushion {
+  color: var(--color-texto-suave);
+  font-size: 12px;
+}
+.fc .fc-event {
+  cursor: pointer;
+  border-radius: 8px;
+}
+.fc .fc-scrollgrid {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+}

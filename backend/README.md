@@ -123,7 +123,8 @@ Todos bajo `/api`. Detalle de parámetros y cuerpos en `/api/docs`.
 | Empresas | `/empresas` · `/empresas/resumen` · `/empresas/:id/contactos` | Gestor Empresas Coformadoras |
 | Tendencias | `/tendencias` · `/tendencias/mapa` · `/top5` · `/megatendencias` · `/plantilla` · `/importar` · `/:id/menciones` | Gestor Tendencias |
 | Calendario | `/calendario` (`?desde=&hasta=` para la vista semanal o mensual) | Gestor Calendario |
-| Estadísticas | `POST /actividad` (todos) · `GET /estadisticas/resumen`, `/top-contenidos`, `/modulos`, `/ciudades`, `/intereses` | — (consulta: SuperAdmin) |
+| Estadísticas | `POST /actividad` (todos) · `GET /estadisticas/panel`, `/resumen`, `/top-contenidos`, `/modulos`, `/ciudades`, `/intereses` | — (consulta: SuperAdmin) |
+| Búsqueda global | `GET /buscar?q=` (Flash, Faro, Empresas, Tendencias y Eventos a la vez) | — |
 | Alertas | `POST /alertas/ejecutar` · `GET /alertas/abierto/:id/:firma` | SuperAdmin |
 
 Cada módulo de contenido tiene las mismas rutas base

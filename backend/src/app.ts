@@ -11,6 +11,7 @@ import { manejadorErrores, rutaNoEncontrada } from './errores.js';
 import { identificarSesion } from './middlewares/sesion.js';
 import { rutasAlertas } from './modulos/alertas.js';
 import { rutasAuth } from './modulos/auth.js';
+import { rutasBuscar } from './modulos/buscar.js';
 import { rutasCalendario } from './modulos/calendario.js';
 import { rutasCategorias, rutasRoles } from './modulos/catalogos.js';
 import { rutasEmpresas } from './modulos/empresas.js';
@@ -64,6 +65,7 @@ export function crearApp() {
   app.use('/api/actividad', rutasActividad);
   app.use('/api/estadisticas', rutasEstadisticas);
   app.use('/api/alertas', rutasAlertas);
+  app.use('/api/buscar', rutasBuscar);
 
   app.use(rutaNoEncontrada);
   app.use(manejadorErrores);

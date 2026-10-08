@@ -30,6 +30,15 @@ describe('Tendencias', () => {
     expect(ia.menciones).toBeGreaterThan(0);
   });
 
+  it('filtra por fecha de publicación', async () => {
+    const todas = await invitado().get('/api/tendencias?limite=100');
+    const futuras = await invitado().get('/api/tendencias?desde=2999-01-01');
+    expect(futuras.status).toBe(200);
+    expect(futuras.body.total).toBe(0);
+    expect(todas.body.total).toBeGreaterThan(0);
+    expect((await invitado().get('/api/tendencias?desde=ayer')).status).toBe(400);
+  });
+
   it('entrega los datos del mapa por periodo y el Top 5', async () => {
     const mapa = await invitado().get('/api/tendencias/mapa?periodo=anio');
     expect(mapa.status).toBe(200);
