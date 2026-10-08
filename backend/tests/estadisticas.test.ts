@@ -87,6 +87,17 @@ describe('Alertas por correo', () => {
     const { agente: usuario } = await sesion('Usuario');
     expect((await usuario.post('/api/alertas/ejecutar').send({ frecuencia: 'Semanal' })).status).toBe(403);
   });
+
+  it('Vercel Cron ejecuta el envío solo con el secreto correcto', async () => {
+    const ruta = '/api/alertas/cron?frecuencia=Inmediata';
+    const r = await invitado().get(ruta).set('Authorization', 'Bearer secreto-cron-de-pruebas-1234');
+    expect(r.status).toBe(200);
+    expect(r.body).toHaveProperty('enviados');
+    expect((await invitado().get(ruta)).status).toBe(404);
+    expect((await invitado().get(ruta).set('Authorization', 'Bearer otro-secreto-de-prueba-00')).status).toBe(404);
+    const { agente } = await sesion('SuperAdmin');
+    expect((await agente.get(ruta)).status).toBe(404);
+  });
 });
 
 describe('Panel de estadísticas', () => {

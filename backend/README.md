@@ -136,7 +136,7 @@ Cada módulo de contenido tiene las mismas rutas base
 | `GET /exportar?formato=xlsx\|pdf` | El mismo listado en Excel o PDF (máx. 5000 registros). |
 | `GET /:id` | Detalle. |
 | `POST /` · `PATCH /:id` · `DELETE /:id` | Crear, editar (campos parciales) y eliminar. |
-| `POST /:id/imagen/:campo` · `DELETE /:id/imagen/:campo` | Subir (JPG/PNG, máx. 5 MB) o quitar una imagen. |
+| `POST /:id/imagen/:campo` · `DELETE /:id/imagen/:campo` | Subir (JPG/PNG, máx. 4 MB) o quitar una imagen. |
 
 Fechas: con hora en ISO 8601 con zona (`2026-10-20T08:00:00-05:00`); sin hora como `AAAA-MM-DD`.
 
@@ -195,3 +195,6 @@ backend/
   y `/api` detrás de un proxy como Nginx). La cookie es `SameSite=Lax` y no viaja entre dominios distintos.
 - Configura `FRONTEND_URL` y `API_URL_PUBLICA` con las direcciones reales (se usan en CORS y en los enlaces de los correos).
 - La carpeta `UPLOADS_DIR` debe conservarse entre despliegues (ahí están las imágenes subidas) y tener copia de seguridad.
+- En **Vercel** el backend corre como función (`api/index.mjs` en la raíz), las imágenes van a **Vercel Blob**
+  (`BLOB_READ_WRITE_TOKEN`) y las alertas las dispara **Vercel Cron** (`CRON_SECRET`). Ver el
+  [README principal](../README.md#publicación-en-vercel).

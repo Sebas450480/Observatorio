@@ -40,3 +40,28 @@ Cada PR ejecuta en GitHub Actions ([`.github/workflows/pruebas.yml`](.github/wor
 1. Base de datos: ver [`supabase/README.md`](supabase/README.md).
 2. Backend: `cd backend && npm install && npm run dev` (puerto 3000).
 3. Frontend: `cd frontend && npm install && npm run dev` y abre `http://localhost:5173`.
+
+## Publicación en Vercel
+
+La rama `produccion` se publica en Vercel como **un solo proyecto** ([`vercel.json`](vercel.json)):
+
+| Parte | En Vercel |
+|---|---|
+| Frontend (`frontend/dist`) | Archivos estáticos; las rutas de la aplicación responden `index.html`. |
+| API (`/api/*`) | Función de Vercel [`api/index.mjs`](api/index.mjs) con la aplicación Express del backend. |
+| Imágenes subidas | Vercel Blob (almacenamiento público). |
+| Alertas por correo | Vercel Cron: inmediatas a diario a las 8:00 a. m. y semanal los lunes a las 8:00 a. m. (hora de Bogotá). En el plan Hobby un cron solo puede correr una vez al día. |
+| Base de datos | Supabase, por el *pooler* en modo transacción (puerto 6543), usuario `obs_backend.<id-del-proyecto>`. |
+
+Variables de entorno del proyecto en Vercel (*Settings → Environment Variables*):
+
+| Variable | Valor |
+|---|---|
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | `postgresql://obs_backend.<id-del-proyecto>:<contraseña>@<host-del-pooler>:6543/postgres` |
+| `DATABASE_SSL` | `true` |
+| `JWT_SECRETO` | Texto aleatorio de 48 caracteres o más. |
+| `FRONTEND_URL`, `API_URL_PUBLICA` | La dirección pública del sitio, por ejemplo `https://observatorio.vercel.app`. |
+| `CRON_SECRET` | Texto aleatorio; Vercel lo envía al ejecutar los cron. |
+| `BLOB_READ_WRITE_TOKEN` | Lo agrega Vercel al conectar el almacenamiento Blob al proyecto. |
+| `SMTP_*`, `CORREO_REMITENTE` | Datos del servidor de correo. Sin `SMTP_HOST` los correos no se envían (solo se registran). |

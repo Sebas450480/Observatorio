@@ -94,7 +94,7 @@ export function CampoImagen({
           </span>
         )}
         <span className="text-caption text-texto-suave">
-          {archivo ? archivo.name : actual ? 'Cambiar imagen (JPG o PNG, máx. 5 MB)' : 'Subir imagen (JPG o PNG, máx. 5 MB)'}
+          {archivo ? archivo.name : actual ? 'Cambiar imagen (JPG o PNG, máx. 4 MB)' : 'Subir imagen (JPG o PNG, máx. 4 MB)'}
         </span>
       </label>
       <input
@@ -104,8 +104,8 @@ export function CampoImagen({
         className="sr-only"
         onChange={(e) => {
           const nuevo = e.target.files?.[0] ?? null;
-          if (nuevo && nuevo.size > 5 * 1024 * 1024) {
-            setError('La imagen supera 5 MB');
+          if (nuevo && nuevo.size > 4 * 1024 * 1024) {
+            setError('La imagen supera 4 MB');
             return;
           }
           setError(null);

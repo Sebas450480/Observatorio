@@ -11,7 +11,9 @@ pg.types.setTypeParser(1082, (v) => v);
 export const pool = new pg.Pool({
   connectionString: config.baseDatos.url,
   ssl: config.baseDatos.ssl ? { rejectUnauthorized: false } : undefined,
-  max: 10,
+  // En Vercel cada instancia de la función atiende pocas peticiones a la vez: pocas conexiones.
+  max: process.env.VERCEL ? 3 : 10,
+  idleTimeoutMillis: process.env.VERCEL ? 5_000 : 10_000,
 });
 
 pool.on('error', (error) => {
