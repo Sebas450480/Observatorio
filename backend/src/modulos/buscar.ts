@@ -28,7 +28,7 @@ rutasBuscar.get('/', async (req, res) => {
 
   const resultados = await conRol(req.sesion, async (c) => {
     const { rows } = await c.query<Resultado>(
-      `(select 'Flash' as tipo, id_fi as id, titulo, tipo_evento::text as detalle, fecha_inicio::date::text as fecha
+      `(select 'Flash' as tipo, id_fi as id, titulo, coalesce(tipo_otro, tipo_evento::text) as detalle, fecha_inicio::date::text as fecha
           from flash_informativo
          where titulo ilike $1 or descripcion ilike $1 or lugar ilike $1
          order by fecha_inicio desc limit $2)
@@ -48,7 +48,7 @@ rutasBuscar.get('/', async (req, res) => {
          where tendencia ilike $1 or megatendencia ilike $1 or descripcion ilike $1
          order by fecha_publicacion desc limit $2)
        union all
-       (select 'Evento', id_evento, titulo, tipo_evento::text, fecha_inicio::date::text
+       (select 'Evento', id_evento, titulo, coalesce(tipo_otro, tipo_evento::text), fecha_inicio::date::text
           from calendario_eventos
          where titulo ilike $1 or descripcion ilike $1 or lugar ilike $1
          order by fecha_inicio desc limit $2)`,

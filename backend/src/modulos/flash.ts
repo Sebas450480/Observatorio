@@ -18,6 +18,8 @@ const esquema = z.object({
   link: enlace.nullish(),
   info_adicional: textoOpcional(),
   tipo_evento: z.enum(TIPOS_EVENTO),
+  /** Nombre del tipo cuando tipo_evento es "Otro". */
+  tipo_otro: textoOpcional(40),
   departamento: textoOpcional(50),
   estado_fi: z.enum(ESTADOS).optional(),
   categorias: listaIds.optional(),

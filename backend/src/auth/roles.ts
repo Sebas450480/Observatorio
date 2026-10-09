@@ -22,6 +22,8 @@ export type RolBD = (typeof ROLES_BD)[number];
 /** Nombre del rol en la tabla `rol` -> rol de PostgreSQL. */
 export const ROL_POR_NOMBRE: Record<string, RolBD> = {
   SuperAdmin: 'obs_superadmin',
+  /** Mismas funciones del SuperAdmin; protegido en la gestión de usuarios. */
+  'SuperAdmin Superior': 'obs_superadmin',
   Usuario: 'obs_usuario',
   'Gestor Faro Empresarial': 'obs_gestor_faro',
   'Gestor Flash Informativo': 'obs_gestor_flash',

@@ -1,5 +1,7 @@
 import { Check, ImagePlus } from 'lucide-react';
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { api, mensajeDeError } from '../../api/cliente';
 import { registrarActividad } from '../../api/consultas';
 import type { Categoria, TipoContenido } from '../../api/tipos';
 import iconoCopiar from '../../assets/figma/compartir/copiar.svg';
@@ -20,7 +22,7 @@ export function BarraFiltros({ children, acciones, className = 'gap-3' }: { chil
   );
 }
 
-/** Selección de varias categorías (etiquetas) en un formulario. */
+/** Selección de varias categorías (etiquetas) en un formulario; el chip "+" crea una categoría nueva. */
 export function SelectorCategorias({
   categorias,
   seleccion,
@@ -32,10 +34,37 @@ export function SelectorCategorias({
   onCambiar: (ids: number[]) => void;
   etiqueta?: string;
 }) {
+  const clienteConsultas = useQueryClient();
+  const [agregando, setAgregando] = useState(false);
+  const [nombre, setNombre] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
+
+  const agregar = async () => {
+    const limpio = nombre.trim().replace(/\s+/g, ' ');
+    if (!limpio) return setError('Escribe el nombre de la categoría');
+    if (limpio.length > 50) return setError('Máximo 50 caracteres');
+    // Si ya existe (sin importar mayúsculas), solo se marca.
+    const existente = categorias.find((c) => c.nombre_categoria.toLocaleLowerCase('es') === limpio.toLocaleLowerCase('es'));
+    try {
+      setGuardando(true);
+      const categoria = existente ?? (await api<Categoria>('/categorias', { metodo: 'POST', cuerpo: { nombre_categoria: limpio } }));
+      if (!existente) await clienteConsultas.invalidateQueries({ queryKey: ['/categorias'] });
+      if (!seleccion.includes(categoria.id_categoria)) onCambiar([...seleccion, categoria.id_categoria]);
+      setNombre('');
+      setError(null);
+      setAgregando(false);
+    } catch (e) {
+      setError(mensajeDeError(e));
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   return (
     <fieldset>
       <legend className="mb-2 text-caption font-semibold text-azul-titulo">{etiqueta}</legend>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {categorias.map((c) => {
           const activa = seleccion.includes(c.id_categoria);
           return (
@@ -53,7 +82,68 @@ export function SelectorCategorias({
             </button>
           );
         })}
+        {agregando ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-azul-oscuro bg-white py-0.5 pl-3 pr-1">
+            <input
+              autoFocus
+              aria-label="Nombre de la nueva categoría"
+              placeholder="Nueva categoría"
+              maxLength={50}
+              value={nombre}
+              onChange={(ev) => {
+                setNombre(ev.target.value);
+                setError(null);
+              }}
+              onKeyDown={(ev) => {
+                // Enter agrega la categoría sin enviar el formulario.
+                if (ev.key === 'Enter') {
+                  ev.preventDefault();
+                  void agregar();
+                } else if (ev.key === 'Escape') {
+                  ev.stopPropagation();
+                  setAgregando(false);
+                }
+              }}
+              className="w-36 bg-transparent text-caption text-texto focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => void agregar()}
+              disabled={guardando}
+              className="cursor-pointer rounded-full bg-azul-oscuro px-2.5 py-0.5 text-caption font-semibold text-white disabled:opacity-60"
+            >
+              Agregar
+            </button>
+            <button
+              type="button"
+              aria-label="Cancelar la nueva categoría"
+              onClick={() => {
+                setAgregando(false);
+                setNombre('');
+                setError(null);
+              }}
+              className="cursor-pointer px-1.5 text-caption font-bold text-texto-suave"
+            >
+              ✕
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            aria-label="Agregar categoría"
+            title="Agregar una categoría nueva"
+            onClick={() => setAgregando(true)}
+            className="inline-grid size-[26px] cursor-pointer place-items-center rounded-full border border-dashed border-azul-oscuro text-body font-bold leading-none text-azul-oscuro hover:bg-[rgba(14,31,135,0.08)]"
+          >
+            +
+          </button>
+        )}
       </div>
+      {error && (
+        <p role="alert" className="mt-1.5 text-[13px] text-rojo">
+          {error}
+        </p>
+      )}
     </fieldset>
   );
 }

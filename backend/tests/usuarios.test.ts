@@ -73,6 +73,25 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
     expect((await agente.delete(`/api/usuarios/${usuario.id}`)).status).toBe(400);
   });
 
+  it('un SuperAdmin no puede cambiarle el rol a un SuperAdmin Superior, eliminarlo ni asignar ese rol', async () => {
+    const { agente: admin } = await sesion('SuperAdmin');
+    const { agente: superior } = await sesion('SuperAdmin Superior');
+    const protegido = await crearUsuario('SuperAdmin Superior');
+    const roles = (await admin.get('/api/roles')).body as { id_rol: number; nombre_rol: string }[];
+    const idRol = (nombre: string) => roles.find((r) => r.nombre_rol === nombre)!.id_rol;
+
+    expect((await admin.patch(`/api/usuarios/${protegido.id}`).send({ id_rol: idRol('Usuario') })).status).toBe(403);
+    expect((await admin.patch(`/api/usuarios/${protegido.id}`).send({ estado_usuario: 'Inactivo' })).status).toBe(403);
+    expect((await admin.delete(`/api/usuarios/${protegido.id}`)).status).toBe(403);
+    const otro = await crearUsuario('Usuario');
+    expect((await admin.patch(`/api/usuarios/${otro.id}`).send({ id_rol: idRol('SuperAdmin Superior') })).status).toBe(403);
+
+    // El SuperAdmin Superior sí puede, y tiene las funciones del SuperAdmin.
+    expect((await superior.patch(`/api/usuarios/${otro.id}`).send({ id_rol: idRol('SuperAdmin Superior') })).status).toBe(200);
+    expect((await superior.patch(`/api/usuarios/${protegido.id}`).send({ estado_usuario: 'Inactivo' })).status).toBe(200);
+    expect((await superior.get('/api/usuarios')).status).toBe(200);
+  });
+
   it('otros perfiles no acceden a la gestión de usuarios', async () => {
     const { agente } = await sesion('Gestor Tendencias');
     expect((await agente.get('/api/usuarios')).status).toBe(403);
@@ -81,12 +100,17 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
 });
 
 describe('Catálogos', () => {
-  it('roles y categorías son públicos; solo el SuperAdmin crea categorías', async () => {
-    expect((await invitado().get('/api/roles')).body).toHaveLength(7);
+  it('roles y categorías son públicos; los gestores crean categorías y solo el SuperAdmin las modifica', async () => {
+    expect((await invitado().get('/api/roles')).body).toHaveLength(8);
     expect((await invitado().get('/api/categorias')).body.length).toBeGreaterThanOrEqual(18);
 
     const { agente: usuario } = await sesion('Usuario');
     expect((await usuario.post('/api/categorias').send({ nombre_categoria: 'Robótica' })).status).toBe(403);
+
+    const { agente: gestor } = await sesion('Gestor Tendencias');
+    const deGestor = await gestor.post('/api/categorias').send({ nombre_categoria: 'Biotecnología' });
+    expect(deGestor.status).toBe(201);
+    expect((await gestor.delete(`/api/categorias/${deGestor.body.id_categoria}`)).status).toBe(403);
 
     const { agente: admin } = await sesion('SuperAdmin');
     const creada = await admin.post('/api/categorias').send({ nombre_categoria: 'Robótica' });

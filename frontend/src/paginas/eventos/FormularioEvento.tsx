@@ -11,6 +11,7 @@ const esquema = z
   .object({
     titulo: z.string().trim().min(1, 'Escribe el título').max(150),
     tipo_evento: z.enum(TIPOS_EVENTO, { message: 'Elige el tipo de evento' }),
+    tipo_otro: z.string().trim().max(40, 'Máximo 40 caracteres'),
     fecha_inicio: z.string().min(1, 'Elige la fecha'),
     hora_inicio: z.string().min(1, 'Elige la hora de inicio'),
     fecha_fin: z.string(),
@@ -22,6 +23,7 @@ const esquema = z
     costo: z.string().regex(/^\d*$/, 'Escribe solo números'),
     descripcion: z.string().trim(),
   })
+  .refine((d) => d.tipo_evento !== 'Otro' || d.tipo_otro !== '', { message: 'Escribe el tipo de evento', path: ['tipo_otro'] })
   .refine((d) => !d.fecha_fin || aIsoBogota(d.fecha_fin, d.hora_fin || d.hora_inicio) >= aIsoBogota(d.fecha_inicio, d.hora_inicio), {
     message: 'La finalización debe ser posterior al inicio',
     path: ['fecha_fin'],
@@ -38,6 +40,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
     defaultValues: {
       titulo: registro?.titulo ?? '',
       tipo_evento: registro?.tipo_evento,
+      tipo_otro: registro?.tipo_otro ?? '',
       fecha_inicio: aEntradaFecha(inicioIso),
       hora_inicio: aEntradaHora(inicioIso),
       fecha_fin: aEntradaFecha(registro?.fecha_fin),
@@ -52,6 +55,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
   });
   const e = formState.errors;
   const gratuito = useWatch({ control, name: 'es_gratuito' });
+  const tipo = useWatch({ control, name: 'tipo_evento' });
 
   const guardar = async () => {
     const d = getValues();
@@ -60,6 +64,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
       datos: {
         titulo: d.titulo,
         tipo_evento: d.tipo_evento,
+        tipo_otro: d.tipo_evento === 'Otro' ? d.tipo_otro : null,
         fecha_inicio: aIsoBogota(d.fecha_inicio, d.hora_inicio),
         fecha_fin: d.fecha_fin ? aIsoBogota(d.fecha_fin, d.hora_fin || d.hora_inicio) : d.hora_fin ? aIsoBogota(d.fecha_inicio, d.hora_fin) : null,
         modalidad: d.modalidad,
@@ -92,6 +97,16 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
         error={e.tipo_evento?.message}
         {...register('tipo_evento')}
       />
+      {tipo === 'Otro' && (
+        <Entrada
+            etiqueta="¿Qué tipo de evento es?"
+            obligatorio
+            autoFocus
+            placeholder="Ej. Feria, Conversatorio, Rueda de negocios"
+            error={e.tipo_otro?.message}
+            {...register('tipo_otro')}
+          />
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <Entrada etiqueta="Fecha de inicio" type="date" obligatorio error={e.fecha_inicio?.message} {...register('fecha_inicio')} />
         <Entrada etiqueta="Horario de inicio" type="time" obligatorio error={e.hora_inicio?.message} {...register('hora_inicio')} />

@@ -10,7 +10,7 @@ import { SelectorIntereses } from '../../componentes/SelectorIntereses';
 import { Boton } from '../../componentes/ui/Boton';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso, Modal } from '../../componentes/ui/Modal';
-import { descripcionRol, useSesion } from '../../sesion/sesion';
+import { descripcionRol, esRolSuperAdmin, useSesion } from '../../sesion/sesion';
 import { iniciales } from '../../utilidades/formato';
 
 const esquema = z.object({
@@ -132,7 +132,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
     setIntereses(usuario.intereses.map((i) => i.id_categoria));
   };
 
-  const esAdmin = usuario.nombre_rol === 'SuperAdmin';
+  const esAdmin = esRolSuperAdmin(usuario.nombre_rol);
   const esGestor = usuario.nombre_rol.startsWith('Gestor');
   const institucional = esAdmin || esGestor;
   const desde = new Date(usuario.fecha_registro).toLocaleDateString('es-CO', { month: 'long', year: 'numeric', timeZone: 'America/Bogota' });

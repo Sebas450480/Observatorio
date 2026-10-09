@@ -28,6 +28,21 @@ interface PropsModal {
 
 const INSIGNIAS = { advertencia: insigniaAdvertencia, editar: insigniaEditar, exito: insigniaExito };
 
+/**
+ * Bloqueo del scroll de la página mientras haya modales abiertos. Se cuenta cuántos hay
+ * porque se encadenan (detalle → editar → confirmar → aviso) y se abren y cierran en
+ * cualquier orden; guardar y restaurar el valor en cada modal dejaba la página sin scroll.
+ */
+let modalesAbiertos = 0;
+function bloquearScroll() {
+  modalesAbiertos += 1;
+  document.body.style.overflow = 'hidden';
+}
+function liberarScroll() {
+  modalesAbiertos = Math.max(0, modalesAbiertos - 1);
+  if (modalesAbiertos === 0) document.body.style.overflow = '';
+}
+
 /** Botones del pie de los modales del Figma (46 px, esquinas de 8 px). */
 export const BOTON_MODAL = {
   base: 'inline-flex h-[46px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-control px-5 text-body disabled:cursor-not-allowed disabled:opacity-60',
@@ -85,12 +100,11 @@ export function Modal({
       if (e.key === 'Escape') cerrarRef.current();
     };
     document.addEventListener('keydown', alPresionar);
-    const desbordamiento = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    bloquearScroll();
     panel.current?.focus();
     return () => {
       document.removeEventListener('keydown', alPresionar);
-      document.body.style.overflow = desbordamiento;
+      liberarScroll();
       anterior?.focus?.();
     };
   }, [abierto]);

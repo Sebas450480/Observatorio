@@ -14,6 +14,8 @@ const esquema = z.object({
   lugar: textoOpcional(150),
   link_externo: enlace.nullish(),
   tipo_evento: z.enum(TIPOS_EVENTO),
+  /** Nombre del tipo cuando tipo_evento es "Otro". */
+  tipo_otro: textoOpcional(40),
   costo: dinero.nullish(),
   es_gratuito: z.boolean().optional(),
 });
