@@ -22,6 +22,10 @@ export function BarraFiltros({ children, acciones, className = 'gap-3' }: { chil
   );
 }
 
+/** Nombre para comparar: sin tildes, en minúsculas y sin espacios repetidos. */
+export const normalizarNombre = (texto: string) =>
+  texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim().replace(/\s+/g, ' ');
+
 /** Selección de varias categorías (etiquetas) en un formulario; el chip "+" crea una categoría nueva. */
 export function SelectorCategorias({
   categorias,
@@ -44,12 +48,13 @@ export function SelectorCategorias({
     const limpio = nombre.trim().replace(/\s+/g, ' ');
     if (!limpio) return setError('Escribe el nombre de la categoría');
     if (limpio.length > 50) return setError('Máximo 50 caracteres');
-    // Si ya existe (sin importar mayúsculas), solo se marca.
-    const existente = categorias.find((c) => c.nombre_categoria.toLocaleLowerCase('es') === limpio.toLocaleLowerCase('es'));
+    // Se compara sin mayúsculas, minúsculas ni tildes: "Innovacion" y "innovación" son la misma.
+    const existente = categorias.find((c) => normalizarNombre(c.nombre_categoria) === normalizarNombre(limpio));
+    if (existente) return setError(`Esta categoría ya está creada: «${existente.nombre_categoria}».`);
     try {
       setGuardando(true);
-      const categoria = existente ?? (await api<Categoria>('/categorias', { metodo: 'POST', cuerpo: { nombre_categoria: limpio } }));
-      if (!existente) await clienteConsultas.invalidateQueries({ queryKey: ['/categorias'] });
+      const categoria = await api<Categoria>('/categorias', { metodo: 'POST', cuerpo: { nombre_categoria: limpio } });
+      await clienteConsultas.invalidateQueries({ queryKey: ['/categorias'] });
       if (!seleccion.includes(categoria.id_categoria)) onCambiar([...seleccion, categoria.id_categoria]);
       setNombre('');
       setError(null);
