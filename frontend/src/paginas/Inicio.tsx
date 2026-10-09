@@ -157,7 +157,7 @@ export function Inicio() {
   return (
     <>
       <div className="mb-[23px] flex flex-col gap-1">
-        <h1 className="text-[24px] font-bold text-azul-marino sm:text-titulo">Bienvenido al Observatorio Empresarial</h1>
+        <h1 className="text-titulo font-bold text-azul-marino">Bienvenido al Observatorio Empresarial</h1>
         <p className="text-small text-gris-azulado sm:text-body">Lo más actual en eventos, oportunidades y tendencias para el sector empresarial.</p>
       </div>
       {listaEventos.length > 0 && <Carrusel eventos={listaEventos.slice(0, 4)} />}

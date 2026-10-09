@@ -86,7 +86,7 @@ export function EncabezadoPagina({
           )
         )}
         <div>
-          <h1 className="text-[24px] font-bold tracking-[0.02em] text-azul-titulo sm:text-titulo">{titulo}</h1>
+          <h1 className="text-titulo font-bold tracking-[0.02em] text-azul-titulo">{titulo}</h1>
           {subtitulo && <p className={`mt-0.5 ${claseSubtitulo}`}>{subtitulo}</p>}
         </div>
       </div>

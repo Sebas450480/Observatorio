@@ -99,7 +99,7 @@ export function PerfilEmpresa() {
           <div className="flex items-start gap-6">
             {empresa.logo_ec && <img src={empresa.logo_ec} alt={`Logo de ${nombre}`} className="size-16 rounded-lg border border-borde bg-white object-contain p-1" />}
             <div className="flex flex-col gap-2">
-              <h1 className="text-[24px] font-extrabold text-[#0a1c40] sm:text-titulo">{nombre}</h1>
+              <h1 className="text-titulo font-extrabold text-[#0a1c40]">{nombre}</h1>
               <p className="flex items-center gap-1.5 text-small text-[#64748b] sm:text-body">
                 <img src={etiqueta} alt="" aria-hidden className="size-3.5" /> {empresa.sector_economico}
               </p>
