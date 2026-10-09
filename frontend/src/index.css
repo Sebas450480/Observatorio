@@ -1,0 +1,314 @@
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+/*
+ * Estilos del Observatorio Empresarial, tomados del prototipo en Figma.
+ * Cada valor se define una sola vez aquí y se usa con clases de Tailwind,
+ * por ejemplo: bg-rojo, text-azul-titulo, shadow-tarjeta, rounded-tarjeta.
+ */
+@theme {
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+
+  /* Azules institucionales */
+  --color-azul: #011f77;          /* barra lateral, paginación activa */
+  --color-azul-titulo: #0b247a;   /* títulos de página */
+  --color-azul-oscuro: #0e1f87;   /* encabezado de modales y avisos */
+  --color-azul-claro: #ebf3ff;
+  --color-azul-boton: #1739a6;    /* botón secundario azul ("Ver contacto principal") */
+  --color-azul-marino: #173b73;   /* títulos del Inicio y del menú de sesión */
+  --color-gris-azulado: #69788c;  /* textos secundarios del Inicio */
+
+  /* Rojos institucionales */
+  --color-rojo: #dd0034;          /* botones principales y píldora "Buscar" */
+  --color-rojo-activo: #eb0a1f;   /* opción activa de la barra lateral */
+  --color-rojo-sesion: #ef0221;   /* botón del menú de sesión */
+  --color-rojo-vivo: #e4002b;     /* carrusel y enlaces "Ver todo" del Inicio */
+  --color-rojo-claro: #fff1f2;
+
+  /* Neutros */
+  --color-fondo: #f4f6f7;
+  --color-texto: #333333;
+  --color-texto-suave: #666666;
+  --color-texto-tenue: #8a94a6;
+  --color-borde: #e0e0e0;
+  --color-etiqueta: #f5f5f5;
+  --color-menu-tenue: #d9d9d9;
+
+  /* Estados */
+  --color-exito: #10b981;
+  --color-exito-claro: #ecfdf5;
+  --color-morado: #8b5cf6;
+  --color-morado-claro: #f5f3ff;
+  --color-naranja: #f97316;
+  --color-naranja-claro: #fff7ed;
+  --color-cian-claro: #ecfeff;
+
+  --radius-tarjeta: 12px;
+  --radius-control: 8px;
+
+  --shadow-tarjeta: 0 4px 12px 0 rgb(0 0 0 / 0.04);
+  --shadow-boton: 0 4px 6px 0 rgb(10 62 179 / 0.25);
+  --shadow-menu: 0 12px 32px 0 rgb(1 31 119 / 0.18);
+
+  /* Escala tipográfica del Figma (Observatorio/...) */
+  --text-caption: 14px;
+  --text-small: 16px;
+  --text-body: 18px;
+  --text-subtitle: 20px;
+  --text-titulo: 28px;
+  --text-display: 40px;
+  /* El Figma usa interlineado "normal" en todos los textos */
+  --text-caption--line-height: normal;
+  --text-small--line-height: normal;
+  --text-body--line-height: normal;
+  --text-subtitle--line-height: normal;
+  --text-titulo--line-height: normal;
+  --text-display--line-height: normal;
+}
+
+/*
+ * En celular todo se ve un poco más compacto: la escala tipográfica baja un punto y los espacios
+ * de Tailwind (--spacing) se reducen un 10 %. Los campos de formulario se quedan en 16 px para que
+ * el teléfono no haga zoom al tocarlos.
+ */
+@media (max-width: 639px) {
+  :root {
+    --text-caption: 13px;
+    --text-small: 14px;
+    --text-body: 15px;
+    --text-subtitle: 17px;
+    --text-titulo: 22px;
+    --text-display: 30px;
+    --spacing: 0.225rem;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    line-height: normal;
+  }
+  body {
+    @apply bg-fondo font-sans text-texto;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-azul-oscuro);
+    outline-offset: 2px;
+  }
+}
+
+/* FullCalendar con los colores del Observatorio (Figma: "Calendario de Eventos") */
+.fc {
+  --fc-border-color: #e5e8f0;
+  --fc-today-bg-color: transparent;
+  --fc-event-border-color: transparent;
+  --fc-page-bg-color: #fff;
+  font-size: 14px;
+}
+.fc .fc-scrollgrid {
+  border: 0;
+}
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  text-decoration: none;
+}
+.fc .fc-event {
+  cursor: pointer;
+}
+
+/* Vista semanal: encabezado de 64 px, horas de 70 px, sin líneas de media hora */
+.calendario-semana .fc .fc-col-header-cell {
+  border-color: transparent;
+  height: 64px;
+  vertical-align: middle;
+}
+.calendario-semana .fc .fc-timegrid-slot {
+  height: 35px;
+}
+.calendario-semana .fc .fc-timegrid-slot-minor {
+  border-top-style: none;
+}
+.calendario-semana .fc .fc-timegrid-axis,
+.calendario-semana .fc .fc-timegrid-slot-label {
+  width: 64px;
+  border-color: transparent;
+}
+.calendario-semana .fc .fc-timegrid-slot-label-cushion {
+  display: inline-block;
+  padding: 0 10px 0 14px;
+  text-align: right;
+  color: #69788c;
+  font-size: 14px;
+  transform: translateY(-50%);
+}
+.calendario-semana .fc .fc-timegrid-event {
+  border-radius: 8px;
+  box-shadow: none;
+  margin: 2px 4px 0 2px;
+}
+.calendario-semana .fc .fc-timegrid-event-harness-inset .fc-timegrid-event {
+  box-shadow: none;
+}
+
+/* Vista mensual: encabezado de 105 px, semanas de 135 px y líneas grises */
+.calendario-mes .fc {
+  --fc-border-color: rgb(35 39 52 / 0.25);
+}
+.calendario-mes .fc .fc-col-header-cell {
+  border-color: transparent;
+  height: 105px;
+  vertical-align: middle;
+}
+.calendario-mes .fc .fc-col-header-cell-cushion {
+  color: #232734;
+  font-size: 18px;
+  font-weight: 700;
+}
+.calendario-mes .fc .fc-day-sun .fc-col-header-cell-cushion,
+.calendario-mes .fc .fc-day-sun .fc-daygrid-day-number {
+  color: #ef0122;
+}
+.calendario-mes .fc .fc-daygrid-day-frame {
+  min-height: 135px;
+}
+.calendario-mes .fc .fc-daygrid-day-top {
+  flex-direction: row;
+}
+.calendario-mes .fc .fc-daygrid-day-number {
+  color: #232734;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 6px 4px 0;
+}
+.calendario-mes .fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 0;
+}
+.calendario-mes .fc .fc-daygrid-event {
+  border-radius: 9999px;
+  margin: 2px 2px 0;
+}
+/* En celular el mes se compacta: encabezados y celdas más bajos para ver la semana completa. */
+@media (max-width: 639px) {
+  .calendario-mes .fc .fc-col-header-cell {
+    height: 44px;
+  }
+  .calendario-mes .fc .fc-col-header-cell-cushion {
+    font-size: 13px;
+    padding: 2px 0;
+  }
+  .calendario-mes .fc .fc-daygrid-day-frame {
+    min-height: 84px;
+  }
+  .calendario-mes .fc .fc-daygrid-day-number {
+    font-size: 15px;
+    padding: 4px 4px 0;
+  }
+  .calendario-mes .fc .fc-daygrid-event {
+    margin: 2px 1px 0;
+  }
+}
+
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ Fondo animado de autenticación
+   Figma: Paso 1 → Paso 2 → Paso 3 con Smart Animate de 4 s (ease-in-out). */
+@keyframes fondo-auth-onda-superior { to { transform: translate(-50px, 18px); } }
+@keyframes fondo-auth-onda-inferior { to { transform: translate(-50px, -18px); } }
+@keyframes fondo-auth-linea { to { transform: translateX(-70px); } }
+@keyframes fondo-auth-giro { to { transform: rotate(60deg); } }
+@keyframes fondo-auth-parpadeo { to { opacity: 0.2; } }
+@keyframes fondo-auth-parpadeo-inverso { from { opacity: 0.2; } to { opacity: 1; } }
+
+.fondo-auth .fondo-auth-onda-superior { animation: fondo-auth-onda-superior 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-onda-inferior { animation: fondo-auth-onda-inferior 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-linea { animation: fondo-auth-linea 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-hexagonos { transform-origin: 780px 945px; animation: fondo-auth-giro 8s ease-in-out infinite; }
+.fondo-auth .fondo-auth-punto { animation: fondo-auth-parpadeo 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-punto-tenue { opacity: 0.2; animation: fondo-auth-parpadeo-inverso 4s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo-auth * { animation: none !important; }
+}
+
+/* ------------------------------------------------------------------ Animaciones de la plataforma
+   Todas se apagan si la persona pidió reducir el movimiento en su equipo. */
+@keyframes entrada-modulo {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes entrada-fondo-modal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes entrada-modal {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes entrada-carrusel-derecha {
+  from { opacity: 0; transform: translateX(48px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes entrada-carrusel-izquierda {
+  from { opacity: 0; transform: translateX(-48px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes progreso-carrusel {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes entrada-hoja {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes crecer-bloque {
+  from { opacity: 0; transform: scale(0.82); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rebote-insignia {
+  0% { transform: scale(0.3); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@keyframes dibujar-visto {
+  from { stroke-dashoffset: 16; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes rebote-aviso {
+  0% { transform: translateY(10px) scale(0.94); opacity: 0; }
+  60% { transform: translateY(-4px) scale(1.01); opacity: 1; }
+  100% { transform: none; }
+}
+
+/* 3. Al cambiar de módulo el contenido nuevo entra subiendo con un fundido. */
+.entrada-modulo { animation: entrada-modulo 450ms ease-out both; }
+/* 7. Modales: el fondo aparece y el panel entra con un pequeño zoom. */
+.entrada-fondo-modal { animation: entrada-fondo-modal 180ms ease-out both; }
+.entrada-modal { animation: entrada-modal 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+/* 8. Carrusel del Inicio: deslizamiento y barra de progreso del punto activo. */
+.entrada-carrusel-derecha { animation: entrada-carrusel-derecha 450ms ease-out both; }
+.entrada-carrusel-izquierda { animation: entrada-carrusel-izquierda 450ms ease-out both; }
+.progreso-carrusel { transform-origin: left; animation: progreso-carrusel 8s linear both; }
+/* Panel de filtros en celular: sube desde abajo. */
+.entrada-hoja { animation: entrada-hoja 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+/* 9. Mapa de tendencias: los bloques crecen al aparecer. */
+.bloque-mapa { transform-box: fill-box; transform-origin: center; animation: crecer-bloque 500ms ease-out both; }
+/* 10. Avisos de éxito: la insignia rebota, el visto se dibuja y el aviso hace un leve rebote. */
+.rebote-insignia { animation: rebote-insignia 450ms ease-out both; }
+.dibujar-visto { stroke-dasharray: 16; animation: dibujar-visto 350ms ease-out 250ms both; }
+.rebote-aviso { animation: rebote-aviso 420ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .entrada-modulo, .entrada-fondo-modal, .entrada-modal, .entrada-hoja, .entrada-carrusel-derecha,
+  .entrada-carrusel-izquierda, .progreso-carrusel, .bloque-mapa, .rebote-insignia, .dibujar-visto, .rebote-aviso {
+    animation: none !important;
+  }
+}
