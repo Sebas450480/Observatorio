@@ -15,6 +15,11 @@ export function fechaLarga(valor: string | Date): string {
 }
 
 /** "29 sep 2026" */
+/** "2 de nov de 2026" (tarjetas del Faro Empresarial). */
+export function fechaMedia(valor: string | Date): string {
+  return aFecha(valor).toLocaleDateString('es-CO', { timeZone: ZONA, day: 'numeric', month: 'short', year: 'numeric' }).replace(/\./g, '');
+}
+
 export function fechaCorta(valor: string | Date): string {
   return aFecha(valor)
     .toLocaleDateString('es-CO', { timeZone: ZONA, day: 'numeric', month: 'short', year: 'numeric' })

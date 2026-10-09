@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Pencil, Search, UserRound } from 'lucide-react';
+import { Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -143,7 +143,7 @@ export function Usuarios() {
 
   return (
     <>
-      <EncabezadoPagina icono={<UserRound />} titulo="Usuarios" subtitulo="Usuarios registrados en la plataforma" />
+      <EncabezadoPagina modulo="usuarios" titulo="Usuarios" subtitulo="Usuarios registrados en la plataforma" />
       <BarraFiltros
         acciones={
           <Boton pildora onClick={() => setFormulario({})}>
@@ -181,7 +181,7 @@ export function Usuarios() {
           valor={borrador.estado}
           onChange={(v) => setBorrador({ ...borrador, estado: v })}
         />
-        <Boton pildora onClick={buscar}>
+        <Boton pildora className="font-bold! shadow-none!" onClick={buscar}>
           Buscar
         </Boton>
       </BarraFiltros>

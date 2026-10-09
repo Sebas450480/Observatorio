@@ -8,7 +8,7 @@ import { Modal } from '../ui/Modal';
 /** Barra de filtros de los módulos: filtros, píldora "Buscar" y acciones. */
 export function BarraFiltros({ children, acciones }: { children: ReactNode; acciones?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-3">
+    <div className="mb-[18px] flex min-h-14 flex-wrap items-center gap-3">
       {children}
       {acciones && <div className="flex flex-wrap items-center gap-3 sm:ml-auto">{acciones}</div>}
     </div>

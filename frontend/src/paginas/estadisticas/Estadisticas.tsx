@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ChartColumn, TrendingDown, TrendingUp } from 'lucide-react';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { api, mensajeDeError } from '../../api/cliente';
 import type { Panel, TipoContenido } from '../../api/tipos';
 import { Cargando, EncabezadoPagina, MensajeError, Tarjeta } from '../../componentes/ui/Elementos';
@@ -87,7 +87,7 @@ export function Estadisticas() {
 
   return (
     <>
-      <EncabezadoPagina icono={<ChartColumn />} titulo="Panel de estadísticas" subtitulo="Indicadores de uso y contenido del Observatorio" />
+      <EncabezadoPagina modulo="estadisticas" titulo="Panel de estadísticas" subtitulo="Indicadores de uso y contenido del Observatorio" />
       <h2 className="mb-3 text-body font-bold text-azul-titulo">
         Resumen del mes <span className="ml-1 text-[12px] font-normal text-texto-suave">Variación frente al mes anterior</span>
       </h2>

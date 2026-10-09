@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { CircleUser, LogIn, LogOut, Menu, Search, UserRound } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
+import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
 import { descripcionRol, etiquetaRol, useSesion } from '../../sesion/sesion';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
@@ -25,7 +26,7 @@ const ETIQUETA_DE: Record<TipoContenido, string> = {
 
 export function BarraSuperior({ onAbrirMenu }: { onAbrirMenu: () => void }) {
   return (
-    <header className="sticky top-0 z-20 flex h-[86px] items-center gap-3 bg-white px-4 sm:px-6 lg:gap-10 lg:px-[30px]">
+    <header className="sticky top-0 z-20 flex h-[86px] items-center gap-3 bg-white px-4 sm:px-6 lg:gap-10 lg:pl-[30px] lg:pr-[48px]">
       <button type="button" onClick={onAbrirMenu} className="cursor-pointer rounded-lg p-2 text-azul lg:hidden" aria-label="Abrir menú">
         <Menu className="size-6" />
       </button>
@@ -73,7 +74,7 @@ function BuscadorGlobal() {
 
   return (
     <div ref={contenedor} className="relative min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-black" aria-hidden />
+      <img src={iconoBuscar} alt="" aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-[25px] -translate-y-1/2" />
       <input
         type="search"
         role="combobox"
@@ -101,7 +102,7 @@ function BuscadorGlobal() {
           }
         }}
         placeholder="Buscar eventos, becas, convocatorias, cursos, tendencias, empresas"
-        className="h-[52px] w-full rounded-[20px] border-2 border-black/10 bg-white pl-12 pr-4 text-small font-bold text-black placeholder:text-black/80 focus:border-azul-oscuro/40 focus:outline-none sm:text-subtitle sm:tracking-[-0.5px]"
+        className="h-[52px] w-full rounded-[20px] border-2 border-black/10 bg-white pl-[49px] pr-4 text-small font-bold text-black placeholder:text-black focus:border-azul-oscuro/40 focus:outline-none sm:text-subtitle sm:tracking-[-0.5px]"
       />
       {abierto && consulta.length >= 2 && (
         <div id={idLista} role="listbox" className="absolute inset-x-0 top-full z-30 mt-2 max-h-[70vh] overflow-y-auto rounded-2xl bg-white py-2 shadow-menu">
@@ -158,13 +159,13 @@ function MenuSesion() {
   }, [abierto]);
 
   const claseBoton =
-    'flex h-[52px] shrink-0 cursor-pointer items-center gap-3 rounded-[20px] bg-rojo-sesion px-3 text-subtitle font-bold tracking-[-0.5px] text-white hover:bg-rojo sm:px-5';
+    'flex h-[52px] shrink-0 cursor-pointer items-center justify-between gap-3 rounded-[20px] bg-rojo-sesion px-1.5 text-subtitle font-bold tracking-[-0.5px] text-white hover:bg-rojo sm:w-[215px] sm:pl-[20px] sm:pr-[23px]';
 
   if (!usuario) {
     return (
       <Link to="/iniciar-sesion" className={claseBoton}>
         <span className="hidden sm:inline">Iniciar sesión</span>
-        <LogIn className="size-7" aria-hidden />
+        <img src={iconoUsuario} alt="" aria-hidden className="size-10" />
       </Link>
     );
   }
@@ -173,21 +174,25 @@ function MenuSesion() {
     <div ref={contenedor} className="relative">
       <button type="button" className={claseBoton} onClick={() => setAbierto((a) => !a)} aria-expanded={abierto} aria-haspopup="menu">
         <span className="hidden sm:inline">{etiquetaRol(usuario.nombre_rol)}</span>
-        <CircleUser className="size-9 stroke-[1.5]" aria-label={`Sesión de ${usuario.nombre_usuario}`} />
+        <img src={iconoUsuario} alt={`Sesión de ${usuario.nombre_usuario}`} className="size-10" />
       </button>
       {abierto && (
-        <div role="menu" className="absolute right-0 mt-2 w-[280px] overflow-hidden rounded-2xl bg-white shadow-menu">
-          <div className="flex items-center gap-3 border-b border-[#eceef1] px-5 py-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-azul-titulo text-small font-bold text-white">
+        <div
+          role="menu"
+          className="absolute right-0 top-[60px] flex w-[280px] flex-col overflow-hidden rounded-xl border border-[#e8ebf2] bg-white p-2 shadow-[0_12px_14px_0_rgba(13,26,64,0.16)]"
+        >
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <span className="grid size-10 shrink-0 place-items-center rounded-[20px] bg-azul-marino text-small font-bold text-white">
               {iniciales(usuario.nombre_usuario, usuario.apellido_usuario)}
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-body font-bold text-azul-titulo">
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-small font-semibold text-azul-marino">
                 {usuario.nombre_usuario} {usuario.apellido_usuario}
               </span>
-              <span className="block truncate text-caption text-texto-suave">{descripcionRol(usuario.nombre_rol)}</span>
+              <span className="truncate text-caption text-gris-azulado">{descripcionRol(usuario.nombre_rol)}</span>
             </span>
           </div>
+          <div className="h-px bg-[#e8ebf2]" />
           <button
             type="button"
             role="menuitem"
@@ -195,14 +200,15 @@ function MenuSesion() {
               setAbierto(false);
               navegar('/mi-perfil');
             }}
-            className="flex w-full cursor-pointer items-center gap-3 border-b border-[#eceef1] px-5 py-3 text-left hover:bg-fondo"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left hover:bg-fondo"
           >
-            <UserRound className="size-5 text-azul-titulo" aria-hidden />
-            <span>
-              <span className="block text-body font-bold text-azul-titulo">Mi perfil</span>
-              <span className="block text-caption text-texto-suave">Ver y editar mis datos</span>
+            <img src={iconoPerfil} alt="" aria-hidden className="size-[22px]" />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-small font-semibold text-azul-marino">Mi perfil</span>
+              <span className="text-caption text-gris-azulado">Ver y editar mis datos</span>
             </span>
           </button>
+          <div className="h-px bg-[#e8ebf2]" />
           <button
             type="button"
             role="menuitem"
@@ -211,9 +217,9 @@ function MenuSesion() {
               await cerrarSesion();
               navegar('/inicio');
             }}
-            className="flex w-full cursor-pointer items-center gap-3 px-5 py-3.5 text-left text-body font-bold text-rojo hover:bg-rojo-claro"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left text-small font-semibold text-rojo-vivo hover:bg-rojo-claro"
           >
-            <LogOut className="size-5" aria-hidden />
+            <img src={iconoCerrarSesion} alt="" aria-hidden className="size-[22px]" />
             Cerrar sesión
           </button>
         </div>

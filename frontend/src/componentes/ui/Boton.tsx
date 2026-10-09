@@ -46,7 +46,7 @@ export function Boton({
       disabled={disabled || cargando}
       className={`inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
         pildora ? 'rounded-full' : 'rounded-control'
-      } ${VARIANTES[variante]} ${TAMANOS[tamano]} ${className}`}
+      } ${VARIANTES[variante]} ${pildora ? 'h-[42px] px-6 text-body' : TAMANOS[tamano]} ${className}`}
       {...resto}
     >
       {cargando ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : icono}

@@ -1,7 +1,15 @@
-import { Award, BookOpen, Briefcase, CalendarDays, ChartLine, DollarSign, Globe, MapPin, Megaphone, Rocket } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { mensajeDeError } from '../../api/cliente';
+import iconoCalendario from '../../assets/figma/iconos/calendario-meta.svg';
+import iconoCosto from '../../assets/figma/iconos/costo.svg';
+import iconoUbicacion from '../../assets/figma/iconos/ubicacion.svg';
+import cohete from '../../assets/figma/tarjetas/cohete.svg';
+import globo from '../../assets/figma/tarjetas/globo.svg';
+import grafica from '../../assets/figma/tarjetas/grafica.svg';
+import libro from '../../assets/figma/tarjetas/libro.svg';
+import maletin from '../../assets/figma/tarjetas/maletin.svg';
+import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import type { Flash, Modalidad } from '../../api/tipos';
 import { BarraFiltros } from '../../componentes/contenido/Controles';
@@ -14,14 +22,14 @@ import { costo, fechaLarga, modalidadTexto } from '../../utilidades/formato';
 import { DetalleFlash } from './DetalleFlash';
 import { FormularioFlash } from './FormularioFlash';
 
-/** Fondo, ícono e insignia de cada tarjeta (los 6 estilos del Figma, en rotación). */
+/** Fondo e ilustración de cada tarjeta (los 6 estilos del Figma, en rotación). */
 const ESTILOS_TARJETA = [
-  { fondo: 'bg-[#ebf3ff]', icono: ChartLine },
-  { fondo: 'bg-exito-claro', icono: Briefcase },
-  { fondo: 'bg-rojo-claro', icono: Award },
-  { fondo: 'bg-morado-claro', icono: Globe },
-  { fondo: 'bg-naranja-claro', icono: BookOpen },
-  { fondo: 'bg-cian-claro', icono: Rocket },
+  { fondo: 'bg-[#ebf3ff]', icono: grafica },
+  { fondo: 'bg-exito-claro', icono: maletin },
+  { fondo: 'bg-rojo-claro', icono: premio },
+  { fondo: 'bg-morado-claro', icono: globo },
+  { fondo: 'bg-naranja-claro', icono: libro },
+  { fondo: 'bg-cian-claro', icono: cohete },
 ];
 
 export function tonoModalidad(m: Modalidad | null): 'azul' | 'verde' | 'morado' {
@@ -30,16 +38,26 @@ export function tonoModalidad(m: Modalidad | null): 'azul' | 'verde' | 'morado' 
   return 'azul';
 }
 
+/** Fila de dato de las tarjetas: ícono de 14 px y texto de 16 px. */
+export function DatoTarjeta({ icono, children, className = '' }: { icono: string; children: ReactNode; className?: string }) {
+  return (
+    <li className={`flex min-w-0 items-center gap-2 ${className}`}>
+      <img src={icono} alt="" aria-hidden className="size-[13px] shrink-0" />
+      <span className="truncate">{children}</span>
+    </li>
+  );
+}
+
 function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number; onAbrir: () => void }) {
   const estilo = ESTILOS_TARJETA[indice % ESTILOS_TARJETA.length]!;
-  const Icono = estilo.icono;
+  const gratuito = flash.es_gratuito || !flash.costo;
   return (
     <article className="flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta">
-      <div className={`relative grid h-[104px] place-items-center ${flash.imagen ? '' : estilo.fondo}`}>
+      <div className={`relative grid h-[104px] shrink-0 place-items-center ${flash.imagen ? '' : estilo.fondo}`}>
         {flash.imagen ? (
           <img src={flash.imagen} alt="" className="absolute inset-0 size-full object-cover" />
         ) : (
-          <Icono className="size-11 text-black/15" aria-hidden />
+          <img src={estilo.icono} alt="" aria-hidden width={46} height={46} />
         )}
         <Insignia tono={tonoModalidad(flash.modalidad)} className="absolute left-3 top-3">
           {modalidadTexto(flash.modalidad)}
@@ -56,21 +74,15 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
             ))}
           </div>
         )}
-        <h2 className="line-clamp-2 min-h-[45px] text-body font-bold leading-snug text-texto">{flash.titulo}</h2>
+        <h2 className="line-clamp-2 h-[45px] text-body font-bold text-texto">{flash.titulo}</h2>
         <ul className="mt-auto flex flex-col gap-1.5 text-small text-texto-suave">
-          <li className="flex items-center gap-2">
-            <CalendarDays className="size-3.5 shrink-0" aria-hidden /> {fechaLarga(flash.fecha_inicio)}
-          </li>
-          {flash.lugar && (
-            <li className="flex items-center gap-2">
-              <MapPin className="size-3.5 shrink-0" aria-hidden /> <span className="truncate">{flash.lugar}</span>
-            </li>
-          )}
-          <li className={`flex items-center gap-2 font-semibold ${flash.es_gratuito || !flash.costo ? 'text-exito' : 'text-texto'}`}>
-            <DollarSign className="size-3.5 shrink-0 text-texto-suave" aria-hidden /> {costo(flash.costo, flash.es_gratuito)}
-          </li>
+          <DatoTarjeta icono={iconoCalendario}>{fechaLarga(flash.fecha_inicio)}</DatoTarjeta>
+          {flash.lugar && <DatoTarjeta icono={iconoUbicacion}>{flash.lugar}</DatoTarjeta>}
+          <DatoTarjeta icono={iconoCosto} className={`font-semibold ${gratuito ? 'text-exito' : 'text-texto'}`}>
+            {gratuito ? 'GRATUITO' : costo(flash.costo, false)}
+          </DatoTarjeta>
         </ul>
-        <button type="button" onClick={onAbrir} className="h-10 cursor-pointer rounded-md bg-rojo text-small font-bold uppercase text-white hover:bg-[#c2002e]">
+        <button type="button" onClick={onAbrir} className="cursor-pointer rounded-md bg-rojo py-2.5 text-small font-bold uppercase text-white hover:bg-[#c2002e]">
           Acceder
           <span className="sr-only">: {flash.titulo}</span>
         </button>
@@ -104,11 +116,11 @@ export function FlashInformativo() {
   return (
     <>
       <EncabezadoPagina
-        icono={<Megaphone />}
+        modulo="flash"
         titulo="Flash Informativo"
         subtitulo="Mantente informado sobre los últimos acontecimientos empresariales, innovaciones y tendencias del mundo corporativo."
-      />
-      <BarraFiltros acciones={<MenuExportar ruta="/flash" consulta={consulta} />}>
+      acciones={<MenuExportar ruta="/flash" consulta={consulta} />} />
+      <BarraFiltros>
         <Filtro etiqueta="Región" todos="Todas las regiones" opciones={DEPARTAMENTOS} valor={borrador.departamento} onChange={(v) => setBorrador({ ...borrador, departamento: v })} />
         <Filtro etiqueta="Año" todos="Todos los años" opciones={opcionesAnios()} valor={borrador.anio} onChange={(v) => setBorrador({ ...borrador, anio: v })} />
         <Filtro
@@ -127,7 +139,7 @@ export function FlashInformativo() {
             onChange={(v) => setBorrador({ ...borrador, estado: v })}
           />
         )}
-        <Boton pildora onClick={() => { setFiltros(borrador); setPagina(1); }}>
+        <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
           Buscar
         </Boton>
         {gestiona && (
@@ -145,7 +157,7 @@ export function FlashInformativo() {
         <EstadoVacio titulo="No hay eventos para estos filtros" detalle="Prueba con otra región, año o categoría." />
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-y-[17px]">
             {data.datos.map((f, i) => (
               <TarjetaFlash key={f.id_fi} flash={f} indice={i} onAbrir={() => navegar(`/flash-informativo/${f.id_fi}`)} />
             ))}

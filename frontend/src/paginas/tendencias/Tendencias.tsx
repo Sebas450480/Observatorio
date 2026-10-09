@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, Columns2, ExternalLink, FileUp, Globe, LayoutGrid, List, Pencil, TrendingUp } from 'lucide-react';
+import { CalendarDays, Columns2, ExternalLink, FileUp, Globe, LayoutGrid, List, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { api, mensajeDeError } from '../../api/cliente';
@@ -153,7 +153,7 @@ export function Tendencias() {
 
   return (
     <>
-      <EncabezadoPagina icono={<TrendingUp />} titulo="Tendencias Empresariales" subtitulo="Megatendencias globales y su impacto en Colombia" />
+      <EncabezadoPagina modulo="tendencias" titulo="Tendencias Empresariales" subtitulo="Megatendencias globales y su impacto en Colombia" />
       <div role="tablist" aria-label="Secciones de tendencias" className="mb-5 flex gap-3 rounded-full bg-white p-2 shadow-tarjeta">
         <button type="button" role="tab" aria-selected={pestana === 'lista'} className={pestanaClase(pestana === 'lista')} onClick={() => setPestana('lista')}>
           Tendencias
@@ -213,7 +213,7 @@ export function Tendencias() {
                 onChange={(v) => setBorrador({ ...borrador, estado: v })}
               />
             )}
-            <Boton pildora onClick={() => { setFiltros(borrador); setPagina(1); }}>
+            <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
               Buscar
             </Boton>
           </BarraFiltros>

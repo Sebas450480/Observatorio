@@ -91,11 +91,11 @@ export function DirectorioEmpresas() {
   return (
     <>
       <EncabezadoPagina
-        icono={<Building2 />}
+        modulo="empresas"
         titulo="Empresas Coformadoras"
         subtitulo="Directorio de empresas aliadas y coformadoras comprometidas con la excelencia académica y el crecimiento empresarial."
-      />
-      <BarraFiltros acciones={<MenuExportar ruta="/empresas" consulta={consulta} />}>
+      acciones={<MenuExportar ruta="/empresas" consulta={consulta} />} />
+      <BarraFiltros>
         <Filtro
           etiqueta="Sector"
           todos="Todos los sectores"
@@ -113,7 +113,7 @@ export function DirectorioEmpresas() {
             onChange={(v) => setBorrador({ ...borrador, estado: v })}
           />
         )}
-        <Boton pildora onClick={() => { setFiltros(borrador); setPagina(1); }}>
+        <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
           Buscar
         </Boton>
         {gestiona && (

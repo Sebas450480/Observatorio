@@ -1,3 +1,4 @@
+import chevronAbajo from '../../assets/figma/iconos/chevron-abajo.svg';
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
 const BASE_CONTROL =
@@ -137,7 +138,7 @@ export function Filtro({
   valor: string;
   onChange: (valor: string) => void;
   opciones: { valor: string; texto: string }[];
-  todos: string;
+  todos?: string;
   etiqueta: string;
   className?: string;
 }) {
@@ -146,9 +147,10 @@ export function Filtro({
       aria-label={etiqueta}
       value={valor}
       onChange={(e) => onChange(e.target.value)}
-      className={`h-[42px] min-w-[170px] cursor-pointer rounded-control border border-borde bg-white px-3.5 text-small text-texto focus:border-azul-oscuro focus:outline-none ${className}`}
+      style={{ backgroundImage: `url("${chevronAbajo}")` }}
+      className={`h-[42px] max-w-full cursor-pointer appearance-none rounded-control border border-borde bg-white bg-[length:13px_13px] bg-[position:right_16px_center] bg-no-repeat pl-4 pr-[34px] text-body text-texto [field-sizing:content] focus:border-azul-oscuro focus:outline-none ${className}`}
     >
-      <option value="">{todos}</option>
+      {todos !== undefined && <option value="">{todos}</option>}
       {opciones.map((o) => (
         <option key={o.valor} value={o.valor}>
           {o.texto}

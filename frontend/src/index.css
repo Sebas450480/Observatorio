@@ -15,11 +15,14 @@
   --color-azul-oscuro: #0e1f87;   /* encabezado de modales y avisos */
   --color-azul-claro: #ebf3ff;
   --color-azul-boton: #1739a6;    /* botón secundario azul ("Ver contacto principal") */
+  --color-azul-marino: #173b73;   /* títulos del Inicio y del menú de sesión */
+  --color-gris-azulado: #69788c;  /* textos secundarios del Inicio */
 
   /* Rojos institucionales */
   --color-rojo: #dd0034;          /* botones principales y píldora "Buscar" */
   --color-rojo-activo: #eb0a1f;   /* opción activa de la barra lateral */
   --color-rojo-sesion: #ef0221;   /* botón del menú de sesión */
+  --color-rojo-vivo: #e4002b;     /* carrusel y enlaces "Ver todo" del Inicio */
   --color-rojo-claro: #fff1f2;
 
   /* Neutros */
@@ -54,11 +57,19 @@
   --text-subtitle: 20px;
   --text-titulo: 28px;
   --text-display: 40px;
+  /* El Figma usa interlineado "normal" en todos los textos */
+  --text-caption--line-height: normal;
+  --text-small--line-height: normal;
+  --text-body--line-height: normal;
+  --text-subtitle--line-height: normal;
+  --text-titulo--line-height: normal;
+  --text-display--line-height: normal;
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    line-height: normal;
   }
   body {
     @apply bg-fondo font-sans text-texto;
