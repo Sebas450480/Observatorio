@@ -255,7 +255,7 @@ export function PerfilEmpresa() {
           <p className="text-small text-texto-suave">Esta empresa todavía no tiene un contacto registrado.</p>
         )}
       </Modal>
-      <ModalCompartir abierto={modal === 'compartir'} onCerrar={() => setModal(null)} titulo={nombre} ruta={`/empresas/${empresa.id_ec}`} tipo="Empresa" id={empresa.id_ec} />
+      <ModalCompartir abierto={modal === 'compartir'} onCerrar={() => setModal(null)} titulo={nombre} ruta={`/empresas/${empresa.id_ec}`} tipo="Empresa" id={empresa.id_ec} nombreTipo="empresa" descarga={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })} />
       <Confirmacion
         abierto={modal === 'eliminar'}
         titulo="Eliminar empresa"
