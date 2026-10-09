@@ -26,17 +26,17 @@ export function PantallaAuth({
     <div className="relative min-h-screen overflow-hidden bg-[#061b49]">
       <FondoAuth />
       <div
-        className={`relative mx-auto grid min-h-screen max-w-[1920px] content-center items-center gap-10 px-4 py-10 sm:px-8 lg:gap-8 lg:pl-[6.8%] ${
-          ancha ? 'lg:grid-cols-[minmax(0,1fr)_560px] lg:pr-[13%]' : 'lg:grid-cols-[minmax(0,1fr)_520px] lg:pr-[14%]'
+        className={`relative mx-auto grid min-h-screen max-w-[1920px] content-center items-center gap-10 px-4 py-10 sm:px-8 xl:gap-8 xl:pl-[6.8%] ${
+          ancha ? 'xl:grid-cols-[minmax(0,1fr)_560px] xl:pr-[13%]' : 'xl:grid-cols-[minmax(0,1fr)_520px] xl:pr-[14%]'
         }`}
       >
-        <section className="flex flex-col items-center text-white lg:mb-10 lg:items-start">
+        <section className="flex flex-col items-center text-white xl:mb-10 xl:items-start">
           <img
             src={logoBlanco}
             alt="Uniempresarial · Observatorio Empresarial"
-            className={`w-[300px] max-w-full ${ancha ? 'lg:w-[610px]' : 'lg:w-[573px]'}`}
+            className={`w-[300px] max-w-full ${ancha ? 'xl:w-[610px]' : 'xl:w-[573px]'}`}
           />
-          <div className={`hidden pl-10 lg:block ${ancha ? 'mt-[41px]' : 'mt-10'}`}>
+          <div className={`hidden pl-10 xl:block ${ancha ? 'mt-[41px]' : 'mt-10'}`}>
             <h2 className="text-subtitle font-bold">{tituloBeneficios}</h2>
             <ul className="mt-[18px] flex max-w-[490px] flex-col gap-[18px]">
               {BENEFICIOS.map((b) => (
@@ -60,7 +60,7 @@ export function PantallaAuth({
           </div>
         </section>
       </div>
-      <p className="absolute bottom-[37px] left-[calc(6.8%+40px)] hidden text-small text-white lg:block">© {new Date().getFullYear()} Observatorio Empresarial</p>
+      <p className="absolute bottom-[37px] left-[calc(6.8%+40px)] hidden text-small text-white xl:block">© {new Date().getFullYear()} Observatorio Empresarial</p>
     </div>
   );
 }

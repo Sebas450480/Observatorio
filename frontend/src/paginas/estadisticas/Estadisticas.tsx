@@ -43,7 +43,7 @@ function Variacion({ pct }: { pct: number | null }) {
 
 function Indicador({ titulo, valor, pct, detalle }: { titulo: string; valor: number; pct: number | null; detalle: string }) {
   return (
-    <div className={`flex min-h-[169px] flex-col gap-1.5 ${TARJETA}`}>
+    <div className={`flex flex-col gap-1.5 sm:min-h-[169px] ${TARJETA}`}>
       <p className="text-small font-semibold text-gris-azulado">{titulo}</p>
       <p className="flex items-center gap-3">
         <span className="text-[32px] font-bold leading-[1.15] text-azul-marino sm:text-display">{numero(valor)}</span>
@@ -134,7 +134,7 @@ export function Estadisticas() {
       )}
 
       <h2 className="mb-4 mt-10 text-subtitle font-bold text-azul-marino">Lo que más interesa</h2>
-      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-[560fr_448fr_448fr]">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-[560fr_448fr_448fr]">
         <section className={`flex flex-col gap-4 xl:min-h-[447px] ${TARJETA}`}>
           <Encabezado titulo="Top 5 de contenidos más vistos" detalle="Últimos 30 días" />
           {!top.data?.length ? (

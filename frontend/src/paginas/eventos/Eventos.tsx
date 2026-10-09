@@ -173,7 +173,7 @@ function ContenidoEvento({ event, view }: EventContentArg) {
     >
       {/* Cuando varios eventos se cruzan la columna se divide: en los angostos solo va el título (en vertical si es muy angosto). */}
       <p
-        className="font-bold leading-[1.2] @max-[100px]:text-[11px] @max-[100px]:leading-[1.15] @max-[64px]:min-h-0 @max-[64px]:flex-1 @max-[64px]:truncate @max-[64px]:[writing-mode:vertical-rl]"
+        className="font-bold leading-[1.2] @max-[100px]:text-[11px] @max-[100px]:leading-[1.15] @max-[48px]:min-h-0 @max-[48px]:flex-1 @max-[48px]:truncate @max-[48px]:[writing-mode:vertical-rl]"
         style={{ color }}
       >
         {event.title}
@@ -286,56 +286,61 @@ export function Eventos() {
 
       {error && <MensajeError mensaje={mensajeDeError(error)} onReintentar={() => refetch()} />}
 
-      <div className={`grid gap-6 ${vista === 'timeGridWeek' ? 'xl:grid-cols-[1fr_420px]' : ''}`}>
+      <div className={`grid grid-cols-1 gap-6 ${vista === 'timeGridWeek' ? 'xl:grid-cols-[minmax(0,1fr)_420px]' : ''}`}>
         <div
           className={`overflow-hidden bg-white ${
             vista === 'timeGridWeek' ? 'calendario-semana rounded-2xl border border-[#e5e8f0]' : 'calendario-mes rounded-[20px] border-2 border-black/10'
           }`}
         >
-          <FullCalendar
-            ref={calendario}
-            plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-            locale={esLocale}
-            initialView={vista}
-            headerToolbar={false}
-            allDaySlot={false}
-            slotMinTime="07:00:00"
-            slotMaxTime="21:00:00"
-            scrollTime="08:00:00"
-            height={vista === 'timeGridWeek' ? 800 : 'auto'}
-            dayMaxEvents={3}
-            slotEventOverlap={false}
-            slotLabelFormat={(arg) => `${arg.date.hour}:00`}
-            slotLabelInterval="01:00"
-            firstDay={0}
-            fixedWeekCount={false}
-            dayHeaderContent={(arg) => {
-              if (arg.view.type !== 'timeGridWeek') return sinTilde(arg.text);
-              const nombre = sinTilde(arg.date.toLocaleDateString('es-CO', { weekday: 'short' }));
-              const domingo = arg.date.getDay() === 0;
-              return (
-                <span className={`flex flex-col items-center gap-0.5 ${domingo ? 'text-rojo-vivo' : ''}`}>
-                  <span className={`text-caption font-semibold ${domingo ? '' : 'text-gris-azulado'}`}>{nombre}</span>
-                  <span className={`text-subtitle font-bold ${domingo ? '' : 'text-[#0a1c40]'}`}>{arg.date.getDate()}</span>
-                </span>
-              );
-            }}
-            dayCellContent={(arg) => arg.date.getDate()}
-            events={eventos}
-            eventContent={ContenidoEvento}
-            datesSet={alCambiarFechas}
-            eventClick={(arg: EventClickArg) => {
-              arg.jsEvent.preventDefault();
-              movidoA.current = Number(arg.event.id);
-              registrarActividad('Evento', Number(arg.event.id), 'Vista');
-              navegar(`/eventos/${arg.event.id}`);
-              // En pantallas angostas el panel queda debajo del calendario: se lleva la vista hasta él.
-              if (arg.view.type === 'timeGridWeek' && window.innerWidth < 1280) {
-                window.setTimeout(() => panel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-              }
-            }}
-            dateClick={gestiona ? (arg: DateClickArg) => setFormulario({ inicio: arg.date }) : undefined}
-          />
+          {/* En celular la semana conserva un ancho mínimo y se desplaza de lado para que los eventos se lean. */}
+          <div className={vista === 'timeGridWeek' ? 'overflow-x-auto overscroll-x-contain' : ''}>
+            <div className={vista === 'timeGridWeek' ? 'min-w-[720px] md:min-w-0' : ''}>
+              <FullCalendar
+                ref={calendario}
+                plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+                locale={esLocale}
+                initialView={vista}
+                headerToolbar={false}
+                allDaySlot={false}
+                slotMinTime="07:00:00"
+                slotMaxTime="21:00:00"
+                scrollTime="08:00:00"
+                height={vista === 'timeGridWeek' ? 800 : 'auto'}
+                dayMaxEvents={3}
+                slotEventOverlap={false}
+                slotLabelFormat={(arg) => `${arg.date.hour}:00`}
+                slotLabelInterval="01:00"
+                firstDay={0}
+                fixedWeekCount={false}
+                dayHeaderContent={(arg) => {
+                  if (arg.view.type !== 'timeGridWeek') return sinTilde(arg.text);
+                  const nombre = sinTilde(arg.date.toLocaleDateString('es-CO', { weekday: 'short' }));
+                  const domingo = arg.date.getDay() === 0;
+                  return (
+                    <span className={`flex flex-col items-center gap-0.5 ${domingo ? 'text-rojo-vivo' : ''}`}>
+                      <span className={`text-caption font-semibold ${domingo ? '' : 'text-gris-azulado'}`}>{nombre}</span>
+                      <span className={`text-subtitle font-bold ${domingo ? '' : 'text-[#0a1c40]'}`}>{arg.date.getDate()}</span>
+                    </span>
+                  );
+                }}
+                dayCellContent={(arg) => arg.date.getDate()}
+                events={eventos}
+                eventContent={ContenidoEvento}
+                datesSet={alCambiarFechas}
+                eventClick={(arg: EventClickArg) => {
+                  arg.jsEvent.preventDefault();
+                  movidoA.current = Number(arg.event.id);
+                  registrarActividad('Evento', Number(arg.event.id), 'Vista');
+                  navegar(`/eventos/${arg.event.id}`);
+                  // En pantallas angostas el panel queda debajo del calendario: se lleva la vista hasta él.
+                  if (arg.view.type === 'timeGridWeek' && window.innerWidth < 1280) {
+                    window.setTimeout(() => panel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                  }
+                }}
+                dateClick={gestiona ? (arg: DateClickArg) => setFormulario({ inicio: arg.date }) : undefined}
+              />
+            </div>
+          </div>
         </div>
 
         {vista === 'timeGridWeek' && (

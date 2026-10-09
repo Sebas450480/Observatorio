@@ -149,11 +149,11 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
             {esAdmin ? 'Actualiza tus datos como administrador del Observatorio.' : 'Actualiza tus datos y elige sobre qué quieres recibir alertas del Observatorio.'}
           </p>
         </div>
-        <div className="flex items-center gap-3 xl:mt-[5px]">
-          <button type="button" onClick={cancelar} className={`h-[52px] px-7 text-body ${botonClaro}`}>
+        <div className="flex w-full items-center gap-3 sm:w-auto xl:mt-[5px] [&>*]:flex-1 sm:[&>*]:flex-none">
+          <button type="button" onClick={cancelar} className={`h-[52px] whitespace-nowrap px-4 text-small sm:px-7 sm:text-body ${botonClaro}`}>
             Cancelar
           </button>
-          <Boton type="submit" cargando={guardar.isPending} className="h-[50px]! rounded-control! bg-rojo-vivo! px-8! text-body! font-bold! shadow-none!">
+          <Boton type="submit" cargando={guardar.isPending} className="h-[50px]! rounded-control! bg-rojo-vivo! whitespace-nowrap px-4! text-small! font-bold! shadow-none! sm:px-8! sm:text-body!">
             Guardar cambios
           </Boton>
         </div>
