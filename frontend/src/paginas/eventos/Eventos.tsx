@@ -57,21 +57,13 @@ function tituloPeriodo(vista: Vista, inicio: Date, fin: Date): string {
 type Vista = 'timeGridWeek' | 'dayGridMonth';
 const aDia = (fecha: Date) => fecha.toLocaleDateString('en-CA');
 
-/** Modal de detalle de un evento (Figma: "Modal — Detalle evento: Talent for Business 2026"). */
-function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerrar: () => void; onEditar?: () => void }) {
+/** Datos del evento: los usa el panel de la vista semanal y el modal de la vista mensual. */
+function CuerpoEvento({ evento, onEditar, panel = false }: { evento: Evento; onEditar?: () => void; panel?: boolean }) {
   const abrirEnlace = () => registrarActividad('Evento', evento.id_evento, 'Clic_acceder');
   const varios = evento.fecha_fin && fechaLarga(evento.fecha_fin) !== fechaLarga(evento.fecha_inicio);
   return (
-    <Modal
-      abierto
-      onCerrar={onCerrar}
-      ancho={700}
-      destacado
-      claseCuerpo={CUERPO_DETALLE}
-      titulo={<span className="uppercase">{evento.titulo}</span>}
-      sobreTitulo={<MetaDetalle etiqueta={nombreTipoEvento(evento)}>{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</MetaDetalle>}
-    >
-      <DatosDetalle>
+    <>
+      <DatosDetalle unaColumna={panel}>
         <DatoDetalle icono={ICONO_DETALLE.calendario} etiqueta="Fecha de inicio">
           {fechaLarga(evento.fecha_inicio)}
           {varios && ` al ${fechaLarga(evento.fecha_fin!)}`}
@@ -104,7 +96,7 @@ function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerra
         </SeccionDetalle>
       )}
       {(onEditar || evento.link_externo) && (
-        <AccionesDetalle>
+        <AccionesDetalle apiladas={panel}>
           {onEditar && <BotonDetalle onClick={onEditar}>Editar</BotonDetalle>}
           {evento.link_externo && (
             <EnlaceDetalle href={evento.link_externo} onClick={abrirEnlace}>
@@ -113,7 +105,52 @@ function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerra
           )}
         </AccionesDetalle>
       )}
+    </>
+  );
+}
+
+/** Modal de detalle de un evento en la vista mensual (Figma: "Modal — Detalle evento"). */
+function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerrar: () => void; onEditar?: () => void }) {
+  return (
+    <Modal
+      abierto
+      onCerrar={onCerrar}
+      ancho={700}
+      destacado
+      claseCuerpo={CUERPO_DETALLE}
+      titulo={<span className="uppercase">{evento.titulo}</span>}
+      sobreTitulo={<MetaDetalle etiqueta={nombreTipoEvento(evento)}>{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</MetaDetalle>}
+    >
+      <CuerpoEvento evento={evento} onEditar={onEditar} />
     </Modal>
+  );
+}
+
+/** Detalle del evento en el panel derecho de la vista semanal (donde dice "Selecciona un evento"). */
+function PanelEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerrar: () => void; onEditar?: () => void }) {
+  const color = COLOR_TIPO[evento.tipo_evento].color;
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex items-start justify-between gap-3">
+        <span className="rounded-full px-3 py-1 text-caption font-bold uppercase" style={{ color, background: fondoTipo(evento.tipo_evento) }}>
+          {nombreTipoEvento(evento)}
+        </span>
+        <button
+          type="button"
+          onClick={onCerrar}
+          aria-label="Cerrar el detalle del evento"
+          className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-subtitle leading-none text-gris-azulado hover:bg-fondo"
+        >
+          ✕
+        </button>
+      </div>
+      <h2 className="mt-3 text-subtitle font-black uppercase leading-tight text-azul-marino">{evento.titulo}</h2>
+      <p className="mt-1 text-caption font-medium text-gris-azulado">{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</p>
+      <span className="mt-3 block h-1 w-16 rounded-xs bg-rojo" />
+      <div className="mt-5 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-1">
+        <CuerpoEvento evento={evento} onEditar={onEditar} panel />
+      </div>
+    </div>
   );
 }
 
@@ -154,6 +191,7 @@ export function Eventos() {
   const { puedeGestionar } = useSesion();
   const gestiona = puedeGestionar('calendario');
   const calendario = useRef<FullCalendar>(null);
+  const panel = useRef<HTMLElement>(null);
   const [vista, setVista] = useState<Vista>('timeGridWeek');
   const [rango, setRango] = useState<{ desde: string; hasta: string; titulo: string } | null>(null);
   const [formulario, setFormulario] = useState<{ registro?: Evento; inicio?: Date } | null>(null);
@@ -291,25 +329,35 @@ export function Eventos() {
               movidoA.current = Number(arg.event.id);
               registrarActividad('Evento', Number(arg.event.id), 'Vista');
               navegar(`/eventos/${arg.event.id}`);
+              // En pantallas angostas el panel queda debajo del calendario: se lleva la vista hasta él.
+              if (arg.view.type === 'timeGridWeek' && window.innerWidth < 1280) {
+                window.setTimeout(() => panel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+              }
             }}
             dateClick={gestiona ? (arg: DateClickArg) => setFormulario({ inicio: arg.date }) : undefined}
           />
         </div>
 
         {vista === 'timeGridWeek' && (
-          <aside className="flex flex-col rounded-2xl border border-[#e5e8f0] bg-white p-6 xl:h-[800px]">
-            <div className="m-auto flex max-w-[340px] flex-col items-center gap-3.5 py-10 text-center">
-              <span className="grid size-20 place-items-center rounded-full bg-[#0d1f87]/8">
-                <img src={iconoPanel} alt="" aria-hidden className="size-9" />
-              </span>
-              <p className="text-subtitle font-bold text-[#0a1c40]">Selecciona un evento</p>
-              <p className="text-small text-gris-azulado sm:text-body">Haz clic en un evento del calendario para ver aquí su información.</p>
-            </div>
+          <aside ref={panel} className="flex scroll-mt-4 flex-col rounded-2xl border border-[#e5e8f0] bg-white p-6 xl:h-[800px]">
+            {seleccionado ? (
+              <PanelEvento evento={seleccionado} onCerrar={() => navegar('/eventos')} onEditar={editarSeleccionado} />
+            ) : (
+              <div className="m-auto flex max-w-[340px] flex-col items-center gap-3.5 py-10 text-center">
+                <span className="grid size-20 place-items-center rounded-full bg-[#0d1f87]/8">
+                  <img src={iconoPanel} alt="" aria-hidden className="size-9" />
+                </span>
+                <p className="text-subtitle font-bold text-[#0a1c40]">Selecciona un evento</p>
+                <p className="text-small text-gris-azulado sm:text-body">Haz clic en un evento del calendario para ver aquí su información.</p>
+              </div>
+            )}
           </aside>
         )}
       </div>
 
-      {seleccionado && !formulario && <DetalleEvento evento={seleccionado} onCerrar={() => navegar('/eventos')} onEditar={editarSeleccionado} />}
+      {vista === 'dayGridMonth' && seleccionado && !formulario && (
+        <DetalleEvento evento={seleccionado} onCerrar={() => navegar('/eventos')} onEditar={editarSeleccionado} />
+      )}
       {formulario && (
         <FormularioEvento
           registro={formulario.registro}

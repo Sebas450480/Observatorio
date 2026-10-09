@@ -116,6 +116,10 @@ describe('Catálogos', () => {
     const creada = await admin.post('/api/categorias').send({ nombre_categoria: 'Robótica' });
     expect(creada.status).toBe(201);
     expect((await admin.post('/api/categorias').send({ nombre_categoria: 'Robótica' })).status).toBe(409);
+    // Sin distinguir mayúsculas, minúsculas ni tildes.
+    const variante = await admin.post('/api/categorias').send({ nombre_categoria: '  ROBOTICA ' });
+    expect(variante.status).toBe(409);
+    expect(variante.body.error).toContain('ya está creada');
     expect((await admin.patch(`/api/categorias/${creada.body.id_categoria}`).send({ nombre_categoria: 'Robótica industrial' })).status).toBe(200);
     expect((await admin.delete(`/api/categorias/${creada.body.id_categoria}`)).status).toBe(204);
   });

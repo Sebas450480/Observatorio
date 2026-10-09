@@ -5,7 +5,7 @@ import { conRol, type Cliente } from '../db/contexto.js';
 import { ErrorApi, noEncontrado } from '../errores.js';
 import { requiereRol } from '../middlewares/sesion.js';
 import { recibirArchivo } from '../servicios/archivos.js';
-import { ESTADOS, enlace, fecha, idPositivo, listaIds, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
+import { ESTADOS, enlace, fecha, idPositivo, listaIds, textoObligatorio, textoOpcional, normalizarNombre } from '../utilidades/esquemas.js';
 
 /** Tendencias: radar de tendencias agrupadas por megatendencia, con fuentes y menciones. */
 const esquemaFuente = z.object({
@@ -134,7 +134,17 @@ async function importarExcel(cliente: Cliente, archivo: Buffer) {
   const categorias = await cliente.query<{ id_categoria: number; nombre_categoria: string }>(
     'select id_categoria, nombre_categoria from categoria',
   );
-  const idCategoria = new Map(categorias.rows.map((c) => [c.nombre_categoria.toLocaleLowerCase('es'), c.id_categoria]));
+  const idCategoria = new Map(categorias.rows.map((c) => [normalizarNombre(c.nombre_categoria), c.id_categoria]));
+  // Una megatendencia escrita con otras mayúsculas o sin tildes se une a la que ya existe
+  // (o a la primera forma en que aparece en el archivo), en vez de crear otra distinta.
+  const megasExistentes = await cliente.query<{ megatendencia: string }>('select distinct megatendencia from tendencia_empresarial');
+  const nombreMega = new Map(megasExistentes.rows.map((m) => [normalizarNombre(m.megatendencia), m.megatendencia]));
+  const unificarMega = (texto: string) => {
+    const clave = normalizarNombre(texto);
+    if (!clave) return texto;
+    if (!nombreMega.has(clave)) nombreMega.set(clave, texto.trim());
+    return nombreMega.get(clave)!;
+  };
 
   const errores: ErrorFila[] = [];
   const validas: { fila: number; datos: z.infer<typeof esquema> }[] = [];
@@ -152,21 +162,21 @@ async function importarExcel(cliente: Cliente, archivo: Buffer) {
       celdas[COLUMNAS_PLANTILLA.findIndex((c) => c.clave === clave)] ?? '';
 
     const nombresCategorias = valor('categorias').split(',').map((s) => s.trim()).filter(Boolean);
-    const desconocidas = nombresCategorias.filter((n) => !idCategoria.has(n.toLocaleLowerCase('es')));
+    const desconocidas = nombresCategorias.filter((n) => !idCategoria.has(normalizarNombre(n)));
     if (desconocidas.length) {
       errores.push({ fila: numero, mensaje: `Categorías que no existen: ${desconocidas.join(', ')}` });
       continue;
     }
 
     const resultado = esquema.safeParse({
-      megatendencia: valor('megatendencia'),
+      megatendencia: unificarMega(valor('megatendencia')),
       tendencia: valor('tendencia'),
       descripcion: valor('descripcion'),
       comportamiento_mundo: valor('comportamiento_mundo'),
       comportamiento_colombia: valor('comportamiento_colombia'),
       fecha_publicacion: valor('fecha_publicacion') || undefined,
       fuentes: interpretarFuentes(valor('fuentes')),
-      categorias: nombresCategorias.map((n) => idCategoria.get(n.toLocaleLowerCase('es'))!),
+      categorias: nombresCategorias.map((n) => idCategoria.get(normalizarNombre(n))!),
     });
     if (!resultado.success) {
       errores.push({

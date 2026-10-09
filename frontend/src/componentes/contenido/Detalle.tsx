@@ -28,8 +28,9 @@ export function MetaDetalle({ etiqueta, mayusculas = true, children }: { etiquet
 export const codigoDetalle = (id: number, fecha?: string | null) =>
   `ID: OE-${fecha ? new Date(fecha).getFullYear() : new Date().getFullYear()}-${String(id).padStart(4, '0')}`;
 
-export function DatosDetalle({ children }: { children: ReactNode }) {
-  return <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2">{children}</div>;
+/** `unaColumna`: en paneles angostos (detalle del evento junto al calendario). */
+export function DatosDetalle({ children, unaColumna = false }: { children: ReactNode; unaColumna?: boolean }) {
+  return <div className={`grid gap-x-3 gap-y-4 ${unaColumna ? '' : 'sm:grid-cols-2'}`}>{children}</div>;
 }
 
 /** Dato con ícono en cuadro gris de 40 px. */
@@ -108,8 +109,8 @@ export function VinetaDetalle({ children }: { children: ReactNode }) {
 }
 
 /** Fila de botones "EDITAR" / "MÁS INFORMACIÓN" al final del cuerpo. */
-export function AccionesDetalle({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center sm:gap-[100px]">{children}</div>;
+export function AccionesDetalle({ children, apiladas = false }: { children: ReactNode; apiladas?: boolean }) {
+  return <div className={`flex flex-col gap-3 pt-2 ${apiladas ? '' : 'sm:flex-row sm:justify-center sm:gap-[100px]'}`}>{children}</div>;
 }
 
 const BOTON_DETALLE =
