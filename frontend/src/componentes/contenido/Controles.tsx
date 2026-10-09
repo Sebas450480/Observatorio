@@ -15,9 +15,10 @@ import { BotonModal, Modal } from '../ui/Modal';
 /** Barra de filtros de los módulos: filtros, píldora "Buscar" y acciones. */
 export function BarraFiltros({ children, acciones, className = 'gap-3' }: { children: ReactNode; acciones?: ReactNode; className?: string }) {
   return (
-    <div className={`mb-[18px] flex min-h-14 flex-wrap items-center ${className}`}>
+    // En celular: una columna con los filtros de ancho completo; desde sm, una fila que se acomoda.
+    <div className={`mb-[18px] flex min-h-14 flex-col items-stretch sm:flex-row sm:flex-wrap sm:items-center [&>select]:w-full sm:[&>select]:w-auto ${className}`}>
       {children}
-      {acciones && <div className="flex flex-wrap items-center gap-3 sm:ml-auto">{acciones}</div>}
+      {acciones && <div className="flex flex-wrap items-center gap-3 sm:ml-auto [&>*]:flex-1 sm:[&>*]:flex-none">{acciones}</div>}
     </div>
   );
 }

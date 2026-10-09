@@ -16,6 +16,9 @@ import { descripcionRol, etiquetaRol, useSesion } from '../../sesion/sesion';
 
 const SUPERIOR = 'SuperAdmin Superior';
 
+/** Rol abreviado para la tabla y las tarjetas del listado. */
+const nombreRolCorto = (rol: string) => (rol === SUPERIOR ? 'Superadmin superior' : etiquetaRol(rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(rol));
+
 const base = {
   nombre_usuario: z.string().trim().min(1, 'Escribe el nombre').max(50),
   apellido_usuario: z.string().trim().min(1, 'Escribe el apellido').max(50),
@@ -216,7 +219,45 @@ export function Usuarios() {
         <EstadoVacio titulo="No hay usuarios para estos filtros" />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Por debajo de xl la tabla se cambia por tarjetas horizontales. */}
+          <ul className="flex flex-col gap-3 xl:hidden">
+            {data.datos.map((u) => (
+              <li key={u.id_usuario} className="flex items-center gap-3 rounded-2xl border-2 border-black/10 bg-[#fdfdfc] p-3.5 sm:gap-4 sm:px-5">
+                <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-full bg-azul-marino text-small font-bold text-white">
+                  {(u.nombre_usuario[0] ?? '') + (u.apellido_usuario[0] ?? '')}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                  <div className="min-w-0 sm:flex-1">
+                    <p className="truncate text-body font-bold text-black">
+                      {u.nombre_usuario} {u.apellido_usuario}
+                      {u.apodo_usuario && <span className="font-semibold text-azul-titulo"> · {u.apodo_usuario}</span>}
+                    </p>
+                    <p className="truncate text-small font-semibold text-black/40" title={u.correo}>
+                      {u.correo}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-caption font-bold sm:shrink-0">
+                    <span className={`rounded-full px-2.5 leading-5 ${u.estado_usuario === 'Activo' ? 'bg-[#ddf7ea] text-[#159b65]' : 'bg-[#eef0f3] text-[#8c94a1]'}`}>
+                      {u.estado_usuario}
+                    </span>
+                    <span className="text-[#172033]" title={descripcionRol(u.nombre_rol)}>
+                      {nombreRolCorto(u.nombre_rol)}
+                    </span>
+                    <span className="font-semibold text-black/40">ID {u.id_usuario}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label={`Editar a ${u.nombre_usuario} ${u.apellido_usuario}`}
+                  onClick={() => setFormulario({ registro: u })}
+                  className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg hover:bg-black/5"
+                >
+                  <img src={iconoLapiz} alt="" className="size-[18px]" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto xl:block">
             <table className="w-full min-w-[1100px] table-fixed border-separate border-spacing-0 text-body">
               <colgroup>
                 {[71, 152, 160, 262, 312, 104, 238, 205].map((ancho, i) => (
@@ -256,7 +297,7 @@ export function Usuarios() {
                       </span>
                     </td>
                     <td className="truncate pl-14 font-bold text-[#172033]" title={descripcionRol(u.nombre_rol)}>
-                      {u.nombre_rol === SUPERIOR ? 'Superadmin superior' : etiquetaRol(u.nombre_rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(u.nombre_rol)}
+                      {nombreRolCorto(u.nombre_rol)}
                     </td>
                     <td>
                       <button

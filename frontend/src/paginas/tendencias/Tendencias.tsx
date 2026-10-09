@@ -89,61 +89,91 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
   const celda = 'h-10 truncate px-1 text-center';
   const tenue = `${celda} font-semibold text-black/40`;
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[1100px] table-fixed border-separate border-spacing-0 text-body">
-        <colgroup>
-          {columnas.map((c) => (
-            <col key={c.titulo} style={{ width: c.ancho }} />
-          ))}
-        </colgroup>
-        <thead>
-          <tr>
-            {columnas.map((c, i) => (
-              <th
-                key={c.titulo}
-                scope="col"
-                className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2' : ''} ${i === columnas.length - 1 ? 'border-r-2' : ''}`}
-              >
-                {c.titulo}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-[#fdfdfc] [&_td:first-child]:border-l-2 [&_td:last-child]:border-r-2 [&_td]:border-black/10 [&_tr:last-child_td]:border-b-2">
-          {datos.map((t) => (
-            <tr key={t.id_te} className="hover:bg-fondo">
-              <td className={tenue}>{t.id_te}</td>
-              <td className={`${celda} font-bold text-azul-titulo`}>{t.megatendencia}</td>
-              <td className="h-10 px-1 text-center font-bold leading-[1.1] text-black">
-                <button type="button" className="line-clamp-2 max-w-full cursor-pointer hover:underline" onClick={() => onAbrir(t.id_te)}>
-                  {t.tendencia}
-                </button>
-              </td>
-              <td className={tenue} title={t.descripcion ?? ''}>{t.descripcion}</td>
-              <td className={tenue} title={t.comportamiento_mundo ?? ''}>{t.comportamiento_mundo}</td>
-              <td className={tenue} title={t.comportamiento_colombia ?? ''}>{t.comportamiento_colombia}</td>
-              <td className={tenue}>{fechaCorta(t.fecha_publicacion)}</td>
-              <td className={celda}>
-                {t.fuentes[0]?.link ? (
-                  <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-azul-titulo hover:underline">
-                    Ver <img src={iconoEnlace} alt="" aria-hidden className="size-5" />
-                  </a>
-                ) : (
-                  <span className="text-black/40">—</span>
-                )}
-              </td>
+    <>
+      {/* Por debajo de xl cada fila es una tarjeta horizontal. */}
+      <ul className="flex flex-col gap-3 xl:hidden">
+        {datos.map((t) => (
+          <li key={t.id_te} className="flex items-start gap-3 rounded-2xl border-2 border-black/10 bg-[#fdfdfc] p-3.5 sm:gap-4 sm:px-5">
+            <button type="button" onClick={() => onAbrir(t.id_te)} className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 text-left">
+              <span className="truncate text-caption font-bold text-azul-titulo">{t.megatendencia}</span>
+              <span className="text-body font-bold leading-[1.2] text-black">{t.tendencia}</span>
+              {t.descripcion && <span className="line-clamp-2 text-small text-black/50">{t.descripcion}</span>}
+              <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption font-semibold text-black/40">
+                <span>ID {t.id_te}</span>
+                <span>{fechaCorta(t.fecha_publicacion)}</span>
+              </span>
+            </button>
+            <div className="flex shrink-0 flex-col items-center gap-1">
+              {t.fuentes[0]?.link && (
+                <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" aria-label={`Fuente de ${t.tendencia}`} className="grid size-10 place-items-center rounded-lg hover:bg-black/5">
+                  <img src={iconoEnlace} alt="" aria-hidden className="size-5" />
+                </a>
+              )}
               {onEditar && (
-                <td className={celda}>
-                  <button type="button" aria-label={`Editar ${t.tendencia}`} onClick={() => onEditar(t)} className="inline-grid cursor-pointer place-items-center rounded p-0.5 hover:bg-black/5">
-                    <img src={iconoEditar} alt="" className="size-[23px]" />
+                <button type="button" aria-label={`Editar ${t.tendencia}`} onClick={() => onEditar(t)} className="grid size-10 cursor-pointer place-items-center rounded-lg hover:bg-black/5">
+                  <img src={iconoEditar} alt="" className="size-[22px]" />
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto xl:block">
+        <table className="w-full min-w-[1100px] table-fixed border-separate border-spacing-0 text-body">
+          <colgroup>
+            {columnas.map((c) => (
+              <col key={c.titulo} style={{ width: c.ancho }} />
+            ))}
+          </colgroup>
+          <thead>
+            <tr>
+              {columnas.map((c, i) => (
+                <th
+                  key={c.titulo}
+                  scope="col"
+                  className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2' : ''} ${i === columnas.length - 1 ? 'border-r-2' : ''}`}
+                >
+                  {c.titulo}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-[#fdfdfc] [&_td:first-child]:border-l-2 [&_td:last-child]:border-r-2 [&_td]:border-black/10 [&_tr:last-child_td]:border-b-2">
+            {datos.map((t) => (
+              <tr key={t.id_te} className="hover:bg-fondo">
+                <td className={tenue}>{t.id_te}</td>
+                <td className={`${celda} font-bold text-azul-titulo`}>{t.megatendencia}</td>
+                <td className="h-10 px-1 text-center font-bold leading-[1.1] text-black">
+                  <button type="button" className="line-clamp-2 max-w-full cursor-pointer hover:underline" onClick={() => onAbrir(t.id_te)}>
+                    {t.tendencia}
                   </button>
                 </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                <td className={tenue} title={t.descripcion ?? ''}>{t.descripcion}</td>
+                <td className={tenue} title={t.comportamiento_mundo ?? ''}>{t.comportamiento_mundo}</td>
+                <td className={tenue} title={t.comportamiento_colombia ?? ''}>{t.comportamiento_colombia}</td>
+                <td className={tenue}>{fechaCorta(t.fecha_publicacion)}</td>
+                <td className={celda}>
+                  {t.fuentes[0]?.link ? (
+                    <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-azul-titulo hover:underline">
+                      Ver <img src={iconoEnlace} alt="" aria-hidden className="size-5" />
+                    </a>
+                  ) : (
+                    <span className="text-black/40">—</span>
+                  )}
+                </td>
+                {onEditar && (
+                  <td className={celda}>
+                    <button type="button" aria-label={`Editar ${t.tendencia}`} onClick={() => onEditar(t)} className="inline-grid cursor-pointer place-items-center rounded p-0.5 hover:bg-black/5">
+                      <img src={iconoEditar} alt="" className="size-[23px]" />
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
@@ -206,7 +236,7 @@ export function Tendencias() {
   };
 
   const pestanaClase = (activa: boolean) =>
-    `h-10 flex-1 cursor-pointer rounded-[15px] text-small font-bold tracking-[0.02em] sm:text-body ${
+    `h-10 flex-1 cursor-pointer whitespace-nowrap rounded-[15px] px-2 text-caption font-bold tracking-[0.02em] min-[400px]:text-small sm:text-body ${
       activa ? 'bg-rojo-activo text-white' : 'border-2 border-black/10 bg-[#fdfdfc] text-black hover:bg-fondo'
     }`;
   const vistas: { valor: VistaLista; etiqueta: string; icono: string; forma: string; ancho: string }[] = [
@@ -261,12 +291,12 @@ export function Tendencias() {
                   <button
                     type="button"
                     onClick={() => setFormulario({})}
-                    className="h-[50px] cursor-pointer rounded-[20px] border-2 border-black/10 bg-white px-6 text-body font-bold tracking-[-0.5px] text-black hover:bg-fondo xl:w-[286px]"
+                    className="h-[50px] w-full cursor-pointer whitespace-nowrap rounded-[20px] border-2 border-black/10 bg-white px-6 text-body font-bold tracking-[-0.5px] text-black hover:bg-fondo sm:w-auto xl:w-[286px]"
                   >
                     Crear nuevo registro
                   </button>
                 )}
-                <div role="group" aria-label="Vista" className="flex h-[50px] items-center rounded-[20px] border-2 border-black/10 bg-[#fdfdfc]/50 px-[10px]">
+                <div role="group" aria-label="Vista" className="flex h-[50px] items-center justify-center rounded-[20px] border-2 border-black/10 bg-[#fdfdfc]/50 px-[10px]">
                   {vistas.map((v) => (
                     <button
                       key={v.valor}
