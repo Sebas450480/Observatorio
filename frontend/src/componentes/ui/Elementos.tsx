@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, FileSpreadsheet, FileText, Inbox, LoaderCircle } from 'lucide-react';
+import { AlertTriangle, Download, FileSpreadsheet, FileText, Inbox } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { urlDescarga } from '../../api/cliente';
 import { ICONOS_MODULO, type Modulo } from '../../assets/figma/iconos';
@@ -130,11 +130,18 @@ export function Paginacion({ pagina, paginas, onCambiar }: { pagina: number; pag
   );
 }
 
+/** Siluetas grises con brillo mientras se cargan los datos. */
 export function Cargando({ texto = 'Cargando...' }: { texto?: string }) {
   return (
-    <div role="status" className="flex items-center justify-center gap-2 py-16 text-texto-suave">
-      <LoaderCircle className="size-5 animate-spin" aria-hidden />
-      {texto}
+    <div role="status" className="flex flex-col gap-4 py-4">
+      <span className="sr-only">{texto}</span>
+      <div aria-hidden className="esqueleto h-6 w-1/3 rounded-lg" />
+      <div aria-hidden className="grid gap-4 sm:grid-cols-2">
+        <div className="esqueleto h-28 rounded-2xl" />
+        <div className="esqueleto h-28 rounded-2xl" />
+      </div>
+      <div aria-hidden className="esqueleto h-4 w-2/3 rounded-lg" />
+      <div aria-hidden className="esqueleto h-4 w-1/2 rounded-lg" />
     </div>
   );
 }

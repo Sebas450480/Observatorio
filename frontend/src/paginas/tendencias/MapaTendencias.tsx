@@ -50,15 +50,17 @@ interface PropsBloque {
   width?: number;
   height?: number;
   depth?: number;
+  index?: number;
   name?: string;
   color?: string;
   detalle?: string;
 }
 
-function Bloque({ x = 0, y = 0, width = 0, height = 0, depth, name, color, detalle }: PropsBloque) {
+function Bloque({ x = 0, y = 0, width = 0, height = 0, depth, index = 0, name, color, detalle }: PropsBloque) {
   if (depth !== 1) return null;
   return (
-    <g style={{ cursor: 'pointer' }}>
+    // Los bloques crecen uno tras otro al aparecer.
+    <g className="bloque-mapa" style={{ cursor: 'pointer', animationDelay: `${Math.min(index, 12) * 45}ms` }}>
       <rect x={x + 2} y={y + 2} width={Math.max(0, width - 4)} height={Math.max(0, height - 4)} rx={4} fill={color} />
       {width > 70 && height > 34 && (
         <foreignObject x={x + 10} y={y + 10} width={width - 20} height={height - 18}>
@@ -223,6 +225,7 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
             ) : (
               <ResponsiveContainer width="100%" height={717}>
                 <Treemap
+                  key={`${mega ?? 'todas'}-${periodo}`}
                   data={nodos}
                   dataKey="size"
                   isAnimationActive={false}

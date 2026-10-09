@@ -113,7 +113,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1437]/60 p-3 sm:p-6"
+      className="entrada-fondo-modal fixed inset-0 z-50 flex items-center justify-center bg-[#0b1437]/60 p-3 sm:p-6"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onCerrar();
       }}
@@ -125,12 +125,20 @@ export function Modal({
         aria-labelledby={idTitulo}
         tabIndex={-1}
         style={{ maxWidth: ancho }}
-        className={`flex max-h-[min(900px,calc(100vh-24px))] w-full flex-col overflow-hidden bg-white focus:outline-none ${destacado ? 'rounded-2xl shadow-[0_0_40px_0_rgba(0,0,0,0.15)]' : 'rounded-[20px] shadow-[0_12px_32px_0_rgba(7,31,93,0.13)]'}`}
+        className={`${insignia === 'exito' ? 'rebote-aviso' : 'entrada-modal'} flex max-h-[min(900px,calc(100vh-24px))] w-full flex-col overflow-hidden bg-white focus:outline-none ${destacado ? 'rounded-2xl shadow-[0_0_40px_0_rgba(0,0,0,0.15)]' : 'rounded-[20px] shadow-[0_12px_32px_0_rgba(7,31,93,0.13)]'}`}
       >
         <header className={`relative shrink-0 bg-azul-oscuro text-white ${destacado ? 'p-6 sm:p-7' : 'px-6 py-5'}`}>
           {sobreTitulo && <div className={`flex flex-wrap items-center gap-2 pr-10 ${destacado ? 'mb-3' : 'mb-2'}`}>{sobreTitulo}</div>}
           <div className="flex items-center gap-3 pr-10">
-            {insignia && <img src={INSIGNIAS[insignia]} alt="" aria-hidden width={28} height={28} className="shrink-0" />}
+            {insignia === 'exito' ? (
+              // Insignia de éxito dibujada en línea para animar el visto.
+              <svg aria-hidden width={28} height={28} viewBox="0 0 28 28" fill="none" className="rebote-insignia shrink-0">
+                <rect width="28" height="28" rx="14" fill="#0F996B" />
+                <path className="dibujar-visto" d="M9.334 14.333 12.334 17.333 18.667 11" stroke="white" strokeWidth="1.733" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              insignia && <img src={INSIGNIAS[insignia]} alt="" aria-hidden width={28} height={28} className="shrink-0" />
+            )}
             <h2 id={idTitulo} className={destacado ? 'text-[22px] font-black sm:text-titulo' : 'text-subtitle font-extrabold uppercase'}>
               {titulo}
             </h2>

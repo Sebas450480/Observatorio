@@ -13,7 +13,7 @@ import { CampoImagen, SelectorCategorias } from '../../componentes/contenido/Con
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { AreaTexto, Casilla, Entrada, Selector } from '../../componentes/ui/Campos';
 import { DEPARTAMENTOS } from '../../utilidades/colombia';
-import { aEntradaFecha, aEntradaHora, aIsoBogota, modalidadTexto } from '../../utilidades/formato';
+import { aEntradaFecha, aEntradaHora, aIsoBogota, enlaceValido, modalidadTexto, normalizarEnlace } from '../../utilidades/formato';
 
 const esquema = z
   .object({
@@ -30,7 +30,7 @@ const esquema = z
     costo: z.string().regex(/^\d*$/, 'Escribe solo números'),
     descripcion: z.string().trim(),
     lugar: z.string().trim().max(100),
-    link: z.union([z.literal(''), z.url('Escribe un enlace válido (https://...)')]),
+    link: z.string().refine((v) => !v.trim() || enlaceValido(v), 'Escribe un enlace válido, por ejemplo www.sitio.com'),
     info_adicional: z.string(),
     estado_fi: z.enum(['Activo', 'Inactivo']),
   })
@@ -90,7 +90,7 @@ export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCe
       costo: d.es_gratuito ? null : Number(d.costo),
       descripcion: d.descripcion,
       lugar: d.lugar,
-      link: d.link || null,
+      link: normalizarEnlace(d.link),
       info_adicional: d.info_adicional,
       estado_fi: d.estado_fi,
       categorias: seleccion,

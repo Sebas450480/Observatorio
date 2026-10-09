@@ -196,3 +196,91 @@
 @media (prefers-reduced-motion: reduce) {
   .fondo-auth * { animation: none !important; }
 }
+
+/* ------------------------------------------------------------------ Animaciones de la plataforma
+   Todas se apagan si la persona pidió reducir el movimiento en su equipo. */
+@keyframes barrido-modulo {
+  0% { transform: translateX(-101%); }
+  100% { transform: translateX(101%); }
+}
+@keyframes entrada-modulo {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes brillo-esqueleto {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes entrada-fondo-modal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes entrada-modal {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes entrada-carrusel-derecha {
+  from { opacity: 0; transform: translateX(48px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes entrada-carrusel-izquierda {
+  from { opacity: 0; transform: translateX(-48px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes progreso-carrusel {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes crecer-bloque {
+  from { opacity: 0; transform: scale(0.82); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rebote-insignia {
+  0% { transform: scale(0.3); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@keyframes dibujar-visto {
+  from { stroke-dashoffset: 16; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes rebote-aviso {
+  0% { transform: translateY(10px) scale(0.94); opacity: 0; }
+  60% { transform: translateY(-4px) scale(1.01); opacity: 1; }
+  100% { transform: none; }
+}
+
+/* 2. Barrido al cambiar de módulo: franja azul con borde rojo que cruza el contenido. */
+.barrido-modulo {
+  background: linear-gradient(90deg, transparent 0%, rgb(14 31 135 / 0.9) 18%, #0e1f87 50%, #dd0034 82%, transparent 100%);
+  animation: barrido-modulo 650ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+/* 3. El contenido nuevo entra subiendo con un fundido, detrás del barrido. */
+.entrada-modulo { animation: entrada-modulo 450ms ease-out 180ms both; }
+/* 6. Siluetas de carga con brillo. */
+.esqueleto {
+  background: linear-gradient(90deg, #e9edf3 25%, #f6f8fb 37%, #e9edf3 63%);
+  background-size: 400% 100%;
+  animation: brillo-esqueleto 1.4s ease-in-out infinite;
+}
+/* 7. Modales: el fondo aparece y el panel entra con un pequeño zoom. */
+.entrada-fondo-modal { animation: entrada-fondo-modal 180ms ease-out both; }
+.entrada-modal { animation: entrada-modal 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+/* 8. Carrusel del Inicio: deslizamiento y barra de progreso del punto activo. */
+.entrada-carrusel-derecha { animation: entrada-carrusel-derecha 450ms ease-out both; }
+.entrada-carrusel-izquierda { animation: entrada-carrusel-izquierda 450ms ease-out both; }
+.progreso-carrusel { transform-origin: left; animation: progreso-carrusel 8s linear both; }
+/* 9. Mapa de tendencias: los bloques crecen al aparecer. */
+.bloque-mapa { transform-box: fill-box; transform-origin: center; animation: crecer-bloque 500ms ease-out both; }
+/* 10. Avisos de éxito: la insignia rebota, el visto se dibuja y el aviso hace un leve rebote. */
+.rebote-insignia { animation: rebote-insignia 450ms ease-out both; }
+.dibujar-visto { stroke-dasharray: 16; animation: dibujar-visto 350ms ease-out 250ms both; }
+.rebote-aviso { animation: rebote-aviso 420ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .barrido-modulo { display: none; }
+  .entrada-modulo, .esqueleto, .entrada-fondo-modal, .entrada-modal, .entrada-carrusel-derecha,
+  .entrada-carrusel-izquierda, .progreso-carrusel, .bloque-mapa, .rebote-insignia, .dibujar-visto, .rebote-aviso {
+    animation: none !important;
+  }
+}
