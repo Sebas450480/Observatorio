@@ -1,8 +1,9 @@
 import chevronAbajo from '../../assets/figma/iconos/chevron-abajo.svg';
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { forwardRef, useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
+/** Campo del Figma: fondo #f8fafc, borde #e2e8f0, texto de 16 px y ejemplo en gris claro. */
 const BASE_CONTROL =
-  'w-full rounded-control border border-borde bg-[#f9fafb] px-3.5 text-small text-texto placeholder:text-texto-tenue focus:border-azul-oscuro focus:bg-white focus:outline-none disabled:opacity-60';
+  'w-full rounded-control border border-[#e2e8f0] bg-[#f8fafc] px-4 text-small text-[#0a1c40] placeholder:font-light placeholder:text-[#788fad] focus:border-azul-oscuro focus:bg-white focus:outline-none disabled:opacity-60';
 
 interface Envoltura {
   etiqueta?: string;
@@ -15,11 +16,11 @@ interface Envoltura {
 
 function Contenedor({ id, etiqueta, error, ayuda, className = '', obligatorio, children }: Envoltura & { id: string; children: ReactNode }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
+    <div className={`flex flex-col gap-2 ${className}`}>
       {etiqueta && (
-        <label htmlFor={id} className="text-caption font-semibold text-azul-titulo">
+        <label htmlFor={id} className="text-small leading-[19px] font-semibold text-[#0a1c40]">
           {etiqueta}
-          {obligatorio && <span className="text-rojo"> *</span>}
+          {obligatorio && <span aria-hidden> *</span>}
         </label>
       )}
       {children}
@@ -51,7 +52,8 @@ export const Entrada = forwardRef<HTMLInputElement, PropsEntrada>(function Entra
           id={idCampo}
           aria-invalid={!!error}
           aria-describedby={error ? `${idCampo}-error` : undefined}
-          className={`${BASE_CONTROL} h-11 ${icono ? 'pl-10' : ''} ${error ? 'border-rojo' : ''}`}
+          aria-required={obligatorio || undefined}
+          className={`${BASE_CONTROL} h-[43px] ${icono ? 'pl-10' : ''} ${error ? 'border-rojo' : ''}`}
           {...resto}
         />
       </div>
@@ -74,7 +76,7 @@ export const AreaTexto = forwardRef<HTMLTextAreaElement, PropsArea>(function Are
         id={idCampo}
         rows={rows}
         aria-invalid={!!error}
-        className={`${BASE_CONTROL} resize-y py-2.5 ${error ? 'border-rojo' : ''}`}
+        className={`${BASE_CONTROL} min-h-[100px] resize-y p-4 ${error ? 'border-rojo' : ''}`}
         {...resto}
       />
     </Contenedor>
@@ -85,21 +87,57 @@ type PropsSelector = SelectHTMLAttributes<HTMLSelectElement> &
   Envoltura & { opciones: { valor: string; texto: string }[]; vacio?: string };
 
 export const Selector = forwardRef<HTMLSelectElement, PropsSelector>(function Selector(
-  { etiqueta, error, ayuda, className, obligatorio, id, opciones, vacio, ...resto },
+  { etiqueta, error, ayuda, className, obligatorio, id, opciones, vacio, onChange, value, defaultValue, ...resto },
   ref,
 ) {
   const generado = useId();
   const idCampo = id ?? generado;
+  const interno = useRef<HTMLSelectElement | null>(null);
+  const [actual, setActual] = useState<string>(String(value ?? defaultValue ?? ''));
+  // Con react-hook-form el valor vive en el DOM (register, reset): se relee después de cada render.
+  // Solo cambia el estado si el valor es distinto, así que no entra en un ciclo.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const valorDom = interno.current?.value ?? '';
+    if (valorDom !== actual) setActual(valorDom);
+  });
+  const texto = opciones.find((o) => o.valor === actual)?.texto;
   return (
     <Contenedor id={idCampo} etiqueta={etiqueta} error={error} ayuda={ayuda} className={className} obligatorio={obligatorio}>
-      <select ref={ref} id={idCampo} aria-invalid={!!error} className={`${BASE_CONTROL} h-11 cursor-pointer ${error ? 'border-rojo' : ''}`} {...resto}>
-        {vacio !== undefined && <option value="">{vacio}</option>}
-        {opciones.map((o) => (
-          <option key={o.valor} value={o.valor}>
-            {o.texto}
-          </option>
-        ))}
-      </select>
+      <div
+        className={`${BASE_CONTROL} relative flex h-[43px] items-center focus-within:border-azul-oscuro focus-within:bg-white ${error ? 'border-rojo' : ''}`}
+      >
+        <span aria-hidden className={`truncate whitespace-pre ${texto ? '' : 'font-light text-[#788fad]'}`}>
+          {texto ?? vacio ?? ''}
+          {'  '}
+          <span className="text-[11px]">▾</span>
+        </span>
+        <select
+          ref={(nodo) => {
+            interno.current = nodo;
+            if (typeof ref === 'function') ref(nodo);
+            else if (ref) ref.current = nodo;
+          }}
+          id={idCampo}
+          aria-invalid={!!error}
+          aria-required={obligatorio || undefined}
+          value={value}
+          defaultValue={defaultValue}
+          onChange={(ev) => {
+            setActual(ev.target.value);
+            onChange?.(ev);
+          }}
+          className="absolute inset-0 size-full cursor-pointer opacity-0"
+          {...resto}
+        >
+          {vacio !== undefined && <option value="">{vacio}</option>}
+          {opciones.map((o) => (
+            <option key={o.valor} value={o.valor}>
+              {o.texto}
+            </option>
+          ))}
+        </select>
+      </div>
     </Contenedor>
   );
 });

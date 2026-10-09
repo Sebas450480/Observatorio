@@ -46,21 +46,27 @@ export function InsigniaEstado({ estado }: { estado?: string }) {
 /** Título de cada módulo: ícono en cuadro rojo, título azul y subtítulo. */
 export function EncabezadoPagina({
   modulo,
+  icono,
   titulo,
   subtitulo,
   acciones,
+  className = 'mb-6 xl:mb-[55px]',
 }: {
   modulo?: Modulo;
+  /** Ícono propio del encabezado cuando el Figma no usa el de la barra lateral. */
+  icono?: string;
   titulo: string;
   subtitulo?: string;
   acciones?: ReactNode;
+  /** Separación inferior (cambia entre pantallas del Figma). */
+  className?: string;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between xl:mb-[55px]">
+    <div className={`flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between ${className}`}>
       <div className="flex items-center gap-[13px]">
-        {modulo && (
+        {(icono || modulo) && (
           <span className="grid size-[55px] shrink-0 place-items-center rounded-[10px] bg-rojo">
-            <img src={ICONOS_MODULO[modulo]} alt="" aria-hidden className="size-[41px] object-contain" />
+            <img src={icono ?? ICONOS_MODULO[modulo!]} alt="" aria-hidden className="size-[41px] object-contain" />
           </span>
         )}
         <div>
