@@ -13,6 +13,14 @@ export function Estructura() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const ubicacion = useLocation();
   const { moduloGestor } = useSesion();
+  // Al cambiar de módulo (no al abrir un registro dentro del mismo) se hace el barrido y el contenido entra de nuevo.
+  const seccion = ubicacion.pathname.split('/')[1] ?? '';
+  const [seccionAnterior, setSeccionAnterior] = useState(seccion);
+  const [barridos, setBarridos] = useState(0);
+  if (seccion !== seccionAnterior) {
+    setSeccionAnterior(seccion);
+    setBarridos((b) => b + 1);
+  }
   const [rutaAnterior, setRutaAnterior] = useState(ubicacion.pathname);
   // Al navegar en móvil se cierra el menú.
   if (rutaAnterior !== ubicacion.pathname) {
@@ -46,8 +54,9 @@ export function Estructura() {
         className="pointer-events-none absolute right-0 top-0 hidden xl:block"
       />
       <BarraSuperior onAbrirMenu={() => setMenuAbierto(true)} />
+      {barridos > 0 && <div key={barridos} aria-hidden className="barrido-modulo pointer-events-none fixed inset-y-0 left-0 right-0 z-20 lg:left-[325px]" />}
       <main id="contenido" className="relative overflow-x-clip px-4 pb-16 pt-6 sm:px-6 lg:px-8 xl:pb-[60px] xl:pl-[30px] xl:pr-[61px] xl:pt-[17px]">
-        <div className="relative max-w-[1504px] min-[1921px]:mx-auto">
+        <div key={seccion} className="entrada-modulo relative max-w-[1504px] min-[1921px]:mx-auto">
           <Outlet />
         </div>
       </main>

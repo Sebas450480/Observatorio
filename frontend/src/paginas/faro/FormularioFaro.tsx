@@ -7,7 +7,7 @@ import { MODALIDADES, TIPOS_FARO, type Faro } from '../../api/tipos';
 import { CampoImagen, SelectorCategorias } from '../../componentes/contenido/Controles';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { AreaTexto, Casilla, Entrada, Selector } from '../../componentes/ui/Campos';
-import { modalidadTexto } from '../../utilidades/formato';
+import { enlaceValido, modalidadTexto, normalizarEnlace } from '../../utilidades/formato';
 
 const esquema = z
   .object({
@@ -22,7 +22,7 @@ const esquema = z
     es_gratuito: z.boolean(),
     costo: z.string().regex(/^\d*$/, 'Escribe solo números'),
     descripcion: z.string().trim(),
-    link: z.union([z.literal(''), z.url('Escribe un enlace válido (https://...)')]),
+    link: z.string().refine((v) => !v.trim() || enlaceValido(v), 'Escribe un enlace válido, por ejemplo www.sitio.com'),
     estado_fe: z.enum(['Activo', 'Inactivo']),
   })
   .refine((d) => !(d.es_gratuito && d.costo), { message: 'Un registro gratuito no tiene costo', path: ['costo'] });
@@ -72,7 +72,7 @@ export function FormularioFaro({ registro, onCerrar }: { registro?: Faro; onCerr
       es_gratuito: d.es_gratuito,
       costo: d.es_gratuito || !d.costo ? null : Number(d.costo),
       descripcion: d.descripcion,
-      link: d.link || null,
+      link: normalizarEnlace(d.link),
       estado_fe: d.estado_fe,
       categorias: seleccion,
     };

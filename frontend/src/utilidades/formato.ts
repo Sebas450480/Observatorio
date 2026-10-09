@@ -102,3 +102,22 @@ export function vinetas(texto: string | null): string[] {
 export function nombreTipoEvento(e: { tipo_evento: string; tipo_otro?: string | null }): string {
   return e.tipo_evento === 'Otro' && e.tipo_otro ? e.tipo_otro : e.tipo_evento;
 }
+
+/** Enlace escrito sin protocolo ("www.sitio.com") → "https://www.sitio.com". Vacío → null. */
+export function normalizarEnlace(valor: string): string | null {
+  const limpio = valor.trim();
+  if (!limpio) return null;
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(limpio) ? limpio : `https://${limpio}`;
+}
+
+/** ¿Es un enlace web válido? Acepta que falte "https://" (se completa al guardar). */
+export function enlaceValido(valor: string): boolean {
+  const enlace = normalizarEnlace(valor);
+  if (!enlace) return false;
+  try {
+    const url = new URL(enlace);
+    return /^https?:$/.test(url.protocol) && url.hostname.includes('.');
+  } catch {
+    return false;
+  }
+}
