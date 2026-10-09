@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ResponsiveContainer, Tooltip, Treemap } from 'recharts';
 import { api, mensajeDeError } from '../../api/cliente';
 import iconoCapas from '../../assets/figma/tendencias/capas.png';
@@ -72,6 +72,61 @@ function Bloque({ x = 0, y = 0, width = 0, height = 0, depth, name, color, detal
   );
 }
 
+/**
+ * Una sola fila de chips que se desplaza horizontalmente, con flechas ‹ › cuando no caben
+ * todos (en lugar de varias líneas). El chip elegido se lleva a la vista.
+ */
+function BarraChips({ children }: { children: ReactNode }) {
+  const fila = useRef<HTMLDivElement>(null);
+  const [bordes, setBordes] = useState({ inicio: true, fin: true });
+
+  useEffect(() => {
+    const nodo = fila.current;
+    if (!nodo) return;
+    const medir = () =>
+      setBordes({ inicio: nodo.scrollLeft <= 2, fin: nodo.scrollLeft + nodo.clientWidth >= nodo.scrollWidth - 2 });
+    medir();
+    nodo.addEventListener('scroll', medir, { passive: true });
+    const observador = new ResizeObserver(medir);
+    observador.observe(nodo);
+    return () => {
+      nodo.removeEventListener('scroll', medir);
+      observador.disconnect();
+    };
+  }, []);
+
+  const mover = (sentido: 1 | -1) => fila.current?.scrollBy({ left: sentido * fila.current.clientWidth * 0.7, behavior: 'smooth' });
+  const flecha =
+    'absolute top-1/2 z-10 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-[#d9dee8] bg-white text-subtitle font-bold leading-none text-[#0a1c40] shadow-[0_2px_6px_rgba(10,28,64,0.12)] hover:bg-fondo';
+  return (
+    <div className="relative min-w-0 flex-1">
+      {!bordes.inicio && (
+        <>
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-[5] w-12 bg-gradient-to-r from-white to-transparent" />
+          <button type="button" aria-label="Ver megatendencias anteriores" onClick={() => mover(-1)} className={`${flecha} left-0`}>
+            ‹
+          </button>
+        </>
+      )}
+      <div
+        ref={fila}
+        onClick={(e) => (e.target as HTMLElement).closest('button')?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })}
+        className="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {children}
+      </div>
+      {!bordes.fin && (
+        <>
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-[5] w-12 bg-gradient-to-l from-white to-transparent" />
+          <button type="button" aria-label="Ver más megatendencias" onClick={() => mover(1)} className={`${flecha} right-0`}>
+            ›
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Mapa de tendencias: bloques proporcionales a las menciones del periodo y Top 5 en crecimiento. */
 export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatendencia: string, tendencia: string) => void }) {
   const [periodo, setPeriodo] = useState<Periodo>('mes');
@@ -124,10 +179,10 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
       </div>
 
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-          <div className="flex min-w-0 items-start gap-3 pt-1">
-            <span className="shrink-0 pt-2 text-caption font-semibold text-gris-azulado">{todas.length} megatendencias</span>
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <span className="shrink-0 text-caption font-semibold text-gris-azulado">{todas.length} megatendencias</span>
+            <BarraChips>
               <button type="button" className={chip(mega === null)} aria-pressed={mega === null} onClick={() => setMega(null)}>
                 Todas
               </button>
@@ -137,7 +192,7 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
                   {m}
                 </button>
               ))}
-            </div>
+            </BarraChips>
           </div>
           <div role="group" aria-label="Periodo" className="flex shrink-0 gap-1 self-start rounded-full border border-[#d9dee8] bg-white p-1">
             {PERIODOS.map((p) => (

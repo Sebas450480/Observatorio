@@ -48,3 +48,7 @@ export const contrasena = z
   .string()
   .min(8, 'La contraseña debe tener al menos 8 caracteres')
   .max(72, 'La contraseña no puede superar 72 caracteres');
+
+/** Nombre para comparar duplicados: sin tildes, en minúsculas y sin espacios repetidos. */
+export const normalizarNombre = (texto: string) =>
+  texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim().replace(/\s+/g, ' ');

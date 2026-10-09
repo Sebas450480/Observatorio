@@ -102,6 +102,21 @@ describe('Tendencias', () => {
     expect(t.categorias).toHaveLength(2);
   });
 
+  it('une las megatendencias escritas con otras mayúsculas o sin tildes', async () => {
+    const { agente } = await sesion('Gestor Tendencias');
+    const archivo = await excel([
+      ['ECONOMIA Y TRABAJO', 'Trabajo por proyectos', '', '', '', '', '', 'empresarial'],
+      ['Nueva megatendencia', 'Primera', '', '', '', '', '', ''],
+      ['nueva megatendéncia', 'Segunda', '', '', '', '', '', ''],
+    ]);
+    const r = await agente.post('/api/tendencias/importar').attach('archivo', archivo, 'tendencias.xlsx');
+    expect(r.status).toBe(201);
+    const megas = (await invitado().get('/api/tendencias/megatendencias')).body as string[];
+    expect(megas).toContain('Economía y trabajo');
+    expect(megas).not.toContain('ECONOMIA Y TRABAJO');
+    expect(megas.filter((m) => m.toLowerCase().startsWith('nueva megatend'))).toEqual(['Nueva megatendencia']);
+  });
+
   it('rechaza todo el archivo si una fila tiene errores', async () => {
     const { agente } = await sesion('Gestor Tendencias');
     const archivo = await excel([
