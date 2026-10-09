@@ -48,6 +48,7 @@ export function EncabezadoPagina({
   modulo,
   icono,
   iconoConCuadro,
+  cuadroRedondo = false,
   titulo,
   subtitulo,
   claseSubtitulo = 'text-small text-texto-suave sm:text-body',
@@ -59,6 +60,8 @@ export function EncabezadoPagina({
   icono?: string;
   /** Ícono que ya incluye su cuadro rojo (55 × 55). */
   iconoConCuadro?: string;
+  /** Cuadro rojo con esquinas de 20 px (Tendencias y Calendario). */
+  cuadroRedondo?: boolean;
   titulo: string;
   subtitulo?: string;
   /** Estilo del subtítulo (Tendencias lo usa azul y en negrita). */
@@ -74,7 +77,7 @@ export function EncabezadoPagina({
           <img src={iconoConCuadro} alt="" aria-hidden width={55} height={55} className="shrink-0" />
         ) : (
           (icono || modulo) && (
-            <span className="grid size-[55px] shrink-0 place-items-center rounded-[10px] bg-rojo">
+            <span className={`grid size-[55px] shrink-0 place-items-center ${cuadroRedondo ? 'rounded-[20px] bg-rojo-activo' : 'rounded-[10px] bg-rojo'}`}>
               <img src={icono ?? ICONOS_MODULO[modulo!]} alt="" aria-hidden className="size-[41px] object-contain" />
             </span>
           )

@@ -5,29 +5,51 @@ import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, DollarSign, ExternalLink, MapPin, MonitorSmartphone } from 'lucide-react';
+import { CalendarDays, Clock, DollarSign, ExternalLink, MapPin, MonitorSmartphone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { api, mensajeDeError } from '../../api/cliente';
 import { registrarActividad, useDetalle } from '../../api/consultas';
 import type { Evento, Pagina, TipoEvento } from '../../api/tipos';
 import { Boton } from '../../componentes/ui/Boton';
-import { DatoConIcono, Insignia, MensajeError, Tarjeta } from '../../componentes/ui/Elementos';
+import iconoPanel from '../../assets/figma/eventos/calendario-panel.svg';
+import { DatoConIcono, EncabezadoPagina, Insignia, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
 import { costo, fechaLarga, modalidadTexto, rangoHoras } from '../../utilidades/formato';
 import { FormularioEvento } from './FormularioEvento';
 
-/** Colores de cada tipo de evento (Figma: azul, verde, rojo y morado sobre fondo claro). */
-const COLOR_TIPO: Record<TipoEvento, { fondo: string; texto: string; tono: 'azul' | 'verde' | 'rojo' | 'morado' | 'naranja' | 'gris' }> = {
-  Congreso: { fondo: '#e6eefc', texto: '#1d5bd8', tono: 'azul' },
-  Foro: { fondo: '#e3f3ec', texto: '#0f8a5f', tono: 'verde' },
-  Cumbre: { fondo: '#e3f3ec', texto: '#0f8a5f', tono: 'verde' },
-  Seminario: { fondo: '#fde8ec', texto: '#c8102e', tono: 'rojo' },
-  Taller: { fondo: '#f1e8fd', texto: '#8b2fd8', tono: 'morado' },
-  Hackathon: { fondo: '#fff1e3', texto: '#c2410c', tono: 'naranja' },
-  Otro: { fondo: '#eef0f3', texto: '#4b5563', tono: 'gris' },
+/** Color de cada tipo de evento (Figma: texto del color y fondo al 12 %). */
+const COLOR_TIPO: Record<TipoEvento, { color: string; tono: 'azul' | 'verde' | 'rojo' | 'morado' | 'naranja' | 'gris' }> = {
+  Congreso: { color: '#266bd9', tono: 'azul' },
+  Foro: { color: '#0a8c5c', tono: 'verde' },
+  Cumbre: { color: '#0a8c5c', tono: 'verde' },
+  Seminario: { color: '#e4002b', tono: 'rojo' },
+  Taller: { color: '#a32afa', tono: 'morado' },
+  Hackathon: { color: '#e07314', tono: 'naranja' },
+  Otro: { color: '#69788c', tono: 'gris' },
 };
+const fondoTipo = (tipo: TipoEvento) => `${COLOR_TIPO[tipo].color}1f`;
+
+/** "mié." → "MIE" (encabezados del calendario en el Figma). */
+const sinTilde = (texto: string) =>
+  texto
+    .replace('.', '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+
+/** "18 – 24 oct 2026" (semana) u "Octubre 2026" (mes), como en el Figma. */
+function tituloPeriodo(vista: Vista, inicio: Date, fin: Date): string {
+  const opciones = (o: Intl.DateTimeFormatOptions) => (f: Date) => f.toLocaleDateString('es-CO', o).replace('.', '').replace('sept', 'sep');
+  if (vista === 'dayGridMonth') {
+    const texto = opciones({ month: 'long', year: 'numeric' })(inicio).replace(' de ', ' ');
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+  const mes = opciones({ month: 'short' });
+  const mismoMes = inicio.getMonth() === fin.getMonth();
+  return `${inicio.getDate()}${mismoMes ? '' : ` ${mes(inicio)}`} – ${fin.getDate()} ${mes(fin)} ${fin.getFullYear()}`;
+}
 
 type Vista = 'timeGridWeek' | 'dayGridMonth';
 const aDia = (fecha: Date) => fecha.toLocaleDateString('en-CA');
@@ -82,13 +104,20 @@ function DetalleEvento({ evento, onEditar }: { evento: Evento; onEditar?: () => 
 
 function ContenidoEvento({ event, view }: EventContentArg) {
   const evento = event.extendedProps.evento as Evento;
+  const color = COLOR_TIPO[evento.tipo_evento].color;
   if (view.type === 'dayGridMonth') {
-    return <span className="block truncate px-2 py-0.5 text-[12px] font-semibold">{event.title}</span>;
+    return (
+      <span className="block truncate rounded-full px-[18px] text-small font-bold leading-[25px]" style={{ color, background: fondoTipo(evento.tipo_evento) }}>
+        {event.title}
+      </span>
+    );
   }
   return (
-    <div className="h-full overflow-hidden p-1.5">
-      <p className="text-[12px] font-bold leading-tight">{event.title}</p>
-      <p className="mt-1 text-[11px] text-texto-suave">{rangoHoras(evento.fecha_inicio, evento.fecha_fin)}</p>
+    <div className="flex h-full flex-col gap-1 overflow-hidden rounded-lg p-2.5 text-caption" style={{ background: fondoTipo(evento.tipo_evento) }}>
+      <p className="font-bold leading-[1.2]" style={{ color }}>
+        {event.title}
+      </p>
+      <p className="leading-[1.2] text-[#0a1c40]/80">{rangoHoras(evento.fecha_inicio, evento.fecha_fin)}</p>
     </div>
   );
 }
@@ -131,7 +160,12 @@ export function Eventos() {
   const alCambiarFechas = (arg: DatesSetArg) => {
     const fin = new Date(arg.end);
     fin.setDate(fin.getDate() - 1);
-    setRango({ desde: aDia(arg.start), hasta: aDia(fin), titulo: arg.view.title });
+    const vistaActual = arg.view.type as Vista;
+    setRango({
+      desde: aDia(arg.start),
+      hasta: aDia(fin),
+      titulo: tituloPeriodo(vistaActual, vistaActual === 'dayGridMonth' ? arg.view.currentStart : arg.start, fin),
+    });
   };
 
   const eventos = (data?.datos ?? []).map((e) => ({
@@ -139,62 +173,63 @@ export function Eventos() {
     title: e.titulo,
     start: e.fecha_inicio,
     end: e.fecha_fin ?? undefined,
-    backgroundColor: COLOR_TIPO[e.tipo_evento].fondo,
-    textColor: COLOR_TIPO[e.tipo_evento].texto,
+    backgroundColor: 'transparent',
+    textColor: COLOR_TIPO[e.tipo_evento].color,
     classNames: idSeleccionado === e.id_evento ? ['ring-2', 'ring-azul-oscuro'] : [],
     extendedProps: { evento: e },
   }));
 
   const editarSeleccionado = gestiona && seleccionado ? () => setFormulario({ registro: seleccionado }) : undefined;
   const claseVista = (v: Vista) =>
-    `h-9 cursor-pointer rounded-full px-4 text-caption font-semibold ${vista === v ? 'bg-rojo text-white' : 'text-texto hover:bg-fondo'}`;
+    `h-[39px] cursor-pointer rounded-full px-[22px] text-small font-semibold ${vista === v ? 'bg-rojo-vivo text-white' : 'text-[#0a1c40] hover:bg-fondo'}`;
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-center gap-3">
-          <span className="grid size-[55px] shrink-0 place-items-center rounded-[10px] bg-rojo text-white">
-            <CalendarDays className="size-8" aria-hidden />
-          </span>
-          <div>
-            <h1 className="text-[24px] font-bold text-azul-titulo sm:text-titulo">Calendario de Eventos</h1>
-            <p className="text-small font-semibold text-azul-titulo sm:text-body">
-              {vista === 'timeGridWeek' ? 'Consulta los eventos de la semana' : 'Organiza tu agenda visualmente por mes'}
-            </p>
+      <EncabezadoPagina
+        modulo="eventos"
+        cuadroRedondo
+        titulo="Calendario de Eventos"
+        subtitulo={vista === 'timeGridWeek' ? 'Consulta los eventos de la semana' : 'Organiza tu agenda visualmente por mes'}
+        claseSubtitulo="text-body font-bold tracking-[-0.5px] text-[#0d2375] sm:text-subtitle"
+        className={vista === 'timeGridWeek' ? 'mb-6 xl:mb-8' : 'mb-6 xl:mb-[38px]'}
+        acciones={
+          <div className="flex flex-wrap items-center gap-4">
+            {gestiona && (
+              <Boton pildora className="px-5!" onClick={() => setFormulario({})}>
+                Crear evento
+              </Boton>
+            )}
+            <div role="group" aria-label="Vista del calendario" className="flex gap-1 rounded-full border border-[#d9dee8] bg-white p-1">
+              <button type="button" aria-pressed={vista === 'timeGridWeek'} className={claseVista('timeGridWeek')} onClick={() => cambiarVista('timeGridWeek')}>
+                Semanal
+              </button>
+              <button type="button" aria-pressed={vista === 'dayGridMonth'} className={claseVista('dayGridMonth')} onClick={() => cambiarVista('dayGridMonth')}>
+                Mensual
+              </button>
+            </div>
+            <div className="flex h-11 items-center gap-5 rounded-full border border-[#d9dee8] bg-white px-[18px] text-[#0a1c40]">
+              <button type="button" aria-label="Periodo anterior" className="cursor-pointer text-body font-bold" onClick={() => calendario.current?.getApi().prev()}>
+                ‹
+              </button>
+              <span className="min-w-[110px] text-center text-small font-bold" aria-live="polite">
+                {rango?.titulo}
+              </span>
+              <button type="button" aria-label="Periodo siguiente" className="cursor-pointer text-body font-bold" onClick={() => calendario.current?.getApi().next()}>
+                ›
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {gestiona && (
-            <Boton pildora onClick={() => setFormulario({})}>
-              Crear evento
-            </Boton>
-          )}
-          <div role="group" aria-label="Vista del calendario" className="flex rounded-full bg-white p-1 shadow-tarjeta">
-            <button type="button" aria-pressed={vista === 'timeGridWeek'} className={claseVista('timeGridWeek')} onClick={() => cambiarVista('timeGridWeek')}>
-              Semanal
-            </button>
-            <button type="button" aria-pressed={vista === 'dayGridMonth'} className={claseVista('dayGridMonth')} onClick={() => cambiarVista('dayGridMonth')}>
-              Mensual
-            </button>
-          </div>
-          <div className="flex h-11 items-center gap-1 rounded-full bg-white px-2 shadow-tarjeta">
-            <button type="button" aria-label="Periodo anterior" className="grid size-8 cursor-pointer place-items-center rounded-full hover:bg-fondo" onClick={() => calendario.current?.getApi().prev()}>
-              <ChevronLeft className="size-4" />
-            </button>
-            <span className="min-w-32 text-center text-caption font-bold capitalize text-azul-titulo" aria-live="polite">
-              {rango?.titulo}
-            </span>
-            <button type="button" aria-label="Periodo siguiente" className="grid size-8 cursor-pointer place-items-center rounded-full hover:bg-fondo" onClick={() => calendario.current?.getApi().next()}>
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {error && <MensajeError mensaje={mensajeDeError(error)} onReintentar={() => refetch()} />}
 
-      <div className={`grid gap-6 ${vista === 'timeGridWeek' ? 'xl:grid-cols-[1fr_300px]' : ''}`}>
-        <Tarjeta className="overflow-hidden p-3 sm:p-4">
+      <div className={`grid gap-6 ${vista === 'timeGridWeek' ? 'xl:grid-cols-[1fr_420px]' : ''}`}>
+        <div
+          className={`overflow-hidden bg-white ${
+            vista === 'timeGridWeek' ? 'calendario-semana rounded-2xl border border-[#e5e8f0]' : 'calendario-mes rounded-[20px] border-2 border-black/10'
+          }`}
+        >
           <FullCalendar
             ref={calendario}
             plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
@@ -205,18 +240,24 @@ export function Eventos() {
             slotMinTime="07:00:00"
             slotMaxTime="21:00:00"
             scrollTime="08:00:00"
-            height="auto"
-            expandRows
-            nowIndicator
+            height={vista === 'timeGridWeek' ? 800 : 'auto'}
             dayMaxEvents={3}
-            slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+            slotLabelFormat={(arg) => `${arg.date.hour}:00`}
+            slotLabelInterval="01:00"
             firstDay={0}
-            dayHeaderContent={(arg) => (
-              <span className="flex flex-col items-center leading-tight">
-                <span className="text-[11px] font-semibold uppercase">{arg.date.toLocaleDateString('es-CO', { weekday: 'short' }).replace('.', '')}</span>
-                {vista === 'timeGridWeek' && <span className="text-subtitle font-bold">{arg.date.getDate()}</span>}
-              </span>
-            )}
+            fixedWeekCount={false}
+            dayHeaderContent={(arg) => {
+              if (arg.view.type !== 'timeGridWeek') return sinTilde(arg.text);
+              const nombre = sinTilde(arg.date.toLocaleDateString('es-CO', { weekday: 'short' }));
+              const domingo = arg.date.getDay() === 0;
+              return (
+                <span className={`flex flex-col items-center gap-0.5 ${domingo ? 'text-rojo-vivo' : ''}`}>
+                  <span className={`text-caption font-semibold ${domingo ? '' : 'text-gris-azulado'}`}>{nombre}</span>
+                  <span className={`text-subtitle font-bold ${domingo ? '' : 'text-[#0a1c40]'}`}>{arg.date.getDate()}</span>
+                </span>
+              );
+            }}
+            dayCellContent={(arg) => arg.date.getDate()}
             events={eventos}
             eventContent={ContenidoEvento}
             datesSet={alCambiarFechas}
@@ -228,22 +269,22 @@ export function Eventos() {
             }}
             dateClick={gestiona ? (arg: DateClickArg) => setFormulario({ inicio: arg.date }) : undefined}
           />
-        </Tarjeta>
+        </div>
 
         {vista === 'timeGridWeek' && (
-          <Tarjeta className="h-fit p-5 xl:sticky xl:top-4">
+          <aside className="flex flex-col rounded-2xl border border-[#e5e8f0] bg-white p-6 xl:h-[800px]">
             {seleccionado ? (
               <DetalleEvento evento={seleccionado} onEditar={editarSeleccionado} />
             ) : (
-              <div className="flex flex-col items-center gap-3 py-16 text-center">
-                <span className="grid size-12 place-items-center rounded-full bg-fondo text-azul-titulo">
-                  <CalendarDays className="size-5" aria-hidden />
+              <div className="m-auto flex max-w-[340px] flex-col items-center gap-3.5 py-10 text-center">
+                <span className="grid size-20 place-items-center rounded-full bg-[#0d1f87]/8">
+                  <img src={iconoPanel} alt="" aria-hidden className="size-9" />
                 </span>
-                <p className="font-bold text-texto">Selecciona un evento</p>
-                <p className="text-caption text-texto-suave">Haz clic en un evento del calendario para ver aquí su información.</p>
+                <p className="text-subtitle font-bold text-[#0a1c40]">Selecciona un evento</p>
+                <p className="text-small text-gris-azulado sm:text-body">Haz clic en un evento del calendario para ver aquí su información.</p>
               </div>
             )}
-          </Tarjeta>
+          </aside>
         )}
       </div>
 

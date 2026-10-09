@@ -80,35 +80,95 @@
   }
 }
 
-/* FullCalendar con los colores del Observatorio */
+/* FullCalendar con los colores del Observatorio (Figma: "Calendario de Eventos") */
 .fc {
-  --fc-border-color: #eceef1;
-  --fc-today-bg-color: rgb(221 0 52 / 0.04);
+  --fc-border-color: #e5e8f0;
+  --fc-today-bg-color: transparent;
   --fc-event-border-color: transparent;
   --fc-page-bg-color: #fff;
   font-size: 14px;
 }
+.fc .fc-scrollgrid {
+  border: 0;
+}
 .fc .fc-col-header-cell-cushion,
 .fc .fc-daygrid-day-number {
-  color: var(--color-texto);
-  font-weight: 700;
   text-decoration: none;
-}
-.fc .fc-day-sun .fc-col-header-cell-cushion,
-.fc .fc-day-sun .fc-daygrid-day-number {
-  color: var(--color-rojo);
-}
-.fc .fc-timegrid-slot-label-cushion {
-  color: var(--color-texto-suave);
-  font-size: 12px;
 }
 .fc .fc-event {
   cursor: pointer;
-  border-radius: 8px;
 }
-.fc .fc-scrollgrid {
-  border-radius: 12px;
-  overflow: hidden;
+
+/* Vista semanal: encabezado de 64 px, horas de 70 px, sin líneas de media hora */
+.calendario-semana .fc .fc-col-header-cell {
+  border-color: transparent;
+  height: 64px;
+  vertical-align: middle;
+}
+.calendario-semana .fc .fc-timegrid-slot {
+  height: 35px;
+}
+.calendario-semana .fc .fc-timegrid-slot-minor {
+  border-top-style: none;
+}
+.calendario-semana .fc .fc-timegrid-axis,
+.calendario-semana .fc .fc-timegrid-slot-label {
+  width: 64px;
+  border-color: transparent;
+}
+.calendario-semana .fc .fc-timegrid-slot-label-cushion {
+  display: inline-block;
+  padding: 0 10px 0 14px;
+  text-align: right;
+  color: #69788c;
+  font-size: 14px;
+  transform: translateY(-50%);
+}
+.calendario-semana .fc .fc-timegrid-event {
+  border-radius: 8px;
+  box-shadow: none;
+  margin: 2px 4px 0 2px;
+}
+.calendario-semana .fc .fc-timegrid-event-harness-inset .fc-timegrid-event {
+  box-shadow: none;
+}
+
+/* Vista mensual: encabezado de 105 px, semanas de 135 px y líneas grises */
+.calendario-mes .fc {
+  --fc-border-color: rgb(35 39 52 / 0.25);
+}
+.calendario-mes .fc .fc-col-header-cell {
+  border-color: transparent;
+  height: 105px;
+  vertical-align: middle;
+}
+.calendario-mes .fc .fc-col-header-cell-cushion {
+  color: #232734;
+  font-size: 18px;
+  font-weight: 700;
+}
+.calendario-mes .fc .fc-day-sun .fc-col-header-cell-cushion,
+.calendario-mes .fc .fc-day-sun .fc-daygrid-day-number {
+  color: #ef0122;
+}
+.calendario-mes .fc .fc-daygrid-day-frame {
+  min-height: 135px;
+}
+.calendario-mes .fc .fc-daygrid-day-top {
+  flex-direction: row;
+}
+.calendario-mes .fc .fc-daygrid-day-number {
+  color: #232734;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 6px 4px 0;
+}
+.calendario-mes .fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 0;
+}
+.calendario-mes .fc .fc-daygrid-event {
+  border-radius: 9999px;
+  margin: 2px 2px 0;
 }
 
 @media print {
