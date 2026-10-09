@@ -65,4 +65,28 @@ test.describe('SuperAdmin', () => {
     await page.getByRole('button', { name: 'Último año' }).click();
     await expect(page.locator('.recharts-wrapper')).toBeVisible();
   });
+
+  test('crea una tendencia con una megatendencia nueva', async ({ page }) => {
+    await irA(page, 'Tendencias');
+    await page.getByRole('button', { name: 'Crear nuevo registro' }).click();
+    const formulario = page.getByRole('dialog', { name: 'Nueva tendencia' });
+    await formulario.getByLabel('Megatendencia').selectOption('__nueva__');
+    await formulario.getByLabel('Nueva megatendencia').fill('Megatendencia E2E');
+    await formulario.getByLabel('Título de la tendencia').fill('Tendencia E2E');
+    await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
+    await expect(page.getByRole('dialog', { name: 'Registro creado' })).toBeVisible();
+    await page.getByRole('button', { name: 'Aceptar' }).click();
+    await page.getByRole('button', { name: 'Crear nuevo registro' }).click();
+    await expect(page.getByRole('dialog', { name: 'Nueva tendencia' }).getByLabel('Megatendencia')).toContainText('Megatendencia E2E');
+  });
+
+  test('desde el mapa abre el listado filtrado por la tendencia', async ({ page }) => {
+    await irA(page, 'Tendencias');
+    await page.getByRole('tab', { name: 'Mapa de tendencias' }).click();
+    await page.getByRole('button', { name: 'Tecnología y sociedad', exact: true }).first().click();
+    await page.locator('.recharts-treemap-depth-1').first().click({ position: { x: 30, y: 30 } });
+    await expect(page.getByRole('tab', { name: 'Tendencias', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText('Filtros aplicados:')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Quitar el filtro Tecnología y sociedad' })).toBeVisible();
+  });
 });

@@ -23,6 +23,8 @@ const COLORES: Record<string, string> = {
   'Energía y recursos': '#0a7ac7',
 };
 const PALETA = Object.values(COLORES);
+/** Megatendencias del Figma (el formulario las ofrece aunque todavía no tengan registros). */
+export const MEGATENDENCIAS = Object.keys(COLORES);
 
 type Periodo = 'semana' | 'mes' | 'anio';
 const PERIODOS: { valor: Periodo; texto: string; comparacion: string }[] = [
@@ -70,7 +72,7 @@ function Bloque({ x = 0, y = 0, width = 0, height = 0, depth, name, color, detal
 }
 
 /** Mapa de tendencias: bloques proporcionales a las menciones del periodo y Top 5 en crecimiento. */
-export function MapaTendencias({ onAbrir }: { onAbrir: (id: number) => void }) {
+export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatendencia: string, tendencia: string) => void }) {
   const [periodo, setPeriodo] = useState<Periodo>('mes');
   const [mega, setMega] = useState<string | null>(null);
   const mapa = useQuery({
@@ -84,7 +86,7 @@ export function MapaTendencias({ onAbrir }: { onAbrir: (id: number) => void }) {
   const nodos: Nodo[] = mega
     ? (mapa.data?.tendencias ?? [])
         .filter((t) => t.megatendencia === mega && Number(t.menciones) > 0)
-        .map((t) => ({ name: t.tendencia, size: Number(t.menciones), color: color(mega), detalle: `${numero(Number(t.menciones))} menciones`, id_te: t.id_te }))
+        .map((t) => ({ name: t.tendencia, size: Number(t.menciones), color: color(mega), detalle: `${numero(Number(t.menciones))} menciones`, id_te: t.id_te, megatendencia: mega }))
     : megas
         .filter((m) => Number(m.menciones) > 0)
         .map((m) => ({
@@ -164,7 +166,8 @@ export function MapaTendencias({ onAbrir }: { onAbrir: (id: number) => void }) {
                   content={<Bloque />}
                   onClick={(n: unknown) => {
                     const nodo = n as Partial<Nodo>;
-                    if (nodo.id_te) onAbrir(nodo.id_te);
+                    // Megatendencia → muestra sus tendencias; tendencia → abre el listado filtrado por ella.
+                    if (nodo.id_te && nodo.megatendencia && nodo.name) onVerTendencia(nodo.megatendencia, nodo.name);
                     else if (nodo.megatendencia) setMega(nodo.megatendencia);
                   }}
                 >
@@ -175,7 +178,7 @@ export function MapaTendencias({ onAbrir }: { onAbrir: (id: number) => void }) {
                 </Treemap>
               </ResponsiveContainer>
             )}
-            {mega && <p className="mt-2 text-caption text-gris-azulado">Haz clic en una tendencia para ver su detalle.</p>}
+            {mega && <p className="mt-2 text-caption text-gris-azulado">Haz clic en una tendencia para ver sus registros en Tendencias.</p>}
           </div>
 
           <aside className="flex flex-col gap-3.5 rounded-xl border border-[#d9dee8] px-[22px] py-6 xl:min-h-[717px]">
@@ -199,7 +202,7 @@ export function MapaTendencias({ onAbrir }: { onAbrir: (id: number) => void }) {
                   const sube = (pct ?? t.crecimiento) >= 0;
                   return (
                     <li key={t.id_te}>
-                      <button type="button" onClick={() => onAbrir(t.id_te)} className="flex w-full cursor-pointer flex-col gap-1.5 text-left">
+                      <button type="button" onClick={() => onVerTendencia(t.megatendencia, t.tendencia)} className="flex w-full cursor-pointer flex-col gap-1.5 text-left">
                         <span className="flex items-center justify-between gap-2.5 text-small">
                           <span className="flex min-w-0 items-center gap-2">
                             <span className="font-bold text-gris-azulado/70">{i + 1}</span>
