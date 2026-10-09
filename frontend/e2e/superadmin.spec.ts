@@ -18,10 +18,10 @@ test.describe('SuperAdmin', () => {
     await formulario.getByLabel('Rol').selectOption({ label: 'Gestor Tendencias' });
     await formulario.getByLabel(/autorizó el tratamiento/).check();
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
-    await expect(page.getByRole('dialog', { name: 'usuario creado' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Registro creado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
 
-    await page.getByRole('textbox', { name: 'Buscar usuarios' }).fill('mjimenez');
+    await page.getByRole('searchbox', { name: 'Buscar usuarios' }).fill('mjimenez');
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     const fila = page.getByRole('row', { name: /mjimenez/ });
     await expect(fila).toContainText('Gestor');
@@ -32,28 +32,28 @@ test.describe('SuperAdmin', () => {
     await irA(page, 'Estadísticas');
     await expect(page.getByRole('heading', { name: 'Panel de estadísticas' })).toBeVisible();
     for (const indicador of ['Usuarios registrados', 'Contenidos publicados', 'Visitas a la plataforma', 'Suscriptores a alertas']) {
-      await expect(page.getByText(indicador)).toBeVisible();
+      await expect(page.getByText(indicador, { exact: true })).toBeVisible();
     }
   });
 
   test('crea un evento institucional y lo ve en el calendario mensual', async ({ page }) => {
     await irA(page, 'Eventos institucionales');
     await page.getByRole('button', { name: 'Crear evento' }).click();
-    const formulario = page.getByRole('dialog', { name: 'Nuevo evento' });
+    const formulario = page.getByRole('dialog', { name: 'Crear evento' });
     await formulario.getByLabel('Título del evento').fill('Encuentro E2E de egresados');
     await formulario.getByLabel('Tipo de evento').selectOption('Foro');
     await formulario.getByLabel('Modalidad').selectOption('Presencial');
     const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     await formulario.getByLabel('Fecha de inicio').fill(hoy);
-    await formulario.getByLabel('Hora de inicio').fill('10:00');
-    await formulario.getByLabel('Hora de finalización').fill('12:00');
+    await formulario.getByLabel('Horario de inicio').fill('10:00');
+    await formulario.getByLabel('Horario de finalización').fill('12:00');
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
-    await expect(page.getByRole('dialog', { name: 'evento creado' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Registro creado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
 
     await page.getByRole('button', { name: 'Mensual' }).click();
     await page.getByText('Encuentro E2E de egresados').click();
-    await expect(page.getByRole('dialog', { name: 'Detalle del evento' })).toContainText('10:00');
+    await expect(page.getByRole('dialog', { name: 'Encuentro E2E de egresados' })).toContainText('10:00');
   });
 
   test('explora el mapa de tendencias y cambia de vista', async ({ page }) => {

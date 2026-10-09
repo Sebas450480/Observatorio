@@ -86,27 +86,24 @@ export function FormularioFaro({ registro, onCerrar }: { registro?: Faro; onCerr
       modo={registro ? 'editar' : 'crear'}
       titulo={registro ? 'Editar registro' : 'Nuevo registro'}
       sustantivo={{ palabra: 'registro', demostrativo: 'este' }}
+      seccion="Faro Empresarial"
       validar={() => trigger()}
       guardar={guardar}
       eliminar={registro ? () => eliminarApi.mutateAsync(registro.id_fe) : undefined}
       onCerrar={onCerrar}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Selector
-          etiqueta="Tipo de registro"
-          obligatorio
-          vacio="Selecciona el tipo"
-          opciones={TIPOS_FARO.map((t) => ({ valor: t, texto: t }))}
-          error={e.tipo?.message}
-          {...register('tipo')}
-        />
-        <Selector etiqueta="Estado" opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo' }]} {...register('estado_fe')} />
-      </div>
+      <Selector
+        etiqueta="Tipo de registro"
+        obligatorio
+        vacio="Selecciona el tipo"
+        opciones={TIPOS_FARO.map((t) => ({ valor: t, texto: t }))}
+        error={e.tipo?.message}
+        {...register('tipo')}
+      />
       <SelectorCategorias etiqueta="Etiquetas" categorias={categorias} seleccion={seleccion} onCambiar={setSeleccion} />
       <Entrada etiqueta="Título" placeholder="Escribe el título del registro" obligatorio error={e.titulo?.message} {...register('titulo')} />
       <Entrada etiqueta="Entidad" placeholder="Nombre de la entidad o institución" {...register('entidad')} />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Entrada etiqueta="Fecha de inicio (opcional)" type="date" {...register('fecha_inicio')} />
+      <div className="grid gap-5 sm:grid-cols-2">
         <Entrada etiqueta="Fecha de cierre" type="date" ayuda="Vacía = Por definir" {...register('fecha_cierre')} />
         <Selector
           etiqueta="Modalidad"
@@ -114,16 +111,20 @@ export function FormularioFaro({ registro, onCerrar }: { registro?: Faro; onCerr
           opciones={MODALIDADES.map((m) => ({ valor: m, texto: modalidadTexto(m) }))}
           {...register('modalidad')}
         />
+        <Entrada etiqueta="Fecha de inicio (opcional)" type="date" {...register('fecha_inicio')} />
         <Entrada etiqueta="Duración" placeholder="Ej. 1 año, 120 horas" {...register('duracion')} />
         <Entrada etiqueta="Lugar" placeholder="Ciudad o país" {...register('lugar')} />
         <div className="flex flex-col gap-2">
-          <Entrada etiqueta="Costo (COP)" inputMode="numeric" placeholder="Ej. 150000" disabled={gratuito} error={e.costo?.message} {...register('costo')} />
+          <Entrada etiqueta="Costo" inputMode="numeric" placeholder="Ej. Gratuito" disabled={gratuito} error={e.costo?.message} {...register('costo')} />
           <Casilla etiqueta="Gratuito" {...register('es_gratuito')} />
         </div>
       </div>
-      <AreaTexto etiqueta="Descripción" placeholder="Escribe una descripción breve de la oportunidad" {...register('descripcion')} />
+      <AreaTexto etiqueta="Descripción" rows={3} placeholder="Escribe una descripción breve de la oportunidad" {...register('descripcion')} />
       <Entrada etiqueta="Link de referencia" placeholder="https://" error={e.link?.message} {...register('link')} />
-      <CampoImagen actual={registro?.imagen} archivo={imagen} onCambiar={setImagen} />
+      <div className="grid items-start gap-5 sm:grid-cols-2">
+        <CampoImagen actual={registro?.imagen} archivo={imagen} onCambiar={setImagen} />
+        <Selector etiqueta="Estado" opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo' }]} {...register('estado_fe')} />
+      </div>
     </FormularioCrud>
   );
 }

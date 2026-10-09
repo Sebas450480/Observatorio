@@ -1,15 +1,35 @@
-import {
-  Award, Briefcase, CalendarDays, Download, FileText, Globe, GraduationCap, Hash, Landmark, Mail, MapPin, Navigation, Pencil,
-  Phone, Ruler, Share2, Tag, Trash2, User, Activity,
-} from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { mensajeDeError, urlDescarga } from '../../api/cliente';
 import { registrarActividad, useDetalle, useEliminar } from '../../api/consultas';
 import type { Empresa } from '../../api/tipos';
+import actividad14 from '../../assets/figma/perfil/actividad-14.svg';
+import actividad16 from '../../assets/figma/perfil/actividad-16.svg';
+import calendario16 from '../../assets/figma/perfil/calendario-16.svg';
+import compartir14 from '../../assets/figma/perfil/compartir-14.svg';
+import contacto14 from '../../assets/figma/perfil/contacto-14.svg';
+import correo16 from '../../assets/figma/perfil/correo-16.svg';
+import descargar14 from '../../assets/figma/perfil/descargar-14.svg';
+import direccion16 from '../../assets/figma/perfil/direccion-16.svg';
+import documento from '../../assets/figma/perfil/documento.svg';
+import editar from '../../assets/figma/perfil/editar.svg';
+import etiqueta from '../../assets/figma/perfil/etiqueta.svg';
+import maletin16 from '../../assets/figma/perfil/maletin-16.svg';
+import mapa16 from '../../assets/figma/perfil/mapa-16.svg';
+import numeral from '../../assets/figma/perfil/numeral.svg';
+import personas16 from '../../assets/figma/perfil/personas-16.svg';
+import premio16 from '../../assets/figma/perfil/premio-16.svg';
+import telefono16 from '../../assets/figma/perfil/telefono-16.svg';
+import ubicacion14 from '../../assets/figma/perfil/ubicacion-14.svg';
+import ubicacion16 from '../../assets/figma/perfil/ubicacion-16.svg';
+import volver from '../../assets/figma/perfil/volver.svg';
+import web16 from '../../assets/figma/perfil/web-16.svg';
+import iconoCorreo from '../../assets/figma/modal/correo.svg';
+import iconoMaletin from '../../assets/figma/modal/maletin.svg';
+import iconoTelefono from '../../assets/figma/modal/telefono.svg';
+import iconoUbicacion from '../../assets/figma/modal/ubicacion.svg';
 import { ModalCompartir } from '../../componentes/contenido/Controles';
-import { Boton } from '../../componentes/ui/Boton';
-import { Cargando, InsigniaEstado, MensajeError, Tarjeta } from '../../componentes/ui/Elementos';
+import { Cargando, MensajeError } from '../../componentes/ui/Elementos';
 import { Aviso, Confirmacion, Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
 import { nombreEmpresa, Portada } from './DirectorioEmpresas';
@@ -17,27 +37,33 @@ import { nombreEmpresa, Portada } from './DirectorioEmpresas';
 /** Migas de pan: "← Empresas coformadoras / Ver perfil". */
 export function Migas({ actual }: { actual: string }) {
   return (
-    <nav aria-label="Migas de pan" className="mb-4 flex items-center gap-1.5 text-caption text-texto-suave">
-      <Link to="/empresas" className="hover:underline">
-        ← Empresas coformadoras
+    <nav aria-label="Migas de pan" className="mb-6 mt-0.5 flex items-center gap-2 text-small font-medium text-[#64748b]">
+      <Link to="/empresas" className="flex items-center gap-2 hover:underline">
+        <img src={volver} alt="" aria-hidden className="size-3.5" /> Empresas coformadoras
       </Link>
       <span aria-hidden>/</span>
-      <span className="font-semibold text-azul-titulo">{actual}</span>
+      <span className="font-semibold text-[#0a3eb3]">{actual}</span>
     </nav>
   );
 }
 
-function Dato({ icono, etiqueta, children }: { icono: ReactNode; etiqueta: string; children: ReactNode }) {
+/** Dato de la ficha: ícono azul en cuadro gris, etiqueta y valor. */
+export function Dato({ icono, etiqueta, children }: { icono: string; etiqueta: string; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="grid size-7 shrink-0 place-items-center rounded-md bg-fondo text-azul-titulo [&_svg]:size-3.5">{icono}</span>
-      <div className="min-w-0">
-        <p className="text-[13px] text-texto-suave">{etiqueta}</p>
-        <div className="break-words text-caption font-semibold text-texto">{children || '—'}</div>
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#f1f5f9]">
+        <img src={icono} alt="" aria-hidden className="size-4" />
+      </span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="text-caption font-medium tracking-[0.5px] text-[#64748b]">{etiqueta}</p>
+        <div className="break-words text-small font-semibold text-[#0a1c40]">{children || '—'}</div>
       </div>
     </div>
   );
 }
+
+export const TARJETA = 'rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.02)]';
+const BOTON_ACCION = 'inline-flex h-[43px] w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] px-4 text-small';
 
 /** Perfil de una empresa coformadora (Figma: "Empresas coformadoras — Ver perfil"). */
 export function PerfilEmpresa() {
@@ -67,112 +93,171 @@ export function PerfilEmpresa() {
   return (
     <>
       <Migas actual="Ver perfil" />
-      <Tarjeta className="overflow-hidden">
-        <Portada empresa={empresa} className="h-[150px] w-full sm:h-[190px]" />
-        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
-          <div className="flex items-start gap-4">
+      <section className={`overflow-hidden ${TARJETA}`}>
+        <Portada empresa={empresa} className="h-[150px] w-full sm:h-[185px]" />
+        <div className={`flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-8 ${gestiona ? 'sm:min-h-[153px]' : ''}`}>
+          <div className="flex items-start gap-6">
             {empresa.logo_ec && <img src={empresa.logo_ec} alt={`Logo de ${nombre}`} className="size-16 rounded-lg border border-borde bg-white object-contain p-1" />}
-            <div>
-              <h1 className="text-[24px] font-bold text-azul-titulo sm:text-titulo">{nombre}</h1>
-              <p className="mt-1 flex items-center gap-1.5 text-small text-texto-suave">
-                <Tag className="size-4" aria-hidden /> {empresa.sector_economico}
+            <div className="flex flex-col gap-2">
+              <h1 className="text-[24px] font-extrabold text-[#0a1c40] sm:text-titulo">{nombre}</h1>
+              <p className="flex items-center gap-1.5 text-small text-[#64748b] sm:text-body">
+                <img src={etiqueta} alt="" aria-hidden className="size-3.5" /> {empresa.sector_economico}
               </p>
-              <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-caption text-texto">
-                <span className="flex items-center gap-1">
-                  <Hash className="size-3.5" aria-hidden /> NIT: {empresa.nit}
+              <p className="flex flex-wrap gap-x-6 gap-y-1 pt-2 text-small font-medium text-[#1e293b]">
+                <span className="flex items-center gap-1.5">
+                  <img src={numeral} alt="" aria-hidden className="size-3.5" /> NIT: {empresa.nit}
                 </span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="size-3.5" aria-hidden /> {ubicacion}
+                <span className="flex items-center gap-1.5">
+                  <img src={ubicacion14} alt="" aria-hidden className="size-3.5" /> {ubicacion}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <img src={actividad14} alt="" aria-hidden className="size-3.5" /> Sector: {empresa.sector_economico}
                 </span>
               </p>
             </div>
           </div>
           {gestiona && (
             <div className="flex gap-3">
-              <Boton variante="secundario" tamano="sm" pildora icono={<Pencil className="size-3.5" />} onClick={() => navegar(`/empresas/${empresa.id_ec}/editar`)}>
-                Editar
-              </Boton>
-              <Boton variante="peligro" tamano="sm" pildora icono={<Trash2 className="size-3.5" />} onClick={() => setModal('eliminar')}>
+              <button
+                type="button"
+                onClick={() => navegar(`/empresas/${empresa.id_ec}/editar`)}
+                className="inline-flex h-[42px] cursor-pointer items-center gap-2 rounded-full border border-[#e2e8f0] bg-white px-5 text-body font-semibold text-[#64748b] hover:bg-fondo"
+              >
+                <img src={editar} alt="" aria-hidden className="size-3.5" /> Editar
+              </button>
+              <button
+                type="button"
+                onClick={() => setModal('eliminar')}
+                className="inline-flex h-[42px] cursor-pointer items-center rounded-full border border-rojo-activo bg-[#fff2f2] px-5 text-body font-semibold text-rojo-activo hover:bg-rojo-claro"
+              >
                 Eliminar
-              </Boton>
+              </button>
             </div>
           )}
         </div>
-      </Tarjeta>
+      </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_250px] xl:grid-cols-[1fr_300px]">
-        <Tarjeta className="p-5 sm:p-6">
-          <h2 className="mb-3 flex items-center gap-2 text-body font-bold text-azul-titulo">
-            <FileText className="size-4" aria-hidden /> Información de la empresa
+      <div className={`mt-6 grid items-start gap-4 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_400px] ${gestiona ? 'xl:mt-[43px]' : 'xl:mt-[15px]'}`}>
+        <section className={`flex flex-col gap-6 p-5 sm:p-8 ${TARJETA}`}>
+          <h2 className="flex items-center gap-2.5 text-subtitle font-extrabold text-[#0a1c40]">
+            <img src={documento} alt="" aria-hidden className="size-[18px]" /> Información de la empresa
           </h2>
-          {empresa.descripcion && <p className="whitespace-pre-line text-small leading-relaxed text-texto">{empresa.descripcion}</p>}
-          <hr className="my-5 border-borde" />
+          {empresa.descripcion && <p className="whitespace-pre-line text-small text-[#1e293b] sm:text-body">{empresa.descripcion}</p>}
+          <hr className="border-[#e2e8f0]" />
           <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-            <Dato icono={<Award />} etiqueta="Nombre comercial">{empresa.nombre_comercial}</Dato>
-            <Dato icono={<Activity />} etiqueta="Sector">{empresa.sector_economico}</Dato>
-            <Dato icono={<MapPin />} etiqueta="Departamento">{empresa.departamento}</Dato>
-            <Dato icono={<MapPin />} etiqueta="Municipio">{empresa.municipio}</Dato>
-            <Dato icono={<Navigation />} etiqueta="Dirección">{empresa.direccion}</Dato>
-            <Dato icono={<Mail />} etiqueta="Correo electrónico">
+            <Dato icono={premio16} etiqueta="Nombre comercial">{empresa.nombre_comercial}</Dato>
+            <Dato icono={actividad16} etiqueta="Sector">{empresa.sector_economico}</Dato>
+            <Dato icono={mapa16} etiqueta="Departamento">{empresa.departamento}</Dato>
+            <Dato icono={ubicacion16} etiqueta="Municipio">{empresa.municipio}</Dato>
+            <Dato icono={direccion16} etiqueta="Dirección">{empresa.direccion}</Dato>
+            <Dato icono={correo16} etiqueta="Correo electrónico">
               {empresa.correo && <a href={`mailto:${empresa.correo}`} className="hover:underline">{empresa.correo}</a>}
             </Dato>
-            <Dato icono={<Phone />} etiqueta="Teléfono">{empresa.telefono}</Dato>
-            <Dato icono={<Globe />} etiqueta="Sitio web">
+            <Dato icono={telefono16} etiqueta="Teléfono">{empresa.telefono}</Dato>
+            <Dato icono={web16} etiqueta="Sitio web">
               {empresa.link && (
                 <a href={empresa.link} target="_blank" rel="noreferrer" className="hover:underline">
                   {empresa.link.replace(/^https?:\/\//, '')}
                 </a>
               )}
             </Dato>
-            <Dato icono={<Landmark />} etiqueta="Código CIIU">{empresa.codigo_ciiu}</Dato>
-            <Dato icono={<Briefcase />} etiqueta="Tipo de empresa">{empresa.naturaleza_juridica}</Dato>
-            <Dato icono={<Ruler />} etiqueta="Tamaño">{empresa.tamano_empresa}</Dato>
-            <Dato icono={<CalendarDays />} etiqueta="Año de constitución">{empresa.anio_constitucion}</Dato>
-            <Dato icono={<GraduationCap />} etiqueta="Estudiantes recibidos">{`${empresa.estudiantes_recibidos} estudiantes`}</Dato>
-            <Dato icono={<Award />} etiqueta="Premios recibidos">{`${empresa.premios_recibidos} reconocimientos`}</Dato>
-            <Dato icono={<CalendarDays />} etiqueta="Tiempo como coformadora">{empresa.tiempo_coformadora}</Dato>
+            {empresa.codigo_ciiu ? <Dato icono={maletin16} etiqueta="Código CIIU">{empresa.codigo_ciiu}</Dato> : <span aria-hidden className="hidden xl:block" />}
+            <Dato icono={maletin16} etiqueta="Tipo de empresa">{empresa.naturaleza_juridica}</Dato>
+            <Dato icono={personas16} etiqueta="Tamaño">{empresa.tamano_empresa}</Dato>
+            <Dato icono={calendario16} etiqueta="Año de constitución">{empresa.anio_constitucion}</Dato>
+            <Dato icono={personas16} etiqueta="Estudiantes recibidos">{`${empresa.estudiantes_recibidos} estudiantes`}</Dato>
+            <Dato icono={premio16} etiqueta="Premios recibidos">{`${empresa.premios_recibidos} reconocimientos`}</Dato>
+            <Dato icono={calendario16} etiqueta="Tiempo como coformadora">{empresa.tiempo_coformadora}</Dato>
           </div>
-        </Tarjeta>
+        </section>
 
-        <Tarjeta className="h-fit p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-small font-bold text-azul-titulo">Estado y acciones</h2>
-            <InsigniaEstado estado={empresa.estado_ec ?? 'Activo'} />
+        <section className={`flex flex-col gap-5 p-6 ${TARJETA}`}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-body font-extrabold text-[#0a1c40]">{gestiona ? 'Estado y acciones' : 'Acciones'}</h2>
+            {gestiona && (
+              <span
+                className={`rounded-full px-2 py-1 text-caption font-bold ${
+                  (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
+                }`}
+              >
+                {empresa.estado_ec ?? 'Activo'}
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-2.5">
-            <Boton variante="azul" tamano="sm" icono={<User className="size-3.5" />} onClick={() => setModal('contacto')}>
-              Ver contacto principal
-            </Boton>
-            <a
-              href={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-control bg-fondo text-caption font-semibold text-azul-titulo hover:bg-[#e8ebee]"
-            >
-              <Download className="size-3.5" aria-hidden /> Descargar información
+            <button type="button" onClick={() => setModal('contacto')} className={`${BOTON_ACCION} bg-[#0a3eb3] font-bold text-white hover:bg-azul`}>
+              <img src={contacto14} alt="" aria-hidden className="size-3.5" /> Ver contacto principal
+            </button>
+            <a href={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })} className={`${BOTON_ACCION} bg-[#f1f5f9] font-semibold text-[#1e293b] hover:bg-[#e2e8f0]`}>
+              <img src={descargar14} alt="" aria-hidden className="size-3.5" /> Descargar información
             </a>
-            <Boton variante="secundario" tamano="sm" icono={<Share2 className="size-3.5" />} onClick={() => setModal('compartir')}>
-              Compartir
-            </Boton>
+            <button type="button" onClick={() => setModal('compartir')} className={`${BOTON_ACCION} border border-[#e2e8f0] font-semibold text-[#64748b] hover:bg-fondo`}>
+              <img src={compartir14} alt="" aria-hidden className="size-3.5" /> Compartir
+            </button>
           </div>
-        </Tarjeta>
+        </section>
       </div>
 
-      <Modal abierto={modal === 'contacto'} onCerrar={() => setModal(null)} titulo="Contacto principal" subtitulo={nombre} ancho={480}>
+      <Modal
+        abierto={modal === 'contacto'}
+        onCerrar={() => setModal(null)}
+        titulo="Contacto principal"
+        subtitulo="Ficha de información de contacto de la empresa coformadora."
+        ancho={438}
+        pie={
+          <div className="flex justify-end">
+            <button type="button" onClick={() => setModal(null)} className="h-[42px] cursor-pointer rounded-lg border border-[#e2e8f0] px-5 text-body font-semibold text-[#64748b] hover:bg-fondo">
+              Cerrar
+            </button>
+          </div>
+        }
+      >
         {principal ? (
-          <div className="flex flex-col gap-4">
-            <Dato icono={<User />} etiqueta="Nombre">{principal.nombre}</Dato>
-            <Dato icono={<Briefcase />} etiqueta="Cargo">{principal.cargo}</Dato>
-            <Dato icono={<Mail />} etiqueta="Correo corporativo">
-              {principal.correo && <a href={`mailto:${principal.correo}`} className="hover:underline">{principal.correo}</a>}
-            </Dato>
-            <Dato icono={<Phone />} etiqueta="Teléfono">
-              {principal.telefono && <a href={`tel:${principal.telefono.replace(/\s/g, '')}`} className="hover:underline">{principal.telefono}</a>}
-            </Dato>
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <span className="grid size-16 shrink-0 place-items-center rounded-full border border-[#e2e8f0] bg-[#f1f5f9] text-subtitle font-bold text-[#071f5d]">
+                {principal.nombre
+                  .split(' ')
+                  .slice(0, 2)
+                  .map((p) => p[0])
+                  .join('')}
+              </span>
+              <div className="flex min-w-0 flex-col items-start gap-1">
+                <p className="text-subtitle font-bold text-[#071f5d]">{principal.nombre}</p>
+                {principal.cargo && <p className="text-small text-[#64748b]">{principal.cargo}</p>}
+                {principal.es_principal && <span className="rounded bg-[#dcfce7] px-2 py-0.5 text-caption font-semibold text-[#15803d]">Principal</span>}
+              </div>
+            </div>
+            <ul className="flex flex-col gap-3 text-small text-[#0f172a]">
+              {principal.telefono && (
+                <li className="flex items-center gap-3">
+                  <img src={iconoTelefono} alt="Teléfono" className="size-4 shrink-0" />
+                  <a href={`tel:${principal.telefono.replace(/\s/g, '')}`} className="hover:underline">{principal.telefono}</a>
+                </li>
+              )}
+              {principal.correo && (
+                <li className="flex min-w-0 items-center gap-3">
+                  <img src={iconoCorreo} alt="Correo" className="size-4 shrink-0" />
+                  <a href={`mailto:${principal.correo}`} className="truncate hover:underline">{principal.correo}</a>
+                </li>
+              )}
+              {ubicacion && (
+                <li className="flex items-center gap-3">
+                  <img src={iconoUbicacion} alt="Ubicación" className="size-4 shrink-0" />
+                  {[empresa.municipio, empresa.departamento].filter(Boolean).join(', ')}
+                </li>
+              )}
+              <li className="flex items-center gap-3">
+                <img src={iconoMaletin} alt="Empresa" className="size-4 shrink-0" />
+                {nombre}
+              </li>
+            </ul>
           </div>
         ) : (
           <p className="text-small text-texto-suave">Esta empresa todavía no tiene un contacto registrado.</p>
         )}
       </Modal>
-      <ModalCompartir abierto={modal === 'compartir'} onCerrar={() => setModal(null)} titulo={nombre} ruta={`/empresas/${empresa.id_ec}`} tipo="Empresa" id={empresa.id_ec} />
+      <ModalCompartir abierto={modal === 'compartir'} onCerrar={() => setModal(null)} titulo={nombre} ruta={`/empresas/${empresa.id_ec}`} tipo="Empresa" id={empresa.id_ec} nombreTipo="empresa" descarga={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })} />
       <Confirmacion
         abierto={modal === 'eliminar'}
         titulo="Eliminar empresa"

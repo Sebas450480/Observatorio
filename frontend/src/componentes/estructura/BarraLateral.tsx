@@ -1,25 +1,27 @@
-import { BarChart3, Building2, CalendarDays, CircleUser, House, Lightbulb, Megaphone, TrendingUp, X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { X } from 'lucide-react';
 import { NavLink } from 'react-router';
-import logo from '../../assets/logo-observatorio.png';
+import circuloAzul from '../../assets/figma/decoraciones/circulo-azul-lateral.svg';
+import circuloRojo from '../../assets/figma/decoraciones/circulo-rojo-lateral.svg';
+import { ICONOS_MODULO, type Modulo } from '../../assets/figma/iconos';
+import logo from '../../assets/figma/logo-observatorio.png';
 import { useSesion } from '../../sesion/sesion';
 
 interface Opcion {
   ruta: string;
   texto: string;
-  icono: ReactNode;
+  icono: Modulo;
   soloSuperAdmin?: boolean;
 }
 
 const OPCIONES: Opcion[] = [
-  { ruta: '/inicio', texto: 'Inicio', icono: <House /> },
-  { ruta: '/flash-informativo', texto: 'Flash informativo', icono: <Megaphone /> },
-  { ruta: '/faro-empresarial', texto: 'Faro Empresarial', icono: <Lightbulb /> },
-  { ruta: '/empresas', texto: 'Empresas coformadoras', icono: <Building2 /> },
-  { ruta: '/tendencias', texto: 'Tendencias', icono: <TrendingUp /> },
-  { ruta: '/eventos', texto: 'Eventos institucionales', icono: <CalendarDays /> },
-  { ruta: '/usuarios', texto: 'Usuarios', icono: <CircleUser />, soloSuperAdmin: true },
-  { ruta: '/estadisticas', texto: 'Estadísticas', icono: <BarChart3 />, soloSuperAdmin: true },
+  { ruta: '/inicio', texto: 'Inicio', icono: 'inicio' },
+  { ruta: '/flash-informativo', texto: 'Flash informativo', icono: 'flash' },
+  { ruta: '/faro-empresarial', texto: 'Faro Empresarial', icono: 'faro' },
+  { ruta: '/empresas', texto: 'Empresas coformadoras', icono: 'empresas' },
+  { ruta: '/tendencias', texto: 'Tendencias', icono: 'tendencias' },
+  { ruta: '/eventos', texto: 'Eventos institucionales', icono: 'eventos' },
+  { ruta: '/usuarios', texto: 'Usuarios', icono: 'usuarios', soloSuperAdmin: true },
+  { ruta: '/estadisticas', texto: 'Estadísticas', icono: 'estadisticas', soloSuperAdmin: true },
 ];
 
 /** Barra lateral azul con el logo y el "Menú principal" según el rol. */
@@ -36,34 +38,31 @@ export function BarraLateral({ abierto, onCerrar }: { abierto: boolean; onCerrar
         }`}
         aria-label="Menú principal"
       >
-        <div className="flex h-[140px] shrink-0 items-center justify-between px-6 lg:px-[29px]">
+        <div className="flex h-[142px] shrink-0 items-start justify-between px-6 pt-[42px] lg:pl-[29px] lg:pr-[19px]">
           <NavLink to="/inicio" aria-label="Ir al inicio">
-            <img src={logo} alt="Uniempresarial · Observatorio Empresarial" className="h-auto w-[230px] lg:w-[277px]" />
+            <img src={logo} alt="Uniempresarial · Observatorio Empresarial" className="h-auto w-[230px] max-w-none lg:w-[277px]" />
           </NavLink>
           <button type="button" onClick={onCerrar} className="cursor-pointer p-2 lg:hidden" aria-label="Cerrar menú">
             <X className="size-5" />
           </button>
         </div>
-        <nav className="relative flex-1 overflow-hidden rounded-tr-[25px] bg-azul px-[14px] pt-7">
-          {/* Círculos decorativos de la barra lateral (Figma) */}
-          <span aria-hidden className="pointer-events-none absolute -left-[75px] bottom-[30px] size-[150px] rounded-full border-[34px] border-rojo-activo" />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -right-[160px] bottom-[50px] size-[400px] rounded-full border-[70px] border-white/[0.07]"
-          />
-          <p className="relative mb-3 px-[22px] text-subtitle font-bold tracking-[0.02em] text-menu-tenue">Menú principal</p>
+        <nav className="relative flex-1 overflow-hidden rounded-tr-[25px] bg-azul px-[14px] pt-[29px]">
+          {/* Medios círculos decorativos de la barra lateral (Figma) */}
+          <img src={circuloRojo} alt="" aria-hidden width={76} height={155} className="pointer-events-none absolute bottom-[26px] left-0" />
+          <img src={circuloAzul} alt="" aria-hidden width={400} height={414} className="pointer-events-none absolute bottom-[39px] left-[125px] max-w-none" />
+          <p className="relative mb-4 px-[22px] text-subtitle font-bold tracking-[0.02em] text-menu-tenue">Menú principal</p>
           <ul className="relative flex flex-col gap-2.5">
             {opciones.map((o) => (
               <li key={o.ruta}>
                 <NavLink
                   to={o.ruta}
                   className={({ isActive }) =>
-                    `flex h-[52px] items-center gap-3.5 rounded-xl px-4 text-body font-bold text-white transition-colors [&_svg]:size-6 [&_svg]:shrink-0 ${
+                    `flex h-[52px] items-center gap-3.5 rounded-xl px-4 text-body font-bold text-white transition-colors ${
                       isActive ? 'bg-rojo-activo' : 'hover:bg-white/10'
                     }`
                   }
                 >
-                  {o.icono}
+                  <img src={ICONOS_MODULO[o.icono]} alt="" aria-hidden className="size-7 shrink-0 object-contain" />
                   {o.texto}
                 </NavLink>
               </li>

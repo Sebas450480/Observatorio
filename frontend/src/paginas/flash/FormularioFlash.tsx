@@ -4,6 +4,11 @@ import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { useCategorias, useEliminar, useGuardar, useSubirImagen } from '../../api/consultas';
 import { MODALIDADES, TIPOS_EVENTO, type Flash } from '../../api/tipos';
+import iconoCalendario from '../../assets/figma/campos/calendario.svg';
+import iconoCosto from '../../assets/figma/campos/costo.svg';
+import iconoHora from '../../assets/figma/campos/hora.svg';
+import iconoModalidad from '../../assets/figma/campos/modalidad.svg';
+import iconoUbicacion from '../../assets/figma/campos/ubicacion.svg';
 import { CampoImagen, SelectorCategorias } from '../../componentes/contenido/Controles';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { AreaTexto, Casilla, Entrada, Selector } from '../../componentes/ui/Campos';
@@ -101,7 +106,7 @@ export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCe
       onCerrar={onCerrar}
     >
       <Entrada etiqueta="Título del evento" placeholder="Escribe el título del evento" obligatorio error={e.titulo?.message} {...register('titulo')} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         <Selector
           etiqueta="Tipo de evento"
           obligatorio
@@ -111,23 +116,25 @@ export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCe
           {...register('tipo_evento')}
         />
         <Selector etiqueta="Departamento" vacio="Selecciona el departamento" opciones={DEPARTAMENTOS} {...register('departamento')} />
-        <Entrada etiqueta="Fecha de inicio" type="date" obligatorio error={e.fecha_inicio?.message} {...register('fecha_inicio')} />
-        <Entrada etiqueta="Horario de inicio" type="time" obligatorio error={e.hora_inicio?.message} {...register('hora_inicio')} />
-        <Entrada etiqueta="Fecha de finalización" type="date" error={e.fecha_fin?.message} {...register('fecha_fin')} />
-        <Entrada etiqueta="Horario de finalización" type="time" {...register('hora_fin')} />
+        <Entrada etiqueta="Fecha de inicio" type="date" obligatorio icono={<img src={iconoCalendario} alt="" className="size-4" />} error={e.fecha_inicio?.message} {...register('fecha_inicio')} />
+        <Entrada etiqueta="Horario de inicio" type="time" obligatorio icono={<img src={iconoHora} alt="" className="size-4" />} error={e.hora_inicio?.message} {...register('hora_inicio')} />
+        <Entrada etiqueta="Fecha de finalización" type="date" icono={<img src={iconoCalendario} alt="" className="size-4" />} error={e.fecha_fin?.message} {...register('fecha_fin')} />
+        <Entrada etiqueta="Horario de finalización" type="time" icono={<img src={iconoHora} alt="" className="size-4" />} {...register('hora_fin')} />
         <Selector
           etiqueta="Modalidad"
           obligatorio
           vacio="Selecciona la modalidad"
+          icono={<img src={iconoModalidad} alt="" className="size-4" />}
           opciones={MODALIDADES.map((m) => ({ valor: m, texto: modalidadTexto(m) }))}
           error={e.modalidad?.message}
           {...register('modalidad')}
         />
         <div className="flex flex-col gap-2">
           <Entrada
-            etiqueta="Costo de participación (COP)"
+            etiqueta="Costo de participación"
             inputMode="numeric"
-            placeholder="Ej. 150000"
+            placeholder="Ej. Gratuito"
+            icono={<img src={iconoCosto} alt="" className="size-4" />}
             disabled={gratuito}
             error={e.costo?.message}
             {...register('costo')}
@@ -135,13 +142,15 @@ export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCe
           <Casilla etiqueta="Gratuito" {...register('es_gratuito')} />
         </div>
       </div>
-      <AreaTexto etiqueta="Descripción del evento" placeholder="Escribe la descripción del evento" {...register('descripcion')} />
-      <Entrada etiqueta="Lugar de referencia" placeholder="Ingresa la ubicación" error={e.lugar?.message} {...register('lugar')} />
+      <AreaTexto etiqueta="Descripción del evento" rows={3} placeholder="Escribe la descripción del evento" {...register('descripcion')} />
+      <Entrada etiqueta="Lugar de referencia" placeholder="Ingresa la ubicación" icono={<img src={iconoUbicacion} alt="" className="size-4" />} error={e.lugar?.message} {...register('lugar')} />
       <Entrada etiqueta="Link de referencia" placeholder="https://" error={e.link?.message} {...register('link')} />
+      <div className="grid items-start gap-5 sm:grid-cols-2">
+        <CampoImagen etiqueta="Imagen del evento" actual={registro?.imagen} archivo={imagen} onCambiar={setImagen} />
+        <Selector etiqueta="Estado" opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo' }]} {...register('estado_fi')} />
+      </div>
       <AreaTexto etiqueta="Información clave" rows={3} ayuda="Una idea por línea; se muestran como viñetas." placeholder="• Escribe una nota" {...register('info_adicional')} />
       <SelectorCategorias categorias={categorias} seleccion={seleccion} onCambiar={setSeleccion} />
-      <CampoImagen etiqueta="Imagen del evento" actual={registro?.imagen} archivo={imagen} onCambiar={setImagen} />
-      <Selector etiqueta="Estado" opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo' }]} {...register('estado_fi')} />
     </FormularioCrud>
   );
 }

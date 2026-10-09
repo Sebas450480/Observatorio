@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { BarraLateral } from './BarraLateral';
 import { BarraSuperior } from './BarraSuperior';
+import semicirculo from '../../assets/figma/decoraciones/semicirculo.svg';
 
 /**
  * Estructura de todas las pantallas internas: barra lateral azul con el menú,
@@ -18,7 +19,7 @@ export function Estructura() {
   }
 
   return (
-    <div className="min-h-screen bg-fondo lg:pl-[325px]">
+    <div className="relative min-h-screen overflow-x-clip bg-fondo lg:pl-[325px]">
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded focus:bg-white focus:px-4 focus:py-2"
@@ -26,14 +27,18 @@ export function Estructura() {
         Saltar al contenido
       </a>
       <BarraLateral abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
+      {/* Semicírculo decorativo rojo de la esquina superior derecha (Figma), detrás de la barra superior */}
+      <img
+        src={semicirculo}
+        alt=""
+        aria-hidden
+        width={136}
+        height={315}
+        className="pointer-events-none absolute right-0 top-0 hidden xl:block"
+      />
       <BarraSuperior onAbrirMenu={() => setMenuAbierto(true)} />
-      <main id="contenido" className="relative overflow-x-clip px-4 pb-16 pt-6 sm:px-6 lg:px-8 xl:px-[30px]">
-        {/* Semicírculo decorativo rojo de la esquina superior derecha (Figma) */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-[130px] right-[-150px] hidden size-[260px] rounded-full border-[42px] border-[#f04d64] opacity-90 xl:block"
-        />
-        <div className="relative mx-auto max-w-[1520px]">
+      <main id="contenido" className="relative overflow-x-clip px-4 pb-16 pt-6 sm:px-6 lg:px-8 xl:pb-[60px] xl:pl-[30px] xl:pr-[61px] xl:pt-[17px]">
+        <div className="relative max-w-[1504px] min-[1921px]:mx-auto">
           <Outlet />
         </div>
       </main>

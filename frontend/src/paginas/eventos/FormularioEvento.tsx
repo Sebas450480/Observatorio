@@ -76,7 +76,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
     <FormularioCrud
       abierto
       modo={registro ? 'editar' : 'crear'}
-      titulo={registro ? 'Editar evento' : 'Nuevo evento'}
+      titulo={registro ? 'Editar evento' : 'Crear evento'}
       sustantivo={{ palabra: 'evento', demostrativo: 'este' }}
       validar={() => trigger()}
       guardar={guardar}
@@ -84,15 +84,19 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
       onCerrar={onCerrar}
     >
       <Entrada etiqueta="Título del evento" obligatorio placeholder="Escribe el título del evento" error={e.titulo?.message} {...register('titulo')} />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Selector
-          etiqueta="Tipo de evento"
-          obligatorio
-          vacio="Selecciona el tipo"
-          opciones={TIPOS_EVENTO.map((t) => ({ valor: t, texto: t }))}
-          error={e.tipo_evento?.message}
-          {...register('tipo_evento')}
-        />
+      <Selector
+        etiqueta="Tipo de evento"
+        obligatorio
+        vacio="Selecciona el tipo"
+        opciones={TIPOS_EVENTO.map((t) => ({ valor: t, texto: t }))}
+        error={e.tipo_evento?.message}
+        {...register('tipo_evento')}
+      />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Entrada etiqueta="Fecha de inicio" type="date" obligatorio error={e.fecha_inicio?.message} {...register('fecha_inicio')} />
+        <Entrada etiqueta="Horario de inicio" type="time" obligatorio error={e.hora_inicio?.message} {...register('hora_inicio')} />
+        <Entrada etiqueta="Fecha de finalización" type="date" ayuda="Vacía = el mismo día" error={e.fecha_fin?.message} {...register('fecha_fin')} />
+        <Entrada etiqueta="Horario de finalización" type="time" {...register('hora_fin')} />
         <Selector
           etiqueta="Modalidad"
           obligatorio
@@ -101,18 +105,16 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
           error={e.modalidad?.message}
           {...register('modalidad')}
         />
-        <Entrada etiqueta="Fecha de inicio" type="date" obligatorio error={e.fecha_inicio?.message} {...register('fecha_inicio')} />
-        <Entrada etiqueta="Hora de inicio" type="time" obligatorio error={e.hora_inicio?.message} {...register('hora_inicio')} />
-        <Entrada etiqueta="Fecha de finalización" type="date" ayuda="Vacía = el mismo día" error={e.fecha_fin?.message} {...register('fecha_fin')} />
-        <Entrada etiqueta="Hora de finalización" type="time" {...register('hora_fin')} />
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Entrada etiqueta="Costo (COP)" inputMode="numeric" placeholder="Ej. 150000" disabled={gratuito} error={e.costo?.message} {...register('costo')} />
+        <div className="flex flex-col gap-2">
+          <Entrada etiqueta="Costo de participación" inputMode="numeric" placeholder="Ingresa el costo" disabled={gratuito} error={e.costo?.message} {...register('costo')} />
           <Casilla etiqueta="Gratuito" {...register('es_gratuito')} />
         </div>
       </div>
-      <Entrada etiqueta="Lugar" placeholder="Ej. Auditorio principal, sede Bogotá" {...register('lugar')} />
-      <Entrada etiqueta="Enlace externo" placeholder="https://" error={e.link_externo?.message} {...register('link_externo')} />
-      <AreaTexto etiqueta="Descripción" placeholder="Describe el evento" {...register('descripcion')} />
+      <AreaTexto etiqueta="Descripción del evento" rows={3} placeholder="Escribe la descripción del evento" {...register('descripcion')} />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Entrada etiqueta="Lugar de referencia" placeholder="Ingresa la ubicación" {...register('lugar')} />
+        <Entrada etiqueta="Link de referencia" placeholder="Ingresa el enlace" error={e.link_externo?.message} {...register('link_externo')} />
+      </div>
     </FormularioCrud>
   );
 }

@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { Camera, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
@@ -8,14 +7,16 @@ import { z } from 'zod';
 import { ErrorApi, api, mensajeDeError } from '../../api/cliente';
 import { useDetalle, useGuardar, useSubirImagen } from '../../api/consultas';
 import { TAMANOS, type Empresa } from '../../api/tipos';
+import iconoDocumento from '../../assets/figma/perfil/documento.svg';
+import iconoEtiqueta from '../../assets/figma/perfil/etiqueta.svg';
 import { CampoImagen, useVistaPrevia } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { AreaTexto, Entrada, Selector } from '../../componentes/ui/Campos';
-import { Cargando, MensajeError, Tarjeta } from '../../componentes/ui/Elementos';
+import { Cargando, MensajeError } from '../../componentes/ui/Elementos';
 import { Aviso, Confirmacion } from '../../componentes/ui/Modal';
 import { DEPARTAMENTOS } from '../../utilidades/colombia';
 import { useResumenEmpresas } from './DirectorioEmpresas';
-import { Migas } from './PerfilEmpresa';
+import { Migas, TARJETA } from './PerfilEmpresa';
 
 const NATURALEZAS = ['Privada', 'Pública', 'Mixta', 'Sin ánimo de lucro'].map((n) => ({ valor: n, texto: n }));
 const entero = z.string().regex(/^\d*$/, 'Escribe solo números');
@@ -178,31 +179,36 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
   return (
     <form onSubmit={alEnviar} noValidate>
       <Migas actual={editar ? 'Editar empresa' : 'Nueva empresa'} />
-      <Tarjeta className="overflow-hidden">
-        <div className="relative h-[150px] bg-[#e3e8ef] sm:h-[190px]">
+      <section className={`overflow-hidden ${TARJETA}`}>
+        <div className="relative h-[150px] bg-[#e3e8f0] sm:h-[185px]">
           {portadaActual && <img src={portadaActual} alt="" className="size-full object-cover" />}
-          <label className="absolute right-5 top-4 inline-flex cursor-pointer items-center gap-2 rounded-full bg-white px-4 py-2 text-caption font-semibold text-azul-titulo shadow-tarjeta hover:bg-fondo">
-            <Camera className="size-4" aria-hidden /> {portadaActual ? 'Cambiar portada' : 'Subir portada'}
+          <label className="absolute right-5 top-4 inline-flex h-[41px] cursor-pointer items-center whitespace-pre rounded-full border border-[#d1d9e3] bg-white px-5 text-small font-semibold text-azul-marino hover:bg-fondo sm:right-[34px] sm:top-6">
+            {portadaActual ? '📷  Cambiar portada' : '📷  Subir portada'}
             <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={(ev) => setPortada(ev.target.files?.[0] ?? null)} />
           </label>
         </div>
-        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
-          <div>
-            <h1 className="text-[24px] font-bold text-azul-titulo sm:text-titulo">{editar ? 'Editar empresa coformadora' : 'Nueva empresa coformadora'}</h1>
-            <p className="mt-1 text-small text-texto-suave">
+        <div className="flex flex-col gap-4 px-5 py-6 sm:min-h-[153px] sm:flex-row sm:items-end sm:justify-between sm:px-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[24px] font-extrabold text-[#0a1c40] sm:text-titulo">{editar ? 'Editar empresa coformadora' : 'Nueva empresa coformadora'}</h1>
+            <p className="flex items-center gap-1.5 text-small text-[#788fad] sm:text-body">
+              <img src={iconoEtiqueta} alt="" aria-hidden className="size-3.5" />
               {editar ? 'Actualiza los datos de la empresa' : 'Completa los datos para registrar la empresa'}
             </p>
           </div>
           <div className="flex gap-3">
-            <Boton variante="secundario" tamano="sm" pildora onClick={cancelar}>
+            <button
+              type="button"
+              onClick={cancelar}
+              className="h-[41px] cursor-pointer rounded-full border border-[#d1d9e3] bg-white px-5 text-small font-semibold text-azul-marino hover:bg-fondo"
+            >
               Cancelar
-            </Boton>
-            <Boton type="submit" tamano="sm" pildora cargando={trabajando && !confirmar}>
+            </button>
+            <Boton type="submit" pildora className="h-[39px]! bg-rojo-vivo! px-5! text-small! shadow-none!" cargando={trabajando && !confirmar}>
               {editar ? 'Guardar cambios' : 'Guardar nuevo registro'}
             </Boton>
           </div>
         </div>
-      </Tarjeta>
+      </section>
 
       {errorGeneral && (
         <p role="alert" className="mt-4 rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">
@@ -210,31 +216,31 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
         </p>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_250px] xl:grid-cols-[1fr_300px]">
-        <Tarjeta className="flex flex-col gap-4 p-5 sm:p-6">
-          <h2 className="flex items-center gap-2 text-body font-bold text-azul-titulo">
-            <FileText className="size-4" aria-hidden /> Información de la empresa
+      <div className="mt-6 grid items-start gap-4 lg:grid-cols-[1fr_300px] xl:mt-[43px] xl:grid-cols-[1fr_400px]">
+        <section className={`flex flex-col gap-4 p-5 sm:p-8 ${TARJETA}`}>
+          <h2 className="flex items-center gap-2.5 text-subtitle font-extrabold text-[#0a1c40]">
+            <img src={iconoDocumento} alt="" aria-hidden className="size-[18px]" /> Información de la empresa
           </h2>
-          <AreaTexto etiqueta="Descripción de la empresa" placeholder="Breve descripción de la empresa, su actividad principal y su enfoque." {...register('descripcion')} />
+          <AreaTexto etiqueta="Descripción de la empresa" rows={3} placeholder="Breve descripción de la empresa, su actividad principal y su enfoque." {...register('descripcion')} />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <Entrada etiqueta="Razón social" obligatorio placeholder="Ej. TecnoSoluciones S.A.S." error={e.razon_social?.message} {...register('razon_social')} />
             <Entrada etiqueta="Nombre comercial" placeholder="Ej. TecnoSoluciones" {...register('nombre_comercial')} />
             <Entrada etiqueta="NIT" obligatorio placeholder="900.000.000-0" error={e.nit?.message} {...register('nit')} />
-            <Entrada etiqueta="Sector" obligatorio placeholder="Ej. Tecnología" list="sectores" error={e.sector_economico?.message} {...register('sector_economico')} />
+            <Entrada etiqueta="Sector" obligatorio placeholder="Selecciona el sector" list="sectores" error={e.sector_economico?.message} {...register('sector_economico')} />
             <Selector etiqueta="Tipo de empresa" vacio="Selecciona el tipo" opciones={NATURALEZAS} {...register('naturaleza_juridica')} />
             <Selector etiqueta="Tamaño" vacio="Selecciona el tamaño" opciones={TAMANOS.map((t) => ({ valor: t, texto: t }))} {...register('tamano_empresa')} />
             <Selector etiqueta="Departamento" obligatorio vacio="Selecciona el departamento" opciones={DEPARTAMENTOS} error={e.departamento?.message} {...register('departamento')} />
-            <Entrada etiqueta="Municipio" obligatorio placeholder="Ej. Medellín" error={e.municipio?.message} {...register('municipio')} />
+            <Entrada etiqueta="Municipio" obligatorio placeholder="Selecciona el municipio" error={e.municipio?.message} {...register('municipio')} />
             <Entrada etiqueta="Dirección" placeholder="Ej. Cra 43A # 5-10" {...register('direccion')} />
             <Entrada etiqueta="Teléfono" placeholder="Ej. (604) 444 1234" {...register('telefono')} />
             <Entrada etiqueta="Correo electrónico" type="email" placeholder="Ej. info@empresa.com" error={e.correo?.message} {...register('correo')} />
             <Entrada etiqueta="Sitio web" placeholder="https://www.empresa.com" error={e.link?.message} {...register('link')} />
-            <Entrada etiqueta="Código CIIU" placeholder="Ej. 6201" {...register('codigo_ciiu')} />
             <Entrada etiqueta="Año de constitución" inputMode="numeric" placeholder="Ej. 2015" error={e.anio_constitucion?.message} {...register('anio_constitucion')} />
+            <Selector etiqueta="Estado de la empresa" opciones={[{ valor: 'Activo', texto: 'Activa' }, { valor: 'Inactivo', texto: 'Inactiva' }]} {...register('estado_ec')} />
+            <Entrada etiqueta="Código CIIU" placeholder="Ej. 6201" {...register('codigo_ciiu')} />
+            <Entrada etiqueta="Estudiantes recibidos" inputMode="numeric" placeholder="Ej. 24" error={e.estudiantes_recibidos?.message} {...register('estudiantes_recibidos')} />
+            <Entrada etiqueta="Premios recibidos" inputMode="numeric" placeholder="Ej. 3" error={e.premios_recibidos?.message} {...register('premios_recibidos')} />
             <Entrada etiqueta="Tiempo como coformadora" placeholder="Ej. 7 años" {...register('tiempo_coformadora')} />
-            <Entrada etiqueta="Estudiantes recibidos" inputMode="numeric" error={e.estudiantes_recibidos?.message} {...register('estudiantes_recibidos')} />
-            <Entrada etiqueta="Premios recibidos" inputMode="numeric" error={e.premios_recibidos?.message} {...register('premios_recibidos')} />
-            <Selector etiqueta="Estado" opciones={[{ valor: 'Activo', texto: 'Activa' }, { valor: 'Inactivo', texto: 'Inactiva' }]} {...register('estado_ec')} />
           </div>
           <datalist id="sectores">
             {(resumen?.por_sector ?? []).map((s) => (
@@ -242,18 +248,18 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
             ))}
           </datalist>
           <CampoImagen etiqueta="Logo de la empresa" actual={empresa?.logo_ec} archivo={logo} onCambiar={setLogo} />
-        </Tarjeta>
+        </section>
 
-        <Tarjeta className="h-fit p-5">
-          <section aria-labelledby="titulo-contacto" className="flex flex-col gap-4">
-            <h2 id="titulo-contacto" className="text-small font-bold text-azul-titulo">Contacto principal</h2>
+        <section aria-labelledby="titulo-contacto" className={`flex flex-col gap-5 p-6 ${TARJETA}`}>
+          <h2 id="titulo-contacto" className="text-body font-extrabold text-[#0a1c40]">Contacto principal</h2>
+          <div className="flex flex-col gap-2.5">
             <Entrada etiqueta="Nombre completo" obligatorio placeholder="Nombre y apellidos" error={e.contacto_nombre?.message} {...register('contacto_nombre')} />
             <Entrada etiqueta="Cargo" placeholder="Ej. Gerente general" {...register('contacto_cargo')} />
             <Entrada etiqueta="Correo corporativo" obligatorio type="email" placeholder="nombre@empresa.com" error={e.contacto_correo?.message} {...register('contacto_correo')} />
             <Entrada etiqueta="Teléfono" obligatorio placeholder="+57 300 000 0000" error={e.contacto_telefono?.message} {...register('contacto_telefono')} />
-            <p className="text-[13px] text-texto-suave">Los campos marcados con * son obligatorios.</p>
-          </section>
-        </Tarjeta>
+            <p className="text-caption text-[#788fad]">Los campos marcados con * son obligatorios.</p>
+          </div>
+        </section>
       </div>
 
       <Confirmacion

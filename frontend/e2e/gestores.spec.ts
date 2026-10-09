@@ -19,7 +19,7 @@ test.describe('Gestor Flash Informativo', () => {
     await formulario.getByLabel('Gratuito').check();
     await formulario.getByRole('button', { name: 'Innovación' }).click();
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
-    await expect(page.getByRole('dialog', { name: 'evento creado' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Registro creado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
 
     await page.getByRole('combobox', { name: 'Buscar en el Observatorio' }).fill('Feria E2E');
@@ -32,7 +32,7 @@ test.describe('Gestor Flash Informativo', () => {
     await edicion.getByLabel('Título del evento').fill('Feria E2E de Innovación (editada)');
     await edicion.getByRole('button', { name: 'Guardar cambios' }).click();
     await page.getByRole('dialog', { name: 'Editar evento' }).last().getByRole('button', { name: 'Editar evento' }).click();
-    await expect(page.getByRole('dialog', { name: 'evento editado' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Registro editado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
 
     await page.getByRole('combobox', { name: 'Buscar en el Observatorio' }).fill('editada');
@@ -40,7 +40,7 @@ test.describe('Gestor Flash Informativo', () => {
     await page.getByRole('dialog').getByRole('button', { name: 'Editar' }).click();
     await page.getByRole('button', { name: 'Eliminar evento' }).click();
     await page.getByRole('dialog', { name: 'Eliminar evento' }).getByRole('button', { name: 'Eliminar evento' }).click();
-    await expect(page.getByRole('dialog', { name: 'evento eliminado' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Registro eliminado' })).toBeVisible();
   });
 
   test('no puede gestionar otros módulos', async ({ page }) => {
