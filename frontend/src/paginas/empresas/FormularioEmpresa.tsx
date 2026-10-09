@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
+import { enlaceValido, normalizarEnlace } from '../../utilidades/formato';
 import { ErrorApi, api, mensajeDeError } from '../../api/cliente';
 import { useDetalle, useGuardar, useSubirImagen } from '../../api/consultas';
 import { TAMANOS, type Empresa } from '../../api/tipos';
@@ -35,7 +36,7 @@ const esquema = z.object({
   direccion: z.string().trim().max(150),
   telefono: z.string().trim().max(20),
   correo: correoOpcional,
-  link: z.union([z.literal(''), z.url('Escribe un enlace válido (https://...)')]),
+  link: z.string().refine((v) => !v.trim() || enlaceValido(v), 'Escribe un enlace válido, por ejemplo www.sitio.com'),
   codigo_ciiu: z.string().trim().max(30),
   anio_constitucion: z.string().regex(/^(\d{4})?$/, 'Escribe un año de 4 dígitos'),
   estudiantes_recibidos: entero,
@@ -129,7 +130,7 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
         direccion: d.direccion,
         telefono: d.telefono,
         correo: d.correo || null,
-        link: d.link || null,
+        link: normalizarEnlace(d.link),
         codigo_ciiu: d.codigo_ciiu,
         anio_constitucion: d.anio_constitucion ? Number(d.anio_constitucion) : null,
         estudiantes_recibidos: Number(d.estudiantes_recibidos || 0),

@@ -5,7 +5,7 @@ import { useEliminar, useGuardar } from '../../api/consultas';
 import { MODALIDADES, TIPOS_EVENTO, type Evento } from '../../api/tipos';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { AreaTexto, Casilla, Entrada, Selector } from '../../componentes/ui/Campos';
-import { aEntradaFecha, aEntradaHora, aIsoBogota, modalidadTexto } from '../../utilidades/formato';
+import { aEntradaFecha, aEntradaHora, aIsoBogota, enlaceValido, modalidadTexto, normalizarEnlace } from '../../utilidades/formato';
 
 const esquema = z
   .object({
@@ -18,7 +18,7 @@ const esquema = z
     hora_fin: z.string(),
     modalidad: z.enum(MODALIDADES, { message: 'Elige la modalidad' }),
     lugar: z.string().trim().max(150),
-    link_externo: z.union([z.literal(''), z.url('Escribe un enlace válido (https://...)')]),
+    link_externo: z.string().refine((v) => !v.trim() || enlaceValido(v), 'Escribe un enlace válido, por ejemplo www.sitio.com'),
     es_gratuito: z.boolean(),
     costo: z.string().regex(/^\d*$/, 'Escribe solo números'),
     descripcion: z.string().trim(),
@@ -69,7 +69,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
         fecha_fin: d.fecha_fin ? aIsoBogota(d.fecha_fin, d.hora_fin || d.hora_inicio) : d.hora_fin ? aIsoBogota(d.fecha_inicio, d.hora_fin) : null,
         modalidad: d.modalidad,
         lugar: d.lugar,
-        link_externo: d.link_externo || null,
+        link_externo: normalizarEnlace(d.link_externo),
         es_gratuito: d.es_gratuito,
         costo: d.es_gratuito || !d.costo ? null : Number(d.costo),
         descripcion: d.descripcion,

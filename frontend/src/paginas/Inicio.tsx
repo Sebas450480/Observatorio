@@ -57,12 +57,22 @@ function Fila({ to, insignia, titulo, detalle }: { to: string; insignia: ReactNo
 
 function Carrusel({ eventos }: { eventos: Evento[] }) {
   const [indice, setIndice] = useState(0);
+  // Sentido del último cambio, para deslizar el contenido desde la derecha o la izquierda.
+  const [sentido, setSentido] = useState<'derecha' | 'izquierda'>('derecha');
   const total = eventos.length;
+  const ir = (nuevo: number, haciaAtras = false) => {
+    setSentido(haciaAtras ? 'izquierda' : 'derecha');
+    setIndice(((nuevo % total) + total) % total);
+  };
+  // Cada evento dura 8 s; al cambiar a mano el conteo empieza de nuevo (igual que la barra de progreso).
   useEffect(() => {
     if (total < 2) return;
-    const temporizador = window.setInterval(() => setIndice((i) => (i + 1) % total), 8000);
-    return () => window.clearInterval(temporizador);
-  }, [total]);
+    const temporizador = window.setTimeout(() => {
+      setSentido('derecha');
+      setIndice((i) => (i + 1) % total);
+    }, 8000);
+    return () => window.clearTimeout(temporizador);
+  }, [total, indice]);
   const evento = eventos[indice % Math.max(total, 1)];
   if (!evento) return null;
   const { dia } = diaMes(evento.fecha_inicio);
@@ -80,21 +90,23 @@ function Carrusel({ eventos }: { eventos: Evento[] }) {
       <img src={circuloRojoCarrusel} alt="" aria-hidden width={104} height={130} className="pointer-events-none absolute bottom-0 right-0" />
       <div className="relative flex items-center gap-8 px-14 py-8 sm:px-[96px] xl:h-full xl:py-0">
         <div aria-live="polite" className="flex min-w-0 max-w-[820px] flex-1 flex-col items-start gap-4 xl:self-start xl:pt-12">
-          <span className="rounded-[14px] bg-rojo-vivo px-3.5 py-1.5 text-caption font-bold uppercase">Evento destacado</span>
-          <h2 className="text-[26px] font-bold leading-[1.15] tracking-[-0.01em] sm:text-display">{evento.titulo}</h2>
-          <p className="text-small font-semibold text-white/90 sm:text-body">
-            {[fechaLarga(evento.fecha_inicio), evento.lugar, modalidadTexto(evento.modalidad)].filter(Boolean).join(' · ')}
-          </p>
-          {evento.descripcion && <p className="line-clamp-2 text-small text-white/75 sm:text-body">{evento.descripcion}</p>}
-          <div className="flex flex-wrap gap-3">
-            <Link to={`/eventos/${evento.id_evento}`} className="rounded-control bg-rojo-vivo px-7 py-3.5 text-body font-bold hover:bg-[#c2002e]">
-              Ver evento&nbsp;&nbsp;→
-            </Link>
-            {evento.link_externo && (
-              <a href={evento.link_externo} target="_blank" rel="noreferrer" className="rounded-control border border-white/60 px-7 py-3.5 text-body font-semibold hover:bg-white/10">
-                Inscribirme
-              </a>
-            )}
+          <div key={indice} className={`flex flex-col items-start gap-4 entrada-carrusel-${sentido}`}>
+            <span className="rounded-[14px] bg-rojo-vivo px-3.5 py-1.5 text-caption font-bold uppercase">Evento destacado</span>
+            <h2 className="text-[26px] font-bold leading-[1.15] tracking-[-0.01em] sm:text-display">{evento.titulo}</h2>
+            <p className="text-small font-semibold text-white/90 sm:text-body">
+              {[fechaLarga(evento.fecha_inicio), evento.lugar, modalidadTexto(evento.modalidad)].filter(Boolean).join(' · ')}
+            </p>
+            {evento.descripcion && <p className="line-clamp-2 text-small text-white/75 sm:text-body">{evento.descripcion}</p>}
+            <div className="flex flex-wrap gap-3">
+              <Link to={`/eventos/${evento.id_evento}`} className="rounded-control bg-rojo-vivo px-7 py-3.5 text-body font-bold hover:bg-[#c2002e]">
+                Ver evento&nbsp;&nbsp;→
+              </Link>
+              {evento.link_externo && (
+                <a href={evento.link_externo} target="_blank" rel="noreferrer" className="rounded-control border border-white/60 px-7 py-3.5 text-body font-semibold hover:bg-white/10">
+                  Inscribirme
+                </a>
+              )}
+            </div>
           </div>
           {total > 1 && (
             <div className="mt-2 flex items-center gap-2 xl:absolute xl:bottom-8 xl:mt-0">
@@ -104,14 +116,17 @@ function Carrusel({ eventos }: { eventos: Evento[] }) {
                   type="button"
                   aria-label={`Ir al evento ${i + 1}`}
                   aria-current={i === indice}
-                  onClick={() => setIndice(i)}
-                  className={`h-2 cursor-pointer rounded ${i === indice ? 'w-7 bg-rojo-vivo' : 'w-2 bg-white/40'}`}
-                />
+                  onClick={() => ir(i, i < indice)}
+                  className={`relative h-2 cursor-pointer overflow-hidden rounded bg-white/40 transition-[width] duration-300 ${i === indice ? 'w-7' : 'w-2'}`}
+                >
+                  {/* El punto activo se llena durante los 8 s que dura el evento. */}
+                  {i === indice && <span key={indice} aria-hidden className="progreso-carrusel absolute inset-0 rounded bg-rojo-vivo" />}
+                </button>
               ))}
             </div>
           )}
         </div>
-        <div className="ml-auto hidden w-[260px] shrink-0 flex-col items-center gap-0.5 rounded-2xl bg-white px-9 py-7 text-center lg:flex xl:mr-[60px]">
+        <div key={`dato-${indice}`} className="entrada-modal ml-auto hidden w-[260px] shrink-0 flex-col items-center gap-0.5 rounded-2xl bg-white px-9 py-7 text-center lg:flex xl:mr-[60px]">
           <p className="text-small font-semibold text-azul-marino/70">Próximo evento</p>
           <p className="text-[64px] font-extrabold leading-[1.15] tracking-[-0.01em] text-azul-marino">{dia}</p>
           <p className="text-small font-bold text-rojo-vivo">{mesAnio}</p>
@@ -119,10 +134,10 @@ function Carrusel({ eventos }: { eventos: Evento[] }) {
       </div>
       {total > 1 && (
         <>
-          <button type="button" aria-label="Evento anterior" className={`${flecha} left-2 sm:left-6`} onClick={() => setIndice((i) => (i - 1 + total) % total)}>
+          <button type="button" aria-label="Evento anterior" className={`${flecha} left-2 sm:left-6`} onClick={() => ir(indice - 1, true)}>
             ‹
           </button>
-          <button type="button" aria-label="Evento siguiente" className={`${flecha} right-2 sm:right-6`} onClick={() => setIndice((i) => (i + 1) % total)}>
+          <button type="button" aria-label="Evento siguiente" className={`${flecha} right-2 sm:right-6`} onClick={() => ir(indice + 1)}>
             ›
           </button>
         </>
