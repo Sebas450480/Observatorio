@@ -15,11 +15,14 @@
   --color-azul-oscuro: #0e1f87;   /* encabezado de modales y avisos */
   --color-azul-claro: #ebf3ff;
   --color-azul-boton: #1739a6;    /* botón secundario azul ("Ver contacto principal") */
+  --color-azul-marino: #173b73;   /* títulos del Inicio y del menú de sesión */
+  --color-gris-azulado: #69788c;  /* textos secundarios del Inicio */
 
   /* Rojos institucionales */
   --color-rojo: #dd0034;          /* botones principales y píldora "Buscar" */
   --color-rojo-activo: #eb0a1f;   /* opción activa de la barra lateral */
   --color-rojo-sesion: #ef0221;   /* botón del menú de sesión */
+  --color-rojo-vivo: #e4002b;     /* carrusel y enlaces "Ver todo" del Inicio */
   --color-rojo-claro: #fff1f2;
 
   /* Neutros */
@@ -54,11 +57,19 @@
   --text-subtitle: 20px;
   --text-titulo: 28px;
   --text-display: 40px;
+  /* El Figma usa interlineado "normal" en todos los textos */
+  --text-caption--line-height: normal;
+  --text-small--line-height: normal;
+  --text-body--line-height: normal;
+  --text-subtitle--line-height: normal;
+  --text-titulo--line-height: normal;
+  --text-display--line-height: normal;
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    line-height: normal;
   }
   body {
     @apply bg-fondo font-sans text-texto;
@@ -69,39 +80,119 @@
   }
 }
 
-/* FullCalendar con los colores del Observatorio */
+/* FullCalendar con los colores del Observatorio (Figma: "Calendario de Eventos") */
 .fc {
-  --fc-border-color: #eceef1;
-  --fc-today-bg-color: rgb(221 0 52 / 0.04);
+  --fc-border-color: #e5e8f0;
+  --fc-today-bg-color: transparent;
   --fc-event-border-color: transparent;
   --fc-page-bg-color: #fff;
   font-size: 14px;
 }
+.fc .fc-scrollgrid {
+  border: 0;
+}
 .fc .fc-col-header-cell-cushion,
 .fc .fc-daygrid-day-number {
-  color: var(--color-texto);
-  font-weight: 700;
   text-decoration: none;
-}
-.fc .fc-day-sun .fc-col-header-cell-cushion,
-.fc .fc-day-sun .fc-daygrid-day-number {
-  color: var(--color-rojo);
-}
-.fc .fc-timegrid-slot-label-cushion {
-  color: var(--color-texto-suave);
-  font-size: 12px;
 }
 .fc .fc-event {
   cursor: pointer;
-  border-radius: 8px;
 }
-.fc .fc-scrollgrid {
-  border-radius: 12px;
-  overflow: hidden;
+
+/* Vista semanal: encabezado de 64 px, horas de 70 px, sin líneas de media hora */
+.calendario-semana .fc .fc-col-header-cell {
+  border-color: transparent;
+  height: 64px;
+  vertical-align: middle;
+}
+.calendario-semana .fc .fc-timegrid-slot {
+  height: 35px;
+}
+.calendario-semana .fc .fc-timegrid-slot-minor {
+  border-top-style: none;
+}
+.calendario-semana .fc .fc-timegrid-axis,
+.calendario-semana .fc .fc-timegrid-slot-label {
+  width: 64px;
+  border-color: transparent;
+}
+.calendario-semana .fc .fc-timegrid-slot-label-cushion {
+  display: inline-block;
+  padding: 0 10px 0 14px;
+  text-align: right;
+  color: #69788c;
+  font-size: 14px;
+  transform: translateY(-50%);
+}
+.calendario-semana .fc .fc-timegrid-event {
+  border-radius: 8px;
+  box-shadow: none;
+  margin: 2px 4px 0 2px;
+}
+.calendario-semana .fc .fc-timegrid-event-harness-inset .fc-timegrid-event {
+  box-shadow: none;
+}
+
+/* Vista mensual: encabezado de 105 px, semanas de 135 px y líneas grises */
+.calendario-mes .fc {
+  --fc-border-color: rgb(35 39 52 / 0.25);
+}
+.calendario-mes .fc .fc-col-header-cell {
+  border-color: transparent;
+  height: 105px;
+  vertical-align: middle;
+}
+.calendario-mes .fc .fc-col-header-cell-cushion {
+  color: #232734;
+  font-size: 18px;
+  font-weight: 700;
+}
+.calendario-mes .fc .fc-day-sun .fc-col-header-cell-cushion,
+.calendario-mes .fc .fc-day-sun .fc-daygrid-day-number {
+  color: #ef0122;
+}
+.calendario-mes .fc .fc-daygrid-day-frame {
+  min-height: 135px;
+}
+.calendario-mes .fc .fc-daygrid-day-top {
+  flex-direction: row;
+}
+.calendario-mes .fc .fc-daygrid-day-number {
+  color: #232734;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 6px 4px 0;
+}
+.calendario-mes .fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 0;
+}
+.calendario-mes .fc .fc-daygrid-event {
+  border-radius: 9999px;
+  margin: 2px 2px 0;
 }
 
 @media print {
   .no-imprimir {
     display: none !important;
   }
+}
+
+/* ------------------------------------------------------------------ Fondo animado de autenticación
+   Figma: Paso 1 → Paso 2 → Paso 3 con Smart Animate de 4 s (ease-in-out). */
+@keyframes fondo-auth-onda-superior { to { transform: translate(-50px, 18px); } }
+@keyframes fondo-auth-onda-inferior { to { transform: translate(-50px, -18px); } }
+@keyframes fondo-auth-linea { to { transform: translateX(-70px); } }
+@keyframes fondo-auth-giro { to { transform: rotate(60deg); } }
+@keyframes fondo-auth-parpadeo { to { opacity: 0.2; } }
+@keyframes fondo-auth-parpadeo-inverso { from { opacity: 0.2; } to { opacity: 1; } }
+
+.fondo-auth .fondo-auth-onda-superior { animation: fondo-auth-onda-superior 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-onda-inferior { animation: fondo-auth-onda-inferior 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-linea { animation: fondo-auth-linea 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-hexagonos { transform-origin: 780px 945px; animation: fondo-auth-giro 8s ease-in-out infinite; }
+.fondo-auth .fondo-auth-punto { animation: fondo-auth-parpadeo 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-punto-tenue { opacity: 0.2; animation: fondo-auth-parpadeo-inverso 4s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo-auth * { animation: none !important; }
 }

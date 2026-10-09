@@ -1,13 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 import { api, mensajeDeError } from '../../api/cliente';
-import { Boton } from '../../componentes/ui/Boton';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso } from '../../componentes/ui/Modal';
-import { PantallaAuth } from './PantallaAuth';
+import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
 
 const esquema = z
   .object({ contrasena: z.string().min(8, 'Mínimo 8 caracteres').max(72), confirmar: z.string() })
@@ -37,37 +37,48 @@ export function RestablecerContrasena() {
 
   return (
     <PantallaAuth>
-      <h1 className="text-[26px] font-bold text-azul-titulo">Crea una nueva contraseña</h1>
+      <EncabezadoAuth titulo="Crea una nueva contraseña">Escribe y confirma la contraseña con la que ingresarás al portal.</EncabezadoAuth>
       {!codigo ? (
-        <p className="mt-4 rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">
+        <ErrorAuth>
           El enlace está incompleto. <Link to="/recuperar-contrasena" className="font-bold underline">Solicita uno nuevo</Link>.
-        </p>
+        </ErrorAuth>
       ) : (
-        <form onSubmit={enviar} noValidate className="mt-7 flex flex-col gap-5">
-          <Entrada
-            etiqueta="Nueva contraseña"
-            type="password"
-            autoComplete="new-password"
-            error={formState.errors.contrasena?.message}
-            {...register('contrasena')}
-          />
-          <Entrada
-            etiqueta="Confirmar contraseña"
-            type="password"
-            autoComplete="new-password"
-            error={formState.errors.confirmar?.message}
-            {...register('confirmar')}
-          />
+        <form onSubmit={enviar} noValidate className="flex flex-col gap-6">
+          <div className="flex flex-col gap-[18px]">
+            <Entrada
+              variante="acceso"
+              etiqueta="Nueva contraseña"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Mínimo 8 caracteres"
+              error={formState.errors.contrasena?.message}
+              {...register('contrasena')}
+            />
+            <Entrada
+              variante="acceso"
+              etiqueta="Confirmar contraseña"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Repite la contraseña"
+              error={formState.errors.confirmar?.message}
+              {...register('confirmar')}
+            />
+          </div>
           {error && (
-            <p role="alert" className="rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">
+            <ErrorAuth>
               {error} <Link to="/recuperar-contrasena" className="font-bold underline">Solicitar otro enlace</Link>
-            </p>
+            </ErrorAuth>
           )}
-          <Boton type="submit" tamano="lg" cargando={formState.isSubmitting}>
+          <button type="submit" disabled={formState.isSubmitting} className={`${BOTON_AUTH.principal} h-[54px]`}>
+            {formState.isSubmitting && <LoaderCircle className="size-4 animate-spin" aria-hidden />}
             Guardar contraseña
-          </Boton>
+          </button>
         </form>
       )}
+      <hr className="border-[#e8ebf2]" />
+      <Link to="/iniciar-sesion" className="flex items-center justify-center gap-2 text-small font-bold text-azul-marino hover:underline">
+        <span aria-hidden>←</span> Volver a iniciar sesión
+      </Link>
       <Aviso
         abierto={listo}
         titulo="Contraseña actualizada"

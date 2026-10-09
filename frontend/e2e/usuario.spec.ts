@@ -22,13 +22,14 @@ test.describe('Usuario registrado', () => {
     await page.goto('/mi-perfil');
     await page.getByLabel('Ciudad').fill('Medellín');
     await page.getByRole('button', { name: 'Becas' }).click();
-    await page.getByLabel('Frecuencia de las alertas').selectOption('Inmediata');
+    await page.getByText('En el momento').click();
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(page.getByRole('dialog', { name: 'Perfil actualizado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
     await page.reload();
     await expect(page.getByLabel('Ciudad')).toHaveValue('Medellín');
     await expect(page.getByRole('button', { name: 'Becas' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('radio', { name: /En el momento/ })).toBeChecked();
   });
 
   test('no puede cambiar la contraseña sin la actual correcta', async ({ page }) => {

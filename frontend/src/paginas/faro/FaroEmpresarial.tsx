@@ -1,7 +1,13 @@
-import { BookOpen, CalendarDays, DollarSign, GraduationCap, Landmark, Lightbulb, MapPin, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { mensajeDeError } from '../../api/cliente';
+import iconoCalendario from '../../assets/figma/iconos/calendario-meta.svg';
+import iconoCosto from '../../assets/figma/iconos/costo.svg';
+import iconoUbicacion from '../../assets/figma/iconos/ubicacion.svg';
+import grafica from '../../assets/figma/tarjetas/grafica.svg';
+import libro from '../../assets/figma/tarjetas/libro.svg';
+import maletin from '../../assets/figma/tarjetas/maletin.svg';
+import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import { MODALIDADES, TIPOS_FARO, type Faro, type TipoFaro } from '../../api/tipos';
 import { BarraFiltros } from '../../componentes/contenido/Controles';
@@ -9,34 +15,38 @@ import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
-import { costo, fechaCorta, modalidadTexto } from '../../utilidades/formato';
+import { costo, fechaMedia, modalidadTexto } from '../../utilidades/formato';
+import { DatoTarjeta } from '../flash/FlashInformativo';
 import { DetalleFaro } from './DetalleFaro';
 import { FormularioFaro } from './FormularioFaro';
 
 /** Estilo de cada tipo de registro (Figma: Beca verde, Convocatoria azul, Curso morado). */
-export const ESTILO_TIPO: Record<TipoFaro, { singular: string; tono: 'verde' | 'azul' | 'morado' | 'naranja'; fondo: string; icono: typeof BookOpen }> = {
-  Becas: { singular: 'Beca', tono: 'verde', fondo: 'bg-exito-claro', icono: GraduationCap },
-  Convocatorias: { singular: 'Convocatoria', tono: 'azul', fondo: 'bg-[#ebf3ff]', icono: Landmark },
-  Cursos: { singular: 'Curso', tono: 'morado', fondo: 'bg-morado-claro', icono: BookOpen },
-  Talleres: { singular: 'Taller', tono: 'naranja', fondo: 'bg-naranja-claro', icono: Wrench },
+export const ESTILO_TIPO: Record<TipoFaro, { singular: string; tono: 'verde' | 'azul' | 'morado' | 'naranja'; fondo: string; icono: string }> = {
+  Becas: { singular: 'Beca', tono: 'verde', fondo: 'bg-[#edfcf5]', icono: premio },
+  Convocatorias: { singular: 'Convocatoria', tono: 'azul', fondo: 'bg-[#ebf2ff]', icono: maletin },
+  Cursos: { singular: 'Curso', tono: 'morado', fondo: 'bg-[#f5f0ff]', icono: grafica },
+  Talleres: { singular: 'Taller', tono: 'naranja', fondo: 'bg-naranja-claro', icono: libro },
 };
 
 /** "Cierre: 2 de nov de 2026", "Cierre: Por definir" o "Inicio: 3 de feb de 2027". */
-export function fechaClave(f: Faro): string {
+export function fechaClave(f: Faro, formato: (valor: string) => string = fechaMedia): string {
   if (f.tipo === 'Cursos' || f.tipo === 'Talleres') {
-    if (f.fecha_inicio) return `Inicio: ${fechaCorta(f.fecha_inicio)}`;
+    if (f.fecha_inicio) return `Inicio: ${formato(f.fecha_inicio)}`;
   }
-  return `Cierre: ${f.fecha_cierre ? fechaCorta(f.fecha_cierre) : 'Por definir'}`;
+  return `Cierre: ${f.fecha_cierre ? formato(f.fecha_cierre) : 'Por definir'}`;
 }
 
 function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
   const estilo = ESTILO_TIPO[faro.tipo];
-  const Icono = estilo.icono;
   const valor = faro.es_gratuito || faro.costo ? costo(faro.costo, faro.es_gratuito) : [modalidadTexto(faro.modalidad), faro.duracion].filter(Boolean).join(' · ');
   return (
     <article className="flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta">
-      <div className={`relative grid h-[104px] place-items-center ${faro.imagen ? '' : estilo.fondo}`}>
-        {faro.imagen ? <img src={faro.imagen} alt="" className="absolute inset-0 size-full object-cover" /> : <Icono className="size-11 text-black/10" aria-hidden />}
+      <div className={`relative grid h-[104px] shrink-0 place-items-center ${faro.imagen ? '' : estilo.fondo}`}>
+        {faro.imagen ? (
+          <img src={faro.imagen} alt="" className="absolute inset-0 size-full object-cover" />
+        ) : (
+          <img src={estilo.icono} alt="" aria-hidden width={46} height={46} />
+        )}
         <Insignia tono={estilo.tono} className="absolute left-3 top-3">
           {estilo.singular}
         </Insignia>
@@ -52,23 +62,17 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
             ))}
           </div>
         )}
-        <h2 className="line-clamp-2 min-h-[45px] text-body font-bold leading-snug text-texto">{faro.titulo}</h2>
+        <h2 className="line-clamp-2 h-[45px] text-body font-bold text-texto">{faro.titulo}</h2>
         <ul className="mt-auto flex flex-col gap-1.5 text-small text-texto-suave">
-          <li className="flex items-center gap-2">
-            <CalendarDays className="size-3.5 shrink-0" aria-hidden /> {fechaClave(faro)}
-          </li>
-          {faro.entidad && (
-            <li className="flex items-center gap-2">
-              <MapPin className="size-3.5 shrink-0" aria-hidden /> <span className="truncate">{faro.entidad}</span>
-            </li>
-          )}
+          <DatoTarjeta icono={iconoCalendario}>{fechaClave(faro)}</DatoTarjeta>
+          {faro.entidad && <DatoTarjeta icono={iconoUbicacion}>{faro.entidad}</DatoTarjeta>}
           {valor && (
-            <li className={`flex items-center gap-2 font-semibold ${valor === 'GRATUITO' ? 'text-exito' : 'text-texto'}`}>
-              <DollarSign className="size-3.5 shrink-0 text-texto-suave" aria-hidden /> {valor}
-            </li>
+            <DatoTarjeta icono={iconoCosto} className={`font-semibold ${valor === 'GRATUITO' ? 'text-exito' : 'text-texto'}`}>
+              {valor}
+            </DatoTarjeta>
           )}
         </ul>
-        <button type="button" onClick={onAbrir} className="h-10 cursor-pointer rounded-md bg-rojo text-small font-bold uppercase text-white hover:bg-[#c2002e]">
+        <button type="button" onClick={onAbrir} className="cursor-pointer rounded-md bg-rojo py-2.5 text-small font-bold uppercase text-white hover:bg-[#c2002e]">
           Acceder<span className="sr-only">: {faro.titulo}</span>
         </button>
       </div>
@@ -100,8 +104,8 @@ export function FaroEmpresarial() {
 
   return (
     <>
-      <EncabezadoPagina icono={<Lightbulb />} titulo="Faro Empresarial" subtitulo="Becas, convocatorias, cursos y talleres para impulsar tu crecimiento empresarial." />
-      <BarraFiltros acciones={<MenuExportar ruta="/faro" consulta={consulta} />}>
+      <EncabezadoPagina modulo="faro" titulo="Faro Empresarial" subtitulo="Becas, convocatorias, cursos y talleres para impulsar tu crecimiento empresarial." acciones={<MenuExportar ruta="/faro" consulta={consulta} />} />
+      <BarraFiltros>
         <Filtro
           etiqueta="Tipo de registro"
           todos="Todos los tipos"
@@ -123,15 +127,12 @@ export function FaroEmpresarial() {
           valor={borrador.categoria}
           onChange={(v) => setBorrador({ ...borrador, categoria: v })}
         />
-        <select
-          aria-label="Vigencia"
-          value={borrador.vigentes}
-          onChange={(e) => setBorrador({ ...borrador, vigentes: e.target.value })}
-          className="h-[42px] cursor-pointer rounded-control border border-borde bg-white px-3.5 text-small text-texto"
-        >
-          <option value="true">Solo vigentes</option>
-          <option value="false">Incluir cerradas</option>
-        </select>
+        <Filtro
+          etiqueta="Vigencia"
+          opciones={[{ valor: 'true', texto: 'Solo vigentes' }, { valor: 'false', texto: 'Incluir cerradas' }]}
+          valor={borrador.vigentes}
+          onChange={(v) => setBorrador({ ...borrador, vigentes: v })}
+        />
         {gestiona && (
           <Filtro
             etiqueta="Estado"
@@ -141,7 +142,7 @@ export function FaroEmpresarial() {
             onChange={(v) => setBorrador({ ...borrador, estado: v })}
           />
         )}
-        <Boton pildora onClick={() => { setFiltros(borrador); setPagina(1); }}>
+        <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
           Buscar
         </Boton>
         {gestiona && (
@@ -159,7 +160,7 @@ export function FaroEmpresarial() {
         <EstadoVacio titulo="No hay oportunidades para estos filtros" detalle="Prueba con otro tipo de registro o incluye las convocatorias cerradas." />
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-y-[17px]">
             {data.datos.map((f) => (
               <TarjetaFaro key={f.id_fe} faro={f} onAbrir={() => navegar(`/faro-empresarial/${f.id_fe}`)} />
             ))}

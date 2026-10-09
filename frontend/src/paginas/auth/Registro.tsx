@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
@@ -8,10 +8,9 @@ import { ErrorApi, api, mensajeDeError } from '../../api/cliente';
 import { useCategorias } from '../../api/consultas';
 import type { Perfil } from '../../api/tipos';
 import { SelectorIntereses } from '../../componentes/SelectorIntereses';
-import { Boton } from '../../componentes/ui/Boton';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
 import { useSesion } from '../../sesion/sesion';
-import { PantallaAuth } from './PantallaAuth';
+import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
 
 const esquemaDatos = z
   .object({
@@ -28,11 +27,11 @@ type Datos = z.infer<typeof esquemaDatos>;
 
 function Progreso({ paso }: { paso: 1 | 2 }) {
   return (
-    <div className="mb-5">
-      <p className="text-caption font-bold text-rojo">{paso === 1 ? 'Paso 1 de 2 · Tus datos' : 'Paso 2 de 2 · Tus intereses'}</p>
-      <div className="mt-2 grid grid-cols-2 gap-1.5" aria-hidden>
-        <span className="h-1 rounded-full bg-rojo" />
-        <span className={`h-1 rounded-full ${paso === 2 ? 'bg-rojo' : 'bg-[#e3e7ee]'}`} />
+    <div className="flex flex-col gap-2">
+      <p className="text-small font-semibold text-rojo-vivo">{paso === 1 ? 'Paso 1 de 2 · Tus datos' : 'Paso 2 de 2 · Tus intereses'}</p>
+      <div className="grid grid-cols-2 gap-2" aria-hidden>
+        <span className="h-1.5 rounded-[3px] bg-rojo-vivo" />
+        <span className={`h-1.5 rounded-[3px] ${paso === 2 ? 'bg-rojo-vivo' : 'bg-[#e3e8f0]'}`} />
       </div>
     </div>
   );
@@ -95,16 +94,16 @@ export function Registro() {
   };
 
   return (
-    <PantallaAuth tituloBeneficios="Al registrarte podrás:">
+    <PantallaAuth tituloBeneficios="Al registrarte podrás:" ancha>
       <Progreso paso={paso} />
       {paso === 1 ? (
-        <form onSubmit={handleSubmit(() => setPaso(2))} noValidate>
-          <h1 className="text-[26px] font-bold text-azul-titulo">Crear cuenta</h1>
-          <p className="mt-1 text-small text-texto-suave">Completa tus datos para registrarte</p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <Entrada etiqueta="Nombre" placeholder="Nombre" autoComplete="given-name" error={e.nombre_usuario?.message} {...register('nombre_usuario')} />
-            <Entrada etiqueta="Apellido" placeholder="Apellido" autoComplete="family-name" error={e.apellido_usuario?.message} {...register('apellido_usuario')} />
+        <form onSubmit={handleSubmit(() => setPaso(2))} noValidate className="flex flex-col gap-[22px]">
+          <EncabezadoAuth titulo="Crear cuenta">Completa tus datos para registrarte</EncabezadoAuth>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Entrada variante="perfil" etiqueta="Nombre" placeholder="Nombre" autoComplete="given-name" error={e.nombre_usuario?.message} {...register('nombre_usuario')} />
+            <Entrada variante="perfil" etiqueta="Apellido" placeholder="Apellido" autoComplete="family-name" error={e.apellido_usuario?.message} {...register('apellido_usuario')} />
             <Entrada
+              variante="perfil"
               className="sm:col-span-2"
               etiqueta="Correo electrónico"
               type="email"
@@ -113,71 +112,68 @@ export function Registro() {
               error={e.correo?.message}
               {...register('correo')}
             />
-            <Entrada className="sm:col-span-2" etiqueta="Apodo" placeholder="Ej. laurag" error={e.apodo_usuario?.message} {...register('apodo_usuario')} />
-            <Entrada className="sm:col-span-2" etiqueta="Ciudad" placeholder="Ej. Bogotá" autoComplete="address-level2" {...register('ciudad')} />
-            <Entrada etiqueta="Contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
-            <Entrada etiqueta="Confirmar contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.confirmar?.message} {...register('confirmar')} />
+            <Entrada variante="perfil" className="sm:col-span-2" etiqueta="Apodo" placeholder="Ej. laurag" error={e.apodo_usuario?.message} {...register('apodo_usuario')} />
+            <Entrada variante="perfil" className="sm:col-span-2" etiqueta="Ciudad" placeholder="Ej. Bogotá" autoComplete="address-level2" {...register('ciudad')} />
+            <Entrada variante="perfil" etiqueta="Contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
+            <Entrada variante="perfil" etiqueta="Confirmar contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.confirmar?.message} {...register('confirmar')} />
           </div>
-          {error && (
-            <p role="alert" className="mt-4 rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">
-              {error}
-            </p>
-          )}
-          <div className="mt-6 flex justify-between gap-3">
-            <Boton variante="secundario" onClick={() => navegar('/iniciar-sesion')}>
+          {error && <ErrorAuth>{error}</ErrorAuth>}
+          <div className="flex justify-between gap-3">
+            <button type="button" className={`${BOTON_AUTH.secundario} h-[52px]`} onClick={() => navegar('/iniciar-sesion')}>
               Cancelar
-            </Boton>
-            <Boton type="submit" icono={<ArrowRight className="size-4" />} className="flex-row-reverse">
-              Siguiente
-            </Boton>
+            </button>
+            <button type="submit" className={`${BOTON_AUTH.principal} h-[50px]`}>
+              Siguiente <span aria-hidden>→</span>
+            </button>
           </div>
-          <p className="mt-5 text-center text-caption text-texto-suave">
+          <p className="text-center text-small text-gris-azulado">
             ¿Ya tienes una cuenta?{' '}
-            <Link to="/iniciar-sesion" className="font-bold text-azul-titulo hover:underline">
+            <Link to="/iniciar-sesion" className="font-bold text-azul-marino hover:underline">
               Inicia sesión
             </Link>
           </p>
         </form>
       ) : (
-        <div>
-          <h1 className="text-[26px] font-bold text-azul-titulo">¿Qué te interesa?</h1>
-          <p className="mt-1 text-small text-texto-suave">
+        <>
+          <EncabezadoAuth titulo="¿Qué te interesa?">
             Elige los temas sobre los que quieres recibir alertas. Puedes cambiarlos cuando quieras en tu perfil.
-          </p>
-          <div className="mt-5">
-            <SelectorIntereses categorias={categorias} seleccion={intereses} onCambiar={setIntereses} />
-          </div>
-          <div className="mt-5 flex flex-col gap-3">
-            <Casilla etiqueta="Quiero recibir alertas y novedades por correo electrónico" checked={alertas} onChange={(ev) => setAlertas(ev.target.checked)} />
-            <Casilla
-              etiqueta={
-                <>
-                  Autorizo el tratamiento de mis datos personales según la{' '}
-                  <strong className="text-azul-titulo underline">Política de tratamiento de datos</strong> (Ley 1581 de 2012)
-                </>
-              }
-              checked={autoriza}
-              error={errorAutoriza}
-              onChange={(ev) => {
-                setAutoriza(ev.target.checked);
-                setErrorAutoriza(undefined);
-              }}
+          </EncabezadoAuth>
+          <div className="flex flex-col gap-5">
+            <SelectorIntereses
+              categorias={categorias}
+              seleccion={intereses}
+              onCambiar={setIntereses}
+              titulos={['Contenido que quiero recibir', 'Sectores de interés']}
             />
+            <div className="flex flex-col gap-3">
+              <Casilla etiqueta="Quiero recibir alertas y novedades por correo electrónico" checked={alertas} onChange={(ev) => setAlertas(ev.target.checked)} />
+              <Casilla
+                etiqueta={
+                  <>
+                    Autorizo el tratamiento de mis datos personales según la{' '}
+                    <strong className="font-semibold text-azul-marino underline">Política de tratamiento de datos</strong> (Ley 1581 de 2012)
+                  </>
+                }
+                checked={autoriza}
+                error={errorAutoriza}
+                onChange={(ev) => {
+                  setAutoriza(ev.target.checked);
+                  setErrorAutoriza(undefined);
+                }}
+              />
+            </div>
           </div>
-          {error && (
-            <p role="alert" className="mt-4 rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">
-              {error}
-            </p>
-          )}
-          <div className="mt-6 flex justify-between gap-3">
-            <Boton variante="secundario" icono={<ArrowLeft className="size-4" />} onClick={() => setPaso(1)}>
-              Atrás
-            </Boton>
-            <Boton onClick={crearCuenta} cargando={enviando}>
+          {error && <ErrorAuth>{error}</ErrorAuth>}
+          <div className="flex justify-between gap-3">
+            <button type="button" className={`${BOTON_AUTH.secundario} h-[52px]`} onClick={() => setPaso(1)}>
+              <span aria-hidden>←</span> Atrás
+            </button>
+            <button type="button" className={`${BOTON_AUTH.principal} h-[50px]`} onClick={crearCuenta} disabled={enviando}>
+              {enviando && <LoaderCircle className="size-4 animate-spin" aria-hidden />}
               Crear mi cuenta
-            </Boton>
+            </button>
           </div>
-        </div>
+        </>
       )}
     </PantallaAuth>
   );

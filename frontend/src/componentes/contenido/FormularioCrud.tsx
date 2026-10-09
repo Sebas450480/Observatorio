@@ -1,8 +1,6 @@
-import { Trash2 } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { mensajeDeError } from '../../api/cliente';
-import { Boton } from '../ui/Boton';
-import { Aviso, Confirmacion, Modal } from '../ui/Modal';
+import { Aviso, BotonModal, Confirmacion, Modal } from '../ui/Modal';
 
 export interface Sustantivo {
   /** "evento", "registro", "tendencia", "empresa", "usuario" */
@@ -28,6 +26,7 @@ export function FormularioCrud({
   onCerrar,
   children,
   ancho = 620,
+  seccion,
 }: {
   abierto: boolean;
   modo: 'crear' | 'editar';
@@ -41,6 +40,8 @@ export function FormularioCrud({
   onCerrar: () => void;
   children: ReactNode;
   ancho?: number;
+  /** Texto después de "Observatorio Empresarial •" (por defecto, "Gestión de <palabra>s"). */
+  seccion?: string;
 }) {
   const [confirmar, setConfirmar] = useState<'editar' | 'eliminar' | null>(null);
   const [aviso, setAviso] = useState<'creado' | 'editado' | 'eliminado' | null>(null);
@@ -71,18 +72,22 @@ export function FormularioCrud({
     else await ejecutar(guardar, 'creado');
   };
 
+  // Textos de los avisos del Figma ("REGISTRO CREADO", "El registro se creó correctamente.").
   const textosAviso = {
     creado: {
-      titulo: `${palabra} ${femenino ? 'creada' : 'creado'}`,
-      mensaje: `${femenino ? 'La' : 'El'} ${palabra} se creó correctamente.`,
+      titulo: 'Registro creado',
+      mensaje: 'El registro se creó correctamente.',
+      detalle: 'La información ya está disponible en el Observatorio Empresarial.',
     },
     editado: {
-      titulo: `${palabra} ${femenino ? 'editada' : 'editado'}`,
-      mensaje: `${femenino ? 'La' : 'El'} ${palabra} se editó correctamente.`,
+      titulo: 'Registro editado',
+      mensaje: 'El registro se editó correctamente.',
+      detalle: 'Los cambios ya se pueden visualizar en el Observatorio Empresarial.',
     },
     eliminado: {
-      titulo: `${palabra} ${femenino ? 'eliminada' : 'eliminado'}`,
-      mensaje: `${femenino ? 'La' : 'El'} ${palabra} se eliminó correctamente.`,
+      titulo: 'Registro eliminado',
+      mensaje: 'El registro se eliminó correctamente.',
+      detalle: 'La información asociada ya no estará disponible para los usuarios.',
     },
   };
 
@@ -92,29 +97,25 @@ export function FormularioCrud({
         abierto={abierto && !aviso}
         onCerrar={onCerrar}
         titulo={titulo}
-        subtitulo="Observatorio Empresarial"
+        subtitulo={`Observatorio Empresarial • ${seccion ?? `Gestión de ${palabra}s`}`}
         ancho={ancho}
         pie={
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {modo === 'editar' && eliminar ? (
-              <Boton variante="peligro" icono={<Trash2 className="size-4" />} onClick={() => setConfirmar('eliminar')}>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <BotonModal variante="secundario" onClick={onCerrar}>
+              Cancelar
+            </BotonModal>
+            {modo === 'editar' && eliminar && (
+              <BotonModal variante="peligro" onClick={() => setConfirmar('eliminar')}>
                 Eliminar {palabra}
-              </Boton>
-            ) : (
-              <span />
+              </BotonModal>
             )}
-            <div className="flex flex-col-reverse gap-3 sm:flex-row">
-              <Boton variante="secundario" onClick={onCerrar}>
-                Cancelar
-              </Boton>
-              <Boton type="submit" form="formulario-crud" cargando={trabajando && !confirmar}>
-                {modo === 'crear' ? 'Guardar nuevo registro' : 'Guardar cambios'}
-              </Boton>
-            </div>
+            <BotonModal type="submit" form="formulario-crud" cargando={trabajando && !confirmar}>
+              {modo === 'crear' ? 'Guardar nuevo registro' : 'Guardar cambios'}
+            </BotonModal>
           </div>
         }
       >
-        <form id="formulario-crud" onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
+        <form id="formulario-crud" onSubmit={alEnviar} noValidate className="flex flex-col gap-5">
           {children}
           {error && (
             <p role="alert" className="rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">
@@ -151,7 +152,7 @@ export function FormularioCrud({
         abierto={!!aviso}
         titulo={aviso ? textosAviso[aviso].titulo : ''}
         mensaje={aviso ? textosAviso[aviso].mensaje : ''}
-        detalle={aviso === 'eliminado' ? 'La información ya no estará disponible para los usuarios.' : 'Los cambios ya se pueden visualizar en el Observatorio Empresarial.'}
+        detalle={aviso ? textosAviso[aviso].detalle : ''}
         onCerrar={() => {
           setAviso(null);
           onCerrar();

@@ -29,7 +29,7 @@ describe('FormularioCrud', () => {
     const { guardar, onCerrar } = montar();
     await userEvent.click(screen.getByRole('button', { name: 'Guardar nuevo registro' }));
     expect(guardar).toHaveBeenCalledOnce();
-    expect(await screen.findByText('El evento se creó correctamente.')).toBeInTheDocument();
+    expect(await screen.findByText('El registro se creó correctamente.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Aceptar' }));
     expect(onCerrar).toHaveBeenCalled();
   });
@@ -47,7 +47,7 @@ describe('FormularioCrud', () => {
     expect(screen.getByText('¿Está seguro de que desea editar este evento?')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Editar evento' }));
     expect(guardar).toHaveBeenCalledOnce();
-    expect(await screen.findByText('El evento se editó correctamente.')).toBeInTheDocument();
+    expect(await screen.findByText('El registro se editó correctamente.')).toBeInTheDocument();
   });
 
   it('elimina con confirmación', async () => {
@@ -58,7 +58,7 @@ describe('FormularioCrud', () => {
     const confirmar = screen.getAllByRole('button', { name: 'Eliminar tendencia' }).at(-1)!;
     await userEvent.click(confirmar);
     expect(eliminar).toHaveBeenCalledOnce();
-    expect(await screen.findByText('La tendencia se eliminó correctamente.')).toBeInTheDocument();
+    expect(await screen.findByText('El registro se eliminó correctamente.')).toBeInTheDocument();
   });
 
   it('muestra el error del backend sin cerrar el formulario', async () => {
