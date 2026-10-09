@@ -84,18 +84,14 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
       eliminar={editar && !propio ? () => eliminarApi.mutateAsync(registro.id_usuario) : undefined}
       onCerrar={onCerrar}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Entrada etiqueta="Nombre" obligatorio error={e.nombre_usuario?.message} {...register('nombre_usuario')} />
-        <Entrada etiqueta="Apellido" obligatorio error={e.apellido_usuario?.message} {...register('apellido_usuario')} />
-        <Entrada etiqueta="Apodo" placeholder="Ej. amartinez" {...register('apodo_usuario')} />
-        <Entrada etiqueta="Ciudad" placeholder="Ej. Bogotá" {...register('ciudad')} />
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+        <Entrada etiqueta="Nombre" placeholder="Ingresa el nombre" obligatorio error={e.nombre_usuario?.message} {...register('nombre_usuario')} />
+        <Entrada etiqueta="Apellido" placeholder="Ingresa el apellido" obligatorio error={e.apellido_usuario?.message} {...register('apellido_usuario')} />
+        <Entrada etiqueta="Apodo" placeholder="Ingresa el apodo" {...register('apodo_usuario')} />
         {editar ? (
           <Entrada etiqueta="Correo" value={registro.correo} readOnly disabled />
         ) : (
-          <>
-            <Entrada etiqueta="Correo" type="email" obligatorio autoComplete="off" error={e.correo?.message} {...register('correo')} />
-            <Entrada etiqueta="Contraseña inicial" type="password" obligatorio autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
-          </>
+          <Entrada etiqueta="Correo" type="email" placeholder="correo@ejemplo.com" obligatorio autoComplete="off" error={e.correo?.message} {...register('correo')} />
         )}
         <Selector
           etiqueta="Rol"
@@ -106,8 +102,14 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
           error={e.id_rol?.message}
           {...register('id_rol')}
         />
-        {editar && (
+        {editar ? (
           <Selector etiqueta="Estado" disabled={propio} opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo (bloqueado)' }]} {...register('estado_usuario')} />
+        ) : (
+          <Selector etiqueta="Estado" disabled opciones={[{ valor: 'Activo', texto: 'Activo' }]} value="Activo" onChange={() => {}} />
+        )}
+        <Entrada etiqueta="Ciudad" placeholder="Ej. Bogotá" {...register('ciudad')} />
+        {!editar && (
+          <Entrada etiqueta="Contraseña inicial" type="password" placeholder="Mínimo 8 caracteres" obligatorio autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
         )}
       </div>
       {propio && <p className="text-[13px] text-texto-suave">No puedes cambiar tu propio rol ni tu estado.</p>}

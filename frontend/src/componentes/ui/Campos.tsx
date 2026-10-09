@@ -52,14 +52,14 @@ export const Entrada = forwardRef<HTMLInputElement, PropsEntrada>(function Entra
   return (
     <Contenedor id={idCampo} etiqueta={etiqueta} error={error} ayuda={ayuda} className={className} obligatorio={obligatorio} variante={variante}>
       <div className="relative">
-        {icono && <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-suave">{icono}</span>}
+        {icono && <span className="pointer-events-none absolute left-4 top-1/2 grid -translate-y-1/2 place-items-center text-texto-suave">{icono}</span>}
         <input
           ref={ref}
           id={idCampo}
           aria-invalid={!!error}
           aria-describedby={error ? `${idCampo}-error` : undefined}
           aria-required={obligatorio || undefined}
-          className={`${variante === 'perfil' ? CONTROL_PERFIL : `${BASE_CONTROL} h-[43px]`} ${icono ? 'pl-10' : ''} ${error ? 'border-rojo' : ''}`}
+          className={`${variante === 'perfil' ? CONTROL_PERFIL : `${BASE_CONTROL} h-[43px]`} ${icono ? 'pl-11' : ''} ${error ? 'border-rojo' : ''}`}
           {...resto}
         />
       </div>
@@ -93,7 +93,7 @@ type PropsSelector = SelectHTMLAttributes<HTMLSelectElement> &
   Envoltura & { opciones: { valor: string; texto: string }[]; vacio?: string };
 
 export const Selector = forwardRef<HTMLSelectElement, PropsSelector>(function Selector(
-  { etiqueta, error, ayuda, className, obligatorio, id, opciones, vacio, onChange, value, defaultValue, ...resto },
+  { etiqueta, error, ayuda, className, obligatorio, id, opciones, vacio, icono, onChange, value, defaultValue, ...resto },
   ref,
 ) {
   const generado = useId();
@@ -113,6 +113,7 @@ export const Selector = forwardRef<HTMLSelectElement, PropsSelector>(function Se
       <div
         className={`${BASE_CONTROL} relative flex h-[43px] items-center focus-within:border-azul-oscuro focus-within:bg-white ${error ? 'border-rojo' : ''}`}
       >
+        {icono && <span className="mr-3 grid shrink-0 place-items-center">{icono}</span>}
         <span aria-hidden className={`truncate whitespace-pre ${texto ? '' : 'font-light text-[#788fad]'}`}>
           {texto ?? vacio ?? ''}
           {'  '}
