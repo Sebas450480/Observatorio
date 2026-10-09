@@ -66,6 +66,28 @@
   --text-display--line-height: normal;
 }
 
+/*
+ * En celular todo se ve un poco más compacto: la escala tipográfica baja un punto y los espacios
+ * de Tailwind (--spacing) se reducen un 10 %. Los campos de formulario se quedan en 16 px para que
+ * el teléfono no haga zoom al tocarlos.
+ */
+@media (max-width: 639px) {
+  :root {
+    --text-caption: 13px;
+    --text-small: 14px;
+    --text-body: 15px;
+    --text-subtitle: 17px;
+    --text-titulo: 22px;
+    --text-display: 30px;
+    --spacing: 0.225rem;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;

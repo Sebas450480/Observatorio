@@ -27,7 +27,7 @@ const ETIQUETA_DE: Record<TipoContenido, string> = {
 
 export function BarraSuperior({ onAbrirMenu }: { onAbrirMenu: () => void }) {
   return (
-    <header className="sticky top-0 z-20 flex h-[86px] items-center gap-3 bg-white px-4 sm:px-6 lg:gap-10 lg:pl-[30px] lg:pr-[48px]">
+    <header className="sticky top-0 z-20 flex h-[64px] items-center gap-3 bg-white px-4 sm:h-[86px] sm:px-6 lg:gap-10 lg:pl-[30px] lg:pr-[48px]">
       <button type="button" onClick={onAbrirMenu} className="cursor-pointer rounded-lg p-2 text-azul lg:hidden" aria-label="Abrir menú">
         <Menu className="size-6" />
       </button>
@@ -81,7 +81,7 @@ function BuscadorGlobal() {
 
   return (
     <div ref={contenedor} className="relative min-w-0 flex-1">
-      <img src={iconoBuscar} alt="" aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-[25px] -translate-y-1/2" />
+      <img src={iconoBuscar} alt="" aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 sm:left-3.5 sm:size-[25px]" />
       <input
         type="search"
         role="combobox"
@@ -109,7 +109,7 @@ function BuscadorGlobal() {
           }
         }}
         placeholder={ancha ? 'Buscar eventos, becas, convocatorias, cursos, tendencias, empresas' : 'Buscar...'}
-        className="h-[52px] w-full rounded-[20px] border-2 border-black/10 bg-white pl-[49px] pr-4 text-small font-bold text-black placeholder:text-black focus:border-azul-oscuro/40 focus:outline-none sm:text-subtitle sm:tracking-[-0.5px]"
+        className="h-[42px] w-full rounded-[14px] border-2 border-black/10 bg-white pl-10 pr-3 sm:h-[52px] sm:rounded-[20px] sm:pl-[49px] sm:pr-4 text-small font-bold text-black placeholder:text-black focus:border-azul-oscuro/40 focus:outline-none sm:text-subtitle sm:tracking-[-0.5px]"
       />
       {abierto && consulta.length >= 2 && (
         <div id={idLista} role="listbox" className="absolute inset-x-0 top-full z-30 mt-2 max-h-[70vh] overflow-y-auto rounded-2xl bg-white py-2 shadow-menu">
@@ -166,13 +166,13 @@ function MenuSesion() {
   }, [abierto]);
 
   const claseBoton =
-    'flex h-[52px] shrink-0 cursor-pointer items-center justify-between gap-3 rounded-[20px] bg-rojo-sesion px-1.5 text-subtitle font-bold tracking-[-0.5px] text-white hover:bg-rojo sm:w-[215px] sm:pl-[20px] sm:pr-[23px]';
+    'flex h-[42px] shrink-0 cursor-pointer items-center justify-between gap-3 rounded-[14px] bg-rojo-sesion px-1 sm:h-[52px] sm:rounded-[20px] sm:px-1.5 text-subtitle font-bold tracking-[-0.5px] text-white hover:bg-rojo sm:w-[215px] sm:pl-[20px] sm:pr-[23px]';
 
   if (!usuario) {
     return (
       <Link to="/iniciar-sesion" className={claseBoton}>
         <span className="hidden whitespace-nowrap sm:inline">Iniciar sesión</span>
-        <img src={iconoUsuario} alt="" aria-hidden className="size-10" />
+        <img src={iconoUsuario} alt="" aria-hidden className="size-8 sm:size-10" />
       </Link>
     );
   }
@@ -181,12 +181,12 @@ function MenuSesion() {
     <div ref={contenedor} className="relative">
       <button type="button" className={claseBoton} onClick={() => setAbierto((a) => !a)} aria-expanded={abierto} aria-haspopup="menu">
         <span className="hidden sm:inline">{etiquetaRol(usuario.nombre_rol)}</span>
-        <img src={iconoUsuario} alt={`Sesión de ${usuario.nombre_usuario}`} className="size-10" />
+        <img src={iconoUsuario} alt={`Sesión de ${usuario.nombre_usuario}`} className="size-8 sm:size-10" />
       </button>
       {abierto && (
         <div
           role="menu"
-          className="absolute right-0 top-[60px] flex w-[280px] flex-col overflow-hidden rounded-xl border border-[#e8ebf2] bg-white p-2 shadow-[0_12px_14px_0_rgba(13,26,64,0.16)]"
+          className="absolute right-0 top-[50px] flex w-[280px] sm:top-[60px] flex-col overflow-hidden rounded-xl border border-[#e8ebf2] bg-white p-2 shadow-[0_12px_14px_0_rgba(13,26,64,0.16)]"
         >
           <div className="flex items-center gap-3 px-3 py-2.5">
             <span className="grid size-10 shrink-0 place-items-center rounded-[20px] bg-azul-marino text-small font-bold text-white">

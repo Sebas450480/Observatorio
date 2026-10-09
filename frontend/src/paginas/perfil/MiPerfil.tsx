@@ -144,7 +144,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
     <form noValidate onSubmit={handleSubmit((d) => guardar.mutate(d))}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between xl:mb-[30px]">
         <div className="flex flex-col gap-1 xl:mt-px">
-          <h1 className="text-[24px] font-bold text-azul-marino sm:text-titulo">Mi perfil</h1>
+          <h1 className="text-titulo font-bold text-azul-marino">Mi perfil</h1>
           <p className="text-small text-gris-azulado sm:text-body">
             {esAdmin ? 'Actualiza tus datos como administrador del Observatorio.' : 'Actualiza tus datos y elige sobre qué quieres recibir alertas del Observatorio.'}
           </p>
