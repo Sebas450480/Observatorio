@@ -5,7 +5,13 @@ import { forwardRef, useEffect, useId, useRef, useState, type InputHTMLAttribute
 const BASE_CONTROL =
   'w-full rounded-control border border-[#e2e8f0] bg-[#f8fafc] px-4 text-small text-[#0a1c40] placeholder:font-light placeholder:text-[#788fad] focus:border-azul-oscuro focus:bg-white focus:outline-none disabled:opacity-60';
 
+/** Campo de Mi perfil: blanco, 48 px y texto de 18 px. */
+const CONTROL_PERFIL =
+  'h-12 w-full rounded-control border border-[#d1d9e3] bg-white px-3.5 text-body text-[#1f293d] placeholder:text-[#788fad] focus:border-azul-oscuro focus:outline-none disabled:opacity-60';
+
 interface Envoltura {
+  /** "perfil": campos blancos de 48 px de Mi perfil; "formulario": campos grises de 43 px. */
+  variante?: 'formulario' | 'perfil';
   etiqueta?: string;
   error?: string;
   ayuda?: string;
@@ -14,11 +20,11 @@ interface Envoltura {
   obligatorio?: boolean;
 }
 
-function Contenedor({ id, etiqueta, error, ayuda, className = '', obligatorio, children }: Envoltura & { id: string; children: ReactNode }) {
+function Contenedor({ id, etiqueta, error, ayuda, className = '', obligatorio, variante, children }: Envoltura & { id: string; children: ReactNode }) {
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={`flex flex-col ${variante === 'perfil' ? 'gap-1.5' : 'gap-2'} ${className}`}>
       {etiqueta && (
-        <label htmlFor={id} className="text-small leading-[19px] font-semibold text-[#0a1c40]">
+        <label htmlFor={id} className={`text-small leading-[19px] font-semibold ${variante === 'perfil' ? 'text-azul-marino' : 'text-[#0a1c40]'}`}>
           {etiqueta}
           {obligatorio && <span aria-hidden> *</span>}
         </label>
@@ -38,13 +44,13 @@ function Contenedor({ id, etiqueta, error, ayuda, className = '', obligatorio, c
 type PropsEntrada = InputHTMLAttributes<HTMLInputElement> & Envoltura;
 
 export const Entrada = forwardRef<HTMLInputElement, PropsEntrada>(function Entrada(
-  { etiqueta, error, ayuda, icono, className, obligatorio, id, ...resto },
+  { etiqueta, error, ayuda, icono, className, obligatorio, variante, id, ...resto },
   ref,
 ) {
   const generado = useId();
   const idCampo = id ?? generado;
   return (
-    <Contenedor id={idCampo} etiqueta={etiqueta} error={error} ayuda={ayuda} className={className} obligatorio={obligatorio}>
+    <Contenedor id={idCampo} etiqueta={etiqueta} error={error} ayuda={ayuda} className={className} obligatorio={obligatorio} variante={variante}>
       <div className="relative">
         {icono && <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-suave">{icono}</span>}
         <input
@@ -53,7 +59,7 @@ export const Entrada = forwardRef<HTMLInputElement, PropsEntrada>(function Entra
           aria-invalid={!!error}
           aria-describedby={error ? `${idCampo}-error` : undefined}
           aria-required={obligatorio || undefined}
-          className={`${BASE_CONTROL} h-[43px] ${icono ? 'pl-10' : ''} ${error ? 'border-rojo' : ''}`}
+          className={`${variante === 'perfil' ? CONTROL_PERFIL : `${BASE_CONTROL} h-[43px]`} ${icono ? 'pl-10' : ''} ${error ? 'border-rojo' : ''}`}
           {...resto}
         />
       </div>
