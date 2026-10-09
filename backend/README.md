@@ -86,6 +86,23 @@ docker run -d --name mailpit -p 8025:8025 -p 1025:1025 axllent/mailpit
 Con `SMTP_HOST=localhost` y `SMTP_PUERTO=1025` (valores del `.env.example`). Si dejas `SMTP_HOST` vacío,
 los correos solo se muestran en la consola. Para producción, configura el SMTP institucional.
 
+### Correo en producción (Vercel)
+
+Sin `SMTP_HOST` no sale ningún correo: ni el enlace de "¿Olvidaste tu contraseña?" ni las alertas.
+`GET /api/salud` indica `"correo": "configurado"` o `"sin configurar"`, y cada correo que no sale queda
+registrado como error en los logs de Vercel. Variables en *Project → Settings → Environment Variables*
+(entorno Production), y después un nuevo despliegue:
+
+| Proveedor | `SMTP_HOST` | `SMTP_PUERTO` | `SMTP_SEGURO` | `SMTP_USUARIO` / `SMTP_CONTRASENA` |
+|---|---|---|---|---|
+| Microsoft 365 (correo institucional) | `smtp.office365.com` | `587` | `false` | cuenta y contraseña con SMTP AUTH habilitado |
+| Google Workspace / Gmail | `smtp.gmail.com` | `465` | `true` | cuenta y una [contraseña de aplicación](https://myaccount.google.com/apppasswords) |
+| Brevo, SendGrid, Resend… | el que indique el servicio | `587` | `false` | credenciales SMTP del servicio |
+
+`CORREO_REMITENTE` debe usar la misma cuenta o un dominio verificado en el servicio, por ejemplo
+`Observatorio Empresarial <observatorio@uniempresarial.edu.co>`. `FRONTEND_URL` debe ser la dirección
+pública (por ejemplo `https://www.observatorioempresarial.com`), porque con ella se arma el enlace del correo.
+
 ## Scripts
 
 | Comando | Qué hace |

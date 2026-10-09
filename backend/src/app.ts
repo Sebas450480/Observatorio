@@ -46,7 +46,8 @@ export function crearApp() {
 
   app.get('/api/salud', async (_req, res) => {
     await pool.query('select 1');
-    res.json({ estado: 'ok', baseDeDatos: 'ok' });
+    // `correo` dice si hay servidor SMTP configurado (sin él no salen correos de recuperación ni alertas).
+    res.json({ estado: 'ok', baseDeDatos: 'ok', correo: config.correo.host ? 'configurado' : 'sin configurar' });
   });
 
   // A partir de aquí todas las rutas conocen quién hace la petición (req.sesion).

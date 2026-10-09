@@ -43,7 +43,12 @@ export async function enviarCorreo(correo: Correo): Promise<void> {
     text: correo.texto,
   });
   if (!config.correo.host) {
-    console.info(`[correo sin SMTP] Para: ${correo.para} | Asunto: ${correo.asunto}\n${correo.texto}`);
+    if (config.esProduccion) {
+      // En producción no se escribe el contenido: los enlaces de recuperación son secretos.
+      console.error(`[correo] No se envió «${correo.asunto}»: falta configurar SMTP_HOST en las variables del servidor.`);
+    } else {
+      console.info(`[correo sin SMTP] Para: ${correo.para} | Asunto: ${correo.asunto}\n${correo.texto}`);
+    }
   } else if (!config.esProduccion) {
     console.info(`[correo] Enviado a ${correo.para}: ${info.messageId}`);
   }
