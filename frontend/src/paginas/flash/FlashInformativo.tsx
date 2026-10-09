@@ -12,7 +12,7 @@ import maletin from '../../assets/figma/tarjetas/maletin.svg';
 import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import type { Flash, Modalidad } from '../../api/tipos';
-import { BarraFiltros } from '../../componentes/contenido/Controles';
+import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
@@ -92,6 +92,8 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
 }
 
 /** Flash Informativo: eventos y oportunidades del entorno empresarial. */
+const FILTROS_INICIALES = { departamento: '', anio: '', categoria: '', estado: '' };
+
 export function FlashInformativo() {
   const { id } = useParams();
   const navegar = useNavigate();
@@ -99,7 +101,7 @@ export function FlashInformativo() {
   const gestiona = puedeGestionar('flash');
   const { data: categorias = [] } = useCategorias();
 
-  const [borrador, setBorrador] = useState({ departamento: '', anio: '', categoria: '', estado: '' });
+  const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const [formulario, setFormulario] = useState<{ registro?: Flash } | null>(null);
@@ -120,7 +122,18 @@ export function FlashInformativo() {
         titulo="Flash Informativo"
         subtitulo="Mantente informado sobre los últimos acontecimientos empresariales, innovaciones y tendencias del mundo corporativo."
       acciones={<MenuExportar ruta="/flash" consulta={consulta} />} />
-      <BarraFiltros>
+      <BarraFiltros
+        activos={contarActivos(filtros, FILTROS_INICIALES)}
+        onBuscar={() => { setFiltros(borrador); setPagina(1); }}
+        onLimpiar={() => { setBorrador(FILTROS_INICIALES); setFiltros(FILTROS_INICIALES); setPagina(1); }}
+        extra={
+          gestiona && (
+            <Boton pildora onClick={() => setFormulario({})}>
+              Crear Flash informativo
+            </Boton>
+          )
+        }
+      >
         <Filtro etiqueta="Región" todos="Todas las regiones" opciones={DEPARTAMENTOS} valor={borrador.departamento} onChange={(v) => setBorrador({ ...borrador, departamento: v })} />
         <Filtro etiqueta="Año" todos="Todos los años" opciones={opcionesAnios()} valor={borrador.anio} onChange={(v) => setBorrador({ ...borrador, anio: v })} />
         <Filtro
@@ -138,14 +151,6 @@ export function FlashInformativo() {
             valor={borrador.estado}
             onChange={(v) => setBorrador({ ...borrador, estado: v })}
           />
-        )}
-        <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
-          Buscar
-        </Boton>
-        {gestiona && (
-          <Boton pildora onClick={() => setFormulario({})}>
-            Crear Flash informativo
-          </Boton>
         )}
       </BarraFiltros>
 

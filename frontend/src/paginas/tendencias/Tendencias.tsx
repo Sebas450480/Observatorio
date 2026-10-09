@@ -13,7 +13,7 @@ import vistaGrande from '../../assets/figma/tendencias/vista-grande.svg';
 import vistaLista from '../../assets/figma/tendencias/vista-lista.svg';
 import { useListado } from '../../api/consultas';
 import type { Tendencia } from '../../api/tipos';
-import { BarraFiltros } from '../../componentes/contenido/Controles';
+import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
@@ -177,6 +177,8 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
   );
 }
 
+const FILTROS_INICIALES = { megatendencia: '', q: '', dias: '', estado: '' };
+
 /** Tendencias Empresariales: listado (tarjetas, compactas, tabla) y mapa de tendencias. */
 export function Tendencias() {
   const { id } = useParams();
@@ -185,7 +187,7 @@ export function Tendencias() {
   const gestiona = puedeGestionar('tendencias');
   const [pestana, setPestana] = useState<'lista' | 'mapa'>('lista');
   const [vista, setVista] = useState<VistaLista>('tarjetas');
-  const [borrador, setBorrador] = useState({ megatendencia: '', q: '', dias: '', estado: '' });
+  const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const [formulario, setFormulario] = useState<{ registro?: Tendencia } | null>(null);
@@ -229,7 +231,7 @@ export function Tendencias() {
     filtros.dias && { campo: 'dias' as const, texto: FECHAS.find((f) => f.valor === filtros.dias)?.texto ?? '' },
   ].filter((f): f is { campo: 'megatendencia' | 'q' | 'dias'; texto: string } => !!f);
   const quitarFiltro = (campo?: 'megatendencia' | 'q' | 'dias') => {
-    const nuevos = campo ? { ...filtros, [campo]: '' } : { megatendencia: '', q: '', dias: '', estado: '' };
+    const nuevos = campo ? { ...filtros, [campo]: '' } : FILTROS_INICIALES;
     setFiltros(nuevos);
     setBorrador(nuevos);
     setPagina(1);
@@ -285,6 +287,9 @@ export function Tendencias() {
         <>
           <BarraFiltros
             className="min-h-[50px]! gap-3 xl:mb-[35px]"
+            activos={contarActivos(filtros, FILTROS_INICIALES)}
+            onBuscar={() => { setFiltros(borrador); setPagina(1); }}
+            onLimpiar={() => quitarFiltro()}
             acciones={
               <>
                 {gestiona && (
@@ -326,9 +331,6 @@ export function Tendencias() {
             />
             <Filtro etiqueta="Tendencia" todos="Todas las tendencias" className="xl:w-[250px]" opciones={opcionesTendencia} valor={borrador.q} onChange={(v) => setBorrador({ ...borrador, q: v })} />
             <Filtro etiqueta="Fecha" todos="Todas las fechas" className="xl:w-[210px]" opciones={FECHAS} valor={borrador.dias} onChange={(v) => setBorrador({ ...borrador, dias: v })} />
-            <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
-              Buscar
-            </Boton>
           </BarraFiltros>
 
           {aplicados.length > 0 && (
