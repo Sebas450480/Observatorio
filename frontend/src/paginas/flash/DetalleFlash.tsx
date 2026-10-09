@@ -8,7 +8,7 @@ import {
 } from '../../componentes/contenido/Detalle';
 import { Cargando, InsigniaEstado, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
-import { costo, fechaLarga, modalidadTexto, rangoHoras, vinetas } from '../../utilidades/formato';
+import { costo, fechaLarga, modalidadTexto, nombreTipoEvento, rangoHoras, vinetas } from '../../utilidades/formato';
 
 /** Modal de detalle de un Flash Informativo (Figma: "Modal — Detalle Congreso"). */
 export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar: () => void; onEditar?: (f: Flash) => void }) {
@@ -31,7 +31,7 @@ export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar:
       sobreTitulo={
         flash && (
           <>
-            <MetaDetalle etiqueta={flash.tipo_evento}>{codigoDetalle(flash.id_fi, flash.fecha_inicio)}</MetaDetalle>
+            <MetaDetalle etiqueta={nombreTipoEvento(flash)}>{codigoDetalle(flash.id_fi, flash.fecha_inicio)}</MetaDetalle>
             {flash.estado_fi !== 'Activo' && <InsigniaEstado estado={flash.estado_fi} />}
           </>
         )

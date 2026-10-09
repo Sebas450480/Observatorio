@@ -14,6 +14,8 @@ import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos'
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { descripcionRol, etiquetaRol, useSesion } from '../../sesion/sesion';
 
+const SUPERIOR = 'SuperAdmin Superior';
+
 const base = {
   nombre_usuario: z.string().trim().min(1, 'Escribe el nombre').max(50),
   apellido_usuario: z.string().trim().min(1, 'Escribe el apellido').max(50),
@@ -37,7 +39,12 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
   const guardarApi = useGuardar<Perfil>('/usuarios');
   const eliminarApi = useEliminar('/usuarios');
   const editar = !!registro;
+  // Un SuperAdmin no puede cambiarle el rol ni el estado a un SuperAdmin Superior, ni asignar ese rol.
+  const soySuperior = yo?.nombre_rol === SUPERIOR;
+  const protegido = !soySuperior && registro?.nombre_rol === SUPERIOR;
   const propio = registro?.id_usuario === yo?.id_usuario;
+  const bloqueado = propio || protegido;
+  const rolesVisibles = roles.filter((r) => soySuperior || r.nombre_rol !== SUPERIOR || r.id_rol === registro?.id_rol);
   const { register, trigger, getValues, formState } = useForm<DatosCrear & DatosEditar>({
     resolver: zodResolver(editar ? esquemaEditar : esquemaCrear) as never,
     defaultValues: {
@@ -64,7 +71,7 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
     if (editar) {
       await guardarApi.mutateAsync({
         id: registro.id_usuario,
-        datos: propio ? comunes : { ...comunes, id_rol: Number(d.id_rol), estado_usuario: d.estado_usuario },
+        datos: bloqueado ? comunes : { ...comunes, id_rol: Number(d.id_rol), estado_usuario: d.estado_usuario },
       });
     } else {
       await guardarApi.mutateAsync({
@@ -81,7 +88,7 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
       sustantivo={{ palabra: 'usuario', demostrativo: 'este' }}
       validar={() => trigger()}
       guardar={guardar}
-      eliminar={editar && !propio ? () => eliminarApi.mutateAsync(registro.id_usuario) : undefined}
+      eliminar={editar && !bloqueado ? () => eliminarApi.mutateAsync(registro.id_usuario) : undefined}
       onCerrar={onCerrar}
     >
       <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
@@ -97,13 +104,13 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
           etiqueta="Rol"
           obligatorio
           vacio="Selecciona el rol"
-          disabled={propio}
-          opciones={roles.map((r) => ({ valor: String(r.id_rol), texto: descripcionRol(r.nombre_rol) }))}
+          disabled={bloqueado}
+          opciones={rolesVisibles.map((r) => ({ valor: String(r.id_rol), texto: descripcionRol(r.nombre_rol) }))}
           error={e.id_rol?.message}
           {...register('id_rol')}
         />
         {editar ? (
-          <Selector etiqueta="Estado" disabled={propio} opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo (bloqueado)' }]} {...register('estado_usuario')} />
+          <Selector etiqueta="Estado" disabled={bloqueado} opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo (bloqueado)' }]} {...register('estado_usuario')} />
         ) : (
           <Selector etiqueta="Estado" disabled opciones={[{ valor: 'Activo', texto: 'Activo' }]} value="Activo" onChange={() => {}} />
         )}
@@ -113,6 +120,7 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
         )}
       </div>
       {propio && <p className="text-[13px] text-texto-suave">No puedes cambiar tu propio rol ni tu estado.</p>}
+      {protegido && <p className="text-[13px] text-texto-suave">Es un SuperAdmin Superior: solo otro SuperAdmin Superior puede cambiarle el rol o el estado.</p>}
       {!editar && (
         <Casilla
           etiqueta="La persona autorizó el tratamiento de sus datos personales (Ley 1581 de 2012)."
@@ -248,7 +256,7 @@ export function Usuarios() {
                       </span>
                     </td>
                     <td className="truncate pl-14 font-bold text-[#172033]" title={descripcionRol(u.nombre_rol)}>
-                      {etiquetaRol(u.nombre_rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(u.nombre_rol)}
+                      {u.nombre_rol === SUPERIOR ? 'Superadmin superior' : etiquetaRol(u.nombre_rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(u.nombre_rol)}
                     </td>
                     <td>
                       <button

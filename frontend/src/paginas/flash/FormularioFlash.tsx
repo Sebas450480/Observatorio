@@ -19,6 +19,7 @@ const esquema = z
   .object({
     titulo: z.string().trim().min(1, 'Escribe el título').max(150),
     tipo_evento: z.enum(TIPOS_EVENTO, { message: 'Elige el tipo de evento' }),
+    tipo_otro: z.string().trim().max(40, 'Máximo 40 caracteres'),
     departamento: z.string(),
     fecha_inicio: z.string().min(1, 'Elige la fecha de inicio'),
     hora_inicio: z.string().min(1, 'Elige la hora de inicio'),
@@ -33,6 +34,7 @@ const esquema = z
     info_adicional: z.string(),
     estado_fi: z.enum(['Activo', 'Inactivo']),
   })
+  .refine((d) => d.tipo_evento !== 'Otro' || d.tipo_otro !== '', { message: 'Escribe el tipo de evento', path: ['tipo_otro'] })
   .refine((d) => d.es_gratuito || d.costo !== '', { message: 'Escribe el costo o marca "Gratuito"', path: ['costo'] })
   .refine((d) => !d.fecha_fin || aIsoBogota(d.fecha_fin, d.hora_fin || d.hora_inicio) >= aIsoBogota(d.fecha_inicio, d.hora_inicio), {
     message: 'La finalización debe ser posterior al inicio',
@@ -54,6 +56,7 @@ export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCe
     defaultValues: {
       titulo: registro?.titulo ?? '',
       tipo_evento: registro?.tipo_evento,
+      tipo_otro: registro?.tipo_otro ?? '',
       departamento: registro?.departamento ?? '',
       fecha_inicio: aEntradaFecha(registro?.fecha_inicio),
       hora_inicio: aEntradaHora(registro?.fecha_inicio),
@@ -71,12 +74,14 @@ export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCe
   });
   const e = formState.errors;
   const gratuito = useWatch({ control, name: 'es_gratuito' });
+  const tipo = useWatch({ control, name: 'tipo_evento' });
 
   const guardar = async () => {
     const d = getValues();
     const datos = {
       titulo: d.titulo,
       tipo_evento: d.tipo_evento,
+        tipo_otro: d.tipo_evento === 'Otro' ? d.tipo_otro : null,
       departamento: d.departamento || null,
       fecha_inicio: aIsoBogota(d.fecha_inicio, d.hora_inicio),
       fecha_fin: d.fecha_fin ? aIsoBogota(d.fecha_fin, d.hora_fin || d.hora_inicio) : null,
@@ -116,6 +121,18 @@ export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCe
           {...register('tipo_evento')}
         />
         <Selector etiqueta="Departamento" vacio="Selecciona el departamento" opciones={DEPARTAMENTOS} {...register('departamento')} />
+        {tipo === 'Otro' && (
+          <div className="sm:col-span-2">
+            <Entrada
+              etiqueta="¿Qué tipo de evento es?"
+              obligatorio
+              autoFocus
+              placeholder="Ej. Feria, Conversatorio, Rueda de negocios"
+              error={e.tipo_otro?.message}
+              {...register('tipo_otro')}
+            />
+          </div>
+        )}
         <Entrada etiqueta="Fecha de inicio" type="date" obligatorio icono={<img src={iconoCalendario} alt="" className="size-4" />} error={e.fecha_inicio?.message} {...register('fecha_inicio')} />
         <Entrada etiqueta="Horario de inicio" type="time" obligatorio icono={<img src={iconoHora} alt="" className="size-4" />} error={e.hora_inicio?.message} {...register('hora_inicio')} />
         <Entrada etiqueta="Fecha de finalización" type="date" icono={<img src={iconoCalendario} alt="" className="size-4" />} error={e.fecha_fin?.message} {...register('fecha_fin')} />

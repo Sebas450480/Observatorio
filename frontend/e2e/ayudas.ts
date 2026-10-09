@@ -9,7 +9,9 @@ export async function iniciarSesion(page: Page, perfil: Perfil) {
   await page.getByLabel('Correo electrónico').fill(CUENTAS[perfil].correo);
   await page.getByLabel('Contraseña').fill(CONTRASENA);
   await page.getByRole('button', { name: 'Ingresar al portal' }).click();
-  await expect(page.getByRole('heading', { name: 'Bienvenido al Observatorio Empresarial' })).toBeVisible();
+  // Los gestores entran directo a su módulo; los demás, al Inicio.
+  await expect(page).not.toHaveURL(/iniciar-sesion/);
+  if (!perfil.startsWith('gestor')) await expect(page.getByRole('heading', { name: 'Bienvenido al Observatorio Empresarial' })).toBeVisible();
 }
 
 /** Ir a un módulo desde el menú lateral. */

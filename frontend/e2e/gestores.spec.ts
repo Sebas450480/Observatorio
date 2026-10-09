@@ -12,12 +12,17 @@ test.describe('Gestor Flash Informativo', () => {
     await expect(formulario.getByText('Escribe el título')).toBeVisible();
 
     await formulario.getByLabel('Título del evento').fill('Feria E2E de Innovación');
-    await formulario.getByLabel('Tipo de evento').selectOption('Foro');
+    await formulario.getByLabel('Tipo de evento').selectOption('Otro');
+    await formulario.getByLabel('¿Qué tipo de evento es?').fill('Feria');
     await formulario.getByLabel('Fecha de inicio').fill('2099-03-10');
     await formulario.getByLabel('Horario de inicio').fill('09:00');
     await formulario.getByLabel('Modalidad').selectOption('Virtual');
     await formulario.getByLabel('Gratuito').check();
     await formulario.getByRole('button', { name: 'Innovación' }).click();
+    await formulario.getByRole('button', { name: 'Agregar categoría' }).click();
+    await formulario.getByLabel('Nombre de la nueva categoría').fill('Ferias E2E');
+    await formulario.getByRole('button', { name: 'Agregar', exact: true }).click();
+    await expect(formulario.getByRole('button', { name: 'Ferias E2E' })).toHaveAttribute('aria-pressed', 'true');
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
     await expect(page.getByRole('dialog', { name: 'Registro creado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
@@ -43,13 +48,20 @@ test.describe('Gestor Flash Informativo', () => {
     await expect(page.getByRole('dialog', { name: 'Registro eliminado' })).toBeVisible();
   });
 
-  test('no puede gestionar otros módulos', async ({ page }) => {
+  test('solo ve y entra a su módulo', async ({ page }) => {
     await iniciarSesion(page, 'gestorFlash');
-    await page.goto('/empresas');
-    await expect(page.getByRole('heading', { name: 'Empresas Coformadoras' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Crear empresa coformadora' })).toHaveCount(0);
-    await page.goto('/empresas/nueva');
-    await expect(page.getByRole('heading', { name: 'No tienes permiso para ver esta página' })).toBeVisible();
+    await expect(page).toHaveURL(/\/flash-informativo$/);
+    const menu = page.getByRole('complementary', { name: 'Menú principal' });
+    await expect(menu.getByRole('link', { name: 'Flash informativo' })).toBeVisible();
+    for (const otro of ['Inicio', 'Faro Empresarial', 'Empresas coformadoras', 'Tendencias', 'Eventos institucionales']) {
+      await expect(menu.getByRole('link', { name: otro, exact: true })).toHaveCount(0);
+    }
+    for (const ruta of ['/inicio', '/empresas', '/empresas/nueva', '/tendencias', '/usuarios']) {
+      await page.goto(ruta);
+      await expect(page).toHaveURL(/\/flash-informativo$/);
+    }
+    await page.goto('/mi-perfil');
+    await expect(page).toHaveURL(/\/mi-perfil$/);
   });
 });
 

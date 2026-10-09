@@ -19,7 +19,7 @@ import {
 import { EncabezadoPagina, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
-import { costo, fechaLarga, modalidadTexto, rangoHoras } from '../../utilidades/formato';
+import { costo, fechaLarga, modalidadTexto, nombreTipoEvento, rangoHoras } from '../../utilidades/formato';
 import { FormularioEvento } from './FormularioEvento';
 
 /** Color de cada tipo de evento (Figma: texto del color y fondo al 12 %). */
@@ -69,7 +69,7 @@ function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerra
       destacado
       claseCuerpo={CUERPO_DETALLE}
       titulo={<span className="uppercase">{evento.titulo}</span>}
-      sobreTitulo={<MetaDetalle etiqueta={evento.tipo_evento}>{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</MetaDetalle>}
+      sobreTitulo={<MetaDetalle etiqueta={nombreTipoEvento(evento)}>{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</MetaDetalle>}
     >
       <DatosDetalle>
         <DatoDetalle icono={ICONO_DETALLE.calendario} etiqueta="Fecha de inicio">
@@ -128,11 +128,20 @@ function ContenidoEvento({ event, view }: EventContentArg) {
     );
   }
   return (
-    <div className="flex h-full flex-col gap-1 overflow-hidden rounded-lg p-2.5 text-caption" style={{ background: fondoTipo(evento.tipo_evento) }}>
-      <p className="font-bold leading-[1.2]" style={{ color }}>
+    <div
+      title={`${event.title} · ${rangoHoras(evento.fecha_inicio, evento.fecha_fin)}`}
+      className="@container flex h-full flex-col gap-1 overflow-hidden rounded-lg border-l-[3px] p-2 text-caption @max-[100px]:p-1.5"
+      // Fondo opaco (tono del tipo sobre blanco) para que los eventos que se cruzan no se mezclen.
+      style={{ background: `linear-gradient(${fondoTipo(evento.tipo_evento)}, ${fondoTipo(evento.tipo_evento)}), #fff`, borderColor: color }}
+    >
+      {/* Cuando varios eventos se cruzan la columna se divide: en los angostos solo va el título (en vertical si es muy angosto). */}
+      <p
+        className="font-bold leading-[1.2] @max-[100px]:text-[11px] @max-[100px]:leading-[1.15] @max-[64px]:min-h-0 @max-[64px]:flex-1 @max-[64px]:truncate @max-[64px]:[writing-mode:vertical-rl]"
+        style={{ color }}
+      >
         {event.title}
       </p>
-      <p className="leading-[1.2] text-[#0a1c40]/80">{rangoHoras(evento.fecha_inicio, evento.fecha_fin)}</p>
+      <p className="leading-[1.2] text-[#0a1c40]/80 @max-[100px]:hidden">{rangoHoras(evento.fecha_inicio, evento.fecha_fin)}</p>
     </div>
   );
 }
@@ -257,6 +266,7 @@ export function Eventos() {
             scrollTime="08:00:00"
             height={vista === 'timeGridWeek' ? 800 : 'auto'}
             dayMaxEvents={3}
+            slotEventOverlap={false}
             slotLabelFormat={(arg) => `${arg.date.hour}:00`}
             slotLabelInterval="01:00"
             firstDay={0}

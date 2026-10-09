@@ -4,7 +4,7 @@ import circuloAzul from '../../assets/figma/decoraciones/circulo-azul-lateral.sv
 import circuloRojo from '../../assets/figma/decoraciones/circulo-rojo-lateral.svg';
 import { ICONOS_MODULO, type Modulo } from '../../assets/figma/iconos';
 import logo from '../../assets/figma/logo-observatorio.png';
-import { useSesion } from '../../sesion/sesion';
+import { RUTA_MODULO, useSesion } from '../../sesion/sesion';
 
 interface Opcion {
   ruta: string;
@@ -26,8 +26,11 @@ const OPCIONES: Opcion[] = [
 
 /** Barra lateral azul con el logo y el "Menú principal" según el rol. */
 export function BarraLateral({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
-  const { esSuperAdmin } = useSesion();
-  const opciones = OPCIONES.filter((o) => !o.soloSuperAdmin || esSuperAdmin);
+  const { esSuperAdmin, moduloGestor } = useSesion();
+  // El gestor solo ve su módulo.
+  const opciones = moduloGestor
+    ? OPCIONES.filter((o) => o.ruta === RUTA_MODULO[moduloGestor])
+    : OPCIONES.filter((o) => !o.soloSuperAdmin || esSuperAdmin);
 
   return (
     <>
@@ -39,7 +42,7 @@ export function BarraLateral({ abierto, onCerrar }: { abierto: boolean; onCerrar
         aria-label="Menú principal"
       >
         <div className="flex h-[142px] shrink-0 items-start justify-between px-6 pt-[42px] lg:pl-[29px] lg:pr-[19px]">
-          <NavLink to="/inicio" aria-label="Ir al inicio">
+          <NavLink to={moduloGestor ? RUTA_MODULO[moduloGestor] : '/inicio'} aria-label="Ir al inicio">
             <img src={logo} alt="Uniempresarial · Observatorio Empresarial" className="h-auto w-[230px] max-w-none lg:w-[277px]" />
           </NavLink>
           <button type="button" onClick={onCerrar} className="cursor-pointer p-2 lg:hidden" aria-label="Cerrar menú">

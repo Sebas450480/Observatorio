@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { z } from 'zod';
 import { config } from '../config.js';
-import { conRol } from '../db/contexto.js';
-import { ErrorApi, noEncontrado } from '../errores.js';
+import { conRol, type Cliente } from '../db/contexto.js';
+import { ErrorApi, noEncontrado, prohibido } from '../errores.js';
 import { requiereSuperAdmin } from '../middlewares/sesion.js';
 import { Filtros, construirPagina, esquemaPaginacion } from '../utilidades/consulta.js';
 import {
@@ -14,6 +14,25 @@ import { COLUMNAS_PERFIL } from './auth.js';
 /** Gestión de usuarios y roles (solo SuperAdmin). RF-24. */
 export const rutasUsuarios = Router();
 rutasUsuarios.use(requiereSuperAdmin);
+
+/**
+ * El SuperAdmin Superior tiene las funciones del SuperAdmin, pero un SuperAdmin
+ * normal no puede asignar ese rol ni cambiarle el rol o el estado ni eliminarlo.
+ */
+export const SUPERADMIN_SUPERIOR = 'SuperAdmin Superior';
+
+async function nombreRolDeUsuario(c: Cliente, idUsuario: number): Promise<string | undefined> {
+  const { rows } = await c.query<{ nombre_rol: string }>(
+    'select r.nombre_rol from usuario u join rol r on r.id_rol = u.id_rol where u.id_usuario = $1',
+    [idUsuario],
+  );
+  return rows[0]?.nombre_rol;
+}
+
+async function nombreRol(c: Cliente, idRol: number): Promise<string | undefined> {
+  const { rows } = await c.query<{ nombre_rol: string }>('select nombre_rol from rol where id_rol = $1', [idRol]);
+  return rows[0]?.nombre_rol;
+}
 
 const esquemaFiltros = esquemaPaginacion.extend({
   q: z.string().trim().min(1).max(100).optional(),
@@ -79,6 +98,9 @@ rutasUsuarios.post('/', async (req, res) => {
   const datos = esquemaCrear.parse(req.body);
   const hash = await bcrypt.hash(datos.contrasena, config.bcryptCosto);
   const id = await conRol(req.sesion, async (c) => {
+    if (req.sesion.nombreRol !== SUPERADMIN_SUPERIOR && (await nombreRol(c, datos.id_rol)) === SUPERADMIN_SUPERIOR) {
+      throw prohibido('Solo un SuperAdmin Superior puede asignar ese rol');
+    }
     const { rows } = await c.query<{ id_usuario: number }>(
       `insert into usuario (nombre_usuario, apellido_usuario, apodo_usuario, correo, contrasena_hash, ciudad,
                             frecuencia_alertas, acepta_tratamiento_datos, fecha_aceptacion_datos, id_rol)
@@ -121,6 +143,14 @@ rutasUsuarios.patch('/:id', async (req, res) => {
     throw new ErrorApi(400, 'No puedes cambiar tu propio rol ni tu estado');
   }
   await conRol(req.sesion, async (c) => {
+    if (req.sesion.nombreRol !== SUPERADMIN_SUPERIOR) {
+      if ((await nombreRolDeUsuario(c, id)) === SUPERADMIN_SUPERIOR && (datos.id_rol !== undefined || datos.estado_usuario !== undefined)) {
+        throw prohibido('No puedes cambiar el rol ni el estado de un SuperAdmin Superior');
+      }
+      if (datos.id_rol !== undefined && (await nombreRol(c, datos.id_rol)) === SUPERADMIN_SUPERIOR) {
+        throw prohibido('Solo un SuperAdmin Superior puede asignar ese rol');
+      }
+    }
     const { rowCount } = await c.query(
       `update usuario set ${entradas.map(([col], i) => `${col} = $${i + 2}`).join(', ')} where id_usuario = $1`,
       [id, ...entradas.map(([, v]) => v)],
@@ -134,6 +164,9 @@ rutasUsuarios.delete('/:id', async (req, res) => {
   const id = idPositivo.parse(req.params.id);
   if (id === req.sesion.idUsuario) throw new ErrorApi(400, 'No puedes eliminar tu propia cuenta');
   await conRol(req.sesion, async (c) => {
+    if (req.sesion.nombreRol !== SUPERADMIN_SUPERIOR && (await nombreRolDeUsuario(c, id)) === SUPERADMIN_SUPERIOR) {
+      throw prohibido('No puedes eliminar a un SuperAdmin Superior');
+    }
     const { rowCount } = await c.query('delete from usuario where id_usuario = $1', [id]);
     if (!rowCount) throw noEncontrado('Usuario');
   });
