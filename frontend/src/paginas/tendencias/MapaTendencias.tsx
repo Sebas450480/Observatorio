@@ -1,14 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
-import { Layers, TrendingDown, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { ResponsiveContainer, Tooltip, Treemap } from 'recharts';
 import { api, mensajeDeError } from '../../api/cliente';
+import iconoCapas from '../../assets/figma/tendencias/capas.png';
 import type { MapaTendencias as DatosMapa, TendenciaCrecimiento } from '../../api/tipos';
-import { Cargando, EstadoVacio, MensajeError, Tarjeta } from '../../componentes/ui/Elementos';
+import { Cargando, EstadoVacio, MensajeError } from '../../componentes/ui/Elementos';
 import { numero } from '../../utilidades/formato';
 
-/** Paleta de las megatendencias (Figma: morado, verde, azul, fucsia, naranja...). */
-const PALETA = ['#6d35d9', '#1a8f55', '#1f6fd1', '#d7336f', '#e2711d', '#0f8d9a', '#a43bb0', '#4a5e7e', '#5d8a1c', '#a87d0c', '#4b4fc4', '#1478c9'];
+/** Color de cada megatendencia en el Figma; las nuevas toman la paleta en orden. */
+const COLORES: Record<string, string> = {
+  'Tecnología y sociedad': '#7338d9',
+  'Medio ambiente y sostenibilidad': '#178c52',
+  'Economía y trabajo': '#1f66c7',
+  'Demografía y cultura': '#e07314',
+  'Salud y bienestar': '#d62e6b',
+  'Educación y talento': '#008c99',
+  'Ciudades y urbanización': '#524dc2',
+  'Finanzas y nuevos mercados': '#b2800a',
+  'Comercio y geopolítica': '#476180',
+  'Consumo y nuevos hábitos': '#a8339e',
+  'Agroindustria y alimentos': '#61851a',
+  'Energía y recursos': '#0a7ac7',
+};
+const PALETA = Object.values(COLORES);
 
 type Periodo = 'semana' | 'mes' | 'anio';
 const PERIODOS: { valor: Periodo; texto: string; comparacion: string }[] = [
@@ -42,12 +56,12 @@ function Bloque({ x = 0, y = 0, width = 0, height = 0, depth, name, color, detal
   if (depth !== 1) return null;
   return (
     <g style={{ cursor: 'pointer' }}>
-      <rect x={x + 2} y={y + 2} width={Math.max(0, width - 4)} height={Math.max(0, height - 4)} rx={6} fill={color} />
+      <rect x={x + 2} y={y + 2} width={Math.max(0, width - 4)} height={Math.max(0, height - 4)} rx={4} fill={color} />
       {width > 70 && height > 34 && (
-        <foreignObject x={x + 8} y={y + 6} width={width - 16} height={height - 12}>
+        <foreignObject x={x + 10} y={y + 10} width={width - 20} height={height - 18}>
           <div className="flex h-full flex-col justify-between overflow-hidden text-white">
-            <p className="text-[13px] font-semibold leading-tight">{name}</p>
-            {height > 70 && <p className="truncate text-[11px] text-white/85">{detalle}</p>}
+            <p className="text-small font-semibold leading-[1.2]">{name}</p>
+            {height > 70 && <p className="truncate text-caption text-white/85">{detalle}</p>}
           </div>
         </foreignObject>
       )}
@@ -66,7 +80,7 @@ export function MapaTendencias({ onAbrir }: { onAbrir: (id: number) => void }) {
   const top = useQuery({ queryKey: ['/tendencias', 'top5'], queryFn: () => api<TendenciaCrecimiento[]>('/tendencias/top5') });
 
   const megas = mapa.data?.megatendencias ?? [];
-  const color = (m: string) => PALETA[Math.max(0, megas.findIndex((x) => x.megatendencia === m)) % PALETA.length]!;
+  const color = (m: string) => COLORES[m] ?? PALETA[Math.max(0, megas.findIndex((x) => x.megatendencia === m)) % PALETA.length]!;
   const nodos: Nodo[] = mega
     ? (mapa.data?.tendencias ?? [])
         .filter((t) => t.megatendencia === mega && Number(t.menciones) > 0)
@@ -82,125 +96,137 @@ export function MapaTendencias({ onAbrir }: { onAbrir: (id: number) => void }) {
         }));
 
   const chip = (activo: boolean) =>
-    `inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold ${
-      activo ? 'border-azul-oscuro bg-azul-oscuro text-white' : 'border-borde bg-white text-texto hover:bg-fondo'
+    `inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full px-3.5 text-caption font-semibold ${
+      activo ? 'h-[33px] bg-azul-marino text-white' : 'h-[35px] border border-[#d9dee8] bg-white text-[#0a1c40] hover:bg-fondo'
     }`;
   const maxTop = Math.max(1, ...(top.data ?? []).map((t) => Math.abs(t.crecimiento_pct ?? 0)));
+  const actualizado = top.dataUpdatedAt
+    ? new Date(top.dataUpdatedAt).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit' })
+    : null;
 
   return (
-    <Tarjeta className="p-4 sm:p-6">
-      <div className="mb-4 flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-naranja-claro text-[#c2410c]">
-          <Layers className="size-5" aria-hidden />
-        </span>
-        <div>
-          <h2 className="text-body font-bold text-texto">Mapa de tendencias</h2>
-          <p className="text-caption text-texto-suave">
+    <section className="flex flex-col gap-[22px] rounded-[20px] border-2 border-black/10 bg-white p-4 sm:pb-12 sm:pl-[35px] sm:pr-[33px] sm:pt-[31px] xl:ml-0.5">
+      <div className="flex items-center gap-6">
+        <img src={iconoCapas} alt="" aria-hidden width={50} height={48} className="shrink-0" />
+        <div className="text-black">
+          <h2 className="text-body font-bold">Mapa de tendencias</h2>
+          <p className="text-small font-light sm:text-body">
             El tamaño de cada bloque muestra cuántas veces aparece la tendencia. Pasa el cursor para ver detalles y haz clic para explorar sus registros.
           </p>
         </div>
       </div>
 
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="shrink-0 text-[12px] text-texto-suave">{megas.length} megatendencias</span>
-          <button type="button" className={chip(mega === null)} aria-pressed={mega === null} onClick={() => setMega(null)}>
-            Todas
-          </button>
-          {megas.map((m) => (
-            <button key={m.megatendencia} type="button" className={chip(mega === m.megatendencia)} aria-pressed={mega === m.megatendencia} onClick={() => setMega(m.megatendencia)}>
-              <span className="size-2 rounded-full" style={{ background: color(m.megatendencia) }} aria-hidden />
-              {m.megatendencia}
-            </button>
-          ))}
-        </div>
-        <div role="group" aria-label="Periodo" className="flex shrink-0 rounded-full border border-borde bg-white p-1">
-          {PERIODOS.map((p) => (
-            <button
-              key={p.valor}
-              type="button"
-              aria-pressed={periodo === p.valor}
-              onClick={() => setPeriodo(p.valor)}
-              className={`h-8 cursor-pointer rounded-full px-3 text-[12px] font-semibold ${periodo === p.valor ? 'bg-rojo text-white' : 'text-texto hover:bg-fondo'}`}
-            >
-              {p.texto}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[1fr_260px]">
-        <div className="min-h-[420px]">
-          {mapa.isLoading ? (
-            <Cargando />
-          ) : mapa.error ? (
-            <MensajeError mensaje={mensajeDeError(mapa.error)} onReintentar={() => mapa.refetch()} />
-          ) : !nodos.length ? (
-            <EstadoVacio titulo="Sin menciones en este periodo" detalle="Prueba con un periodo más amplio." />
-          ) : (
-            <ResponsiveContainer width="100%" height={460}>
-              <Treemap
-                data={nodos}
-                dataKey="size"
-                isAnimationActive={false}
-                content={<Bloque />}
-                onClick={(n: unknown) => {
-                  const nodo = n as Partial<Nodo>;
-                  if (nodo.id_te) onAbrir(nodo.id_te);
-                  else if (nodo.megatendencia) setMega(nodo.megatendencia);
-                }}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+          <div className="flex min-w-0 items-center gap-3 pt-1">
+            <span className="shrink-0 text-caption font-semibold text-gris-azulado">{megas.length} megatendencias</span>
+            <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1">
+              <button type="button" className={chip(mega === null)} aria-pressed={mega === null} onClick={() => setMega(null)}>
+                Todas
+              </button>
+              {megas.map((m) => (
+                <button key={m.megatendencia} type="button" className={chip(mega === m.megatendencia)} aria-pressed={mega === m.megatendencia} onClick={() => setMega(m.megatendencia)}>
+                  <span className="size-2.5 rounded-full" style={{ background: color(m.megatendencia) }} aria-hidden />
+                  {m.megatendencia}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div role="group" aria-label="Periodo" className="flex shrink-0 gap-1 self-start rounded-full border border-[#d9dee8] bg-white p-1">
+            {PERIODOS.map((p) => (
+              <button
+                key={p.valor}
+                type="button"
+                aria-pressed={periodo === p.valor}
+                onClick={() => setPeriodo(p.valor)}
+                className={`h-[33px] cursor-pointer rounded-full px-4 text-caption font-semibold ${periodo === p.valor ? 'bg-rojo-vivo text-white' : 'text-[#0a1c40] hover:bg-fondo'}`}
               >
-                <Tooltip
-                  formatter={(valor) => [`${numero(Number(valor))} menciones`, 'Menciones']}
-                  labelFormatter={(_, carga) => String((carga?.[0]?.payload as Nodo | undefined)?.name ?? '')}
-                />
-              </Treemap>
-            </ResponsiveContainer>
-          )}
-          {mega && <p className="mt-2 text-[12px] text-texto-suave">Haz clic en una tendencia para ver su detalle.</p>}
+                {p.texto}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <aside className="h-fit rounded-xl border border-borde p-4">
-          <h3 className="font-bold text-texto">Top 5 en crecimiento</h3>
-          <p className="text-[12px] text-texto-suave">Últimos 30 días · vs. 30 días anteriores</p>
-          {top.isLoading ? (
-            <Cargando />
-          ) : !top.data?.length ? (
-            <p className="mt-4 text-caption text-texto-suave">Todavía no hay menciones recientes.</p>
-          ) : (
-            <ol className="mt-3 flex flex-col gap-3">
-              {top.data.map((t, i) => {
-                const pct = t.crecimiento_pct;
-                const sube = (pct ?? t.crecimiento) >= 0;
-                return (
-                  <li key={t.id_te}>
-                    <button type="button" onClick={() => onAbrir(t.id_te)} className="w-full cursor-pointer text-left">
-                      <span className="flex items-center justify-between gap-2 text-caption font-semibold text-texto">
-                        <span className="truncate">
-                          <span className="mr-1 text-texto-suave">{i + 1}</span> {t.tendencia}
+        <div className="grid gap-6 xl:grid-cols-[1fr_330px]">
+          <div className="min-h-[420px]">
+            {mapa.isLoading ? (
+              <Cargando />
+            ) : mapa.error ? (
+              <MensajeError mensaje={mensajeDeError(mapa.error)} onReintentar={() => mapa.refetch()} />
+            ) : !nodos.length ? (
+              <EstadoVacio titulo="Sin menciones en este periodo" detalle="Prueba con un periodo más amplio." />
+            ) : (
+              <ResponsiveContainer width="100%" height={717}>
+                <Treemap
+                  data={nodos}
+                  dataKey="size"
+                  isAnimationActive={false}
+                  content={<Bloque />}
+                  onClick={(n: unknown) => {
+                    const nodo = n as Partial<Nodo>;
+                    if (nodo.id_te) onAbrir(nodo.id_te);
+                    else if (nodo.megatendencia) setMega(nodo.megatendencia);
+                  }}
+                >
+                  <Tooltip
+                    formatter={(valor) => [`${numero(Number(valor))} menciones`, 'Menciones']}
+                    labelFormatter={(_, carga) => String((carga?.[0]?.payload as Nodo | undefined)?.name ?? '')}
+                  />
+                </Treemap>
+              </ResponsiveContainer>
+            )}
+            {mega && <p className="mt-2 text-caption text-gris-azulado">Haz clic en una tendencia para ver su detalle.</p>}
+          </div>
+
+          <aside className="flex flex-col gap-3.5 rounded-xl border border-[#d9dee8] px-[22px] py-6 xl:min-h-[717px]">
+            <div className="flex flex-col gap-0.5">
+              <h3 className="text-subtitle font-bold text-[#0a1c40]">Top 5 en crecimiento</h3>
+              <p className="text-caption text-gris-azulado">Último mes · vs. mes anterior</p>
+            </div>
+            {actualizado && (
+              <p className="flex items-center gap-2 self-start rounded-full bg-[#0a8c5c]/10 px-3 py-1.5 text-caption font-semibold text-[#0a734d]">
+                <span className="size-2 rounded-full bg-[#0a8c5c]" aria-hidden /> Actualizado hoy, {actualizado}
+              </p>
+            )}
+            {top.isLoading ? (
+              <Cargando />
+            ) : !top.data?.length ? (
+              <p className="text-caption text-gris-azulado">Todavía no hay menciones recientes.</p>
+            ) : (
+              <ol className="flex flex-col gap-3.5">
+                {top.data.map((t, i) => {
+                  const pct = t.crecimiento_pct;
+                  const sube = (pct ?? t.crecimiento) >= 0;
+                  return (
+                    <li key={t.id_te}>
+                      <button type="button" onClick={() => onAbrir(t.id_te)} className="flex w-full cursor-pointer flex-col gap-1.5 text-left">
+                        <span className="flex items-center justify-between gap-2.5 text-small">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="font-bold text-gris-azulado/70">{i + 1}</span>
+                            <span className="truncate font-semibold text-[#0a1c40]">{t.tendencia}</span>
+                          </span>
+                          <span className={`shrink-0 font-bold ${sube ? 'text-[#0a8c5c]' : 'text-rojo'}`}>
+                            {pct === null ? 'Nueva' : `${sube ? '▲' : '▼'} ${Math.round(Math.abs(pct))} %`}
+                          </span>
                         </span>
-                        <span className={`flex shrink-0 items-center gap-0.5 ${sube ? 'text-exito' : 'text-rojo'}`}>
-                          {sube ? <TrendingUp className="size-3.5" aria-hidden /> : <TrendingDown className="size-3.5" aria-hidden />}
-                          {pct === null ? 'Nueva' : `${pct} %`}
+                        <span className="truncate text-caption text-gris-azulado">
+                          {t.megatendencia} · {numero(t.menciones_actual)} menciones
                         </span>
-                      </span>
-                      <span className="block truncate text-[11px] text-texto-suave">
-                        {t.megatendencia} · {numero(t.menciones_actual)} menciones
-                      </span>
-                      <span className="mt-1 block h-1 rounded-full bg-fondo">
-                        <span
-                          className="block h-1 rounded-full"
-                          style={{ width: `${pct === null ? 100 : Math.max(8, (Math.abs(pct) / maxTop) * 100)}%`, background: color(t.megatendencia) }}
-                        />
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </aside>
+                        <span className="block h-1.5 rounded-[3px] bg-[#edf0f5]">
+                          <span
+                            className="block h-1.5 rounded-[3px]"
+                            style={{ width: `${pct === null ? 100 : Math.max(8, (Math.abs(pct) / maxTop) * 100)}%`, background: color(t.megatendencia) }}
+                          />
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </aside>
+        </div>
       </div>
-    </Tarjeta>
+    </section>
   );
 }

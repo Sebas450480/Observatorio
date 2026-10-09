@@ -1,8 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, Columns2, ExternalLink, FileUp, Globe, LayoutGrid, List, Pencil } from 'lucide-react';
+import { FileUp } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { api, mensajeDeError } from '../../api/cliente';
+import iconoCalendario from '../../assets/figma/tendencias/calendario-tendencia.svg';
+import iconoEditar from '../../assets/figma/tendencias/editar-tabla.png';
+import iconoEnlace from '../../assets/figma/tendencias/enlace-externo.png';
+import iconoGlobo from '../../assets/figma/tendencias/globo-tendencia.png';
+import iconoEncabezado from '../../assets/figma/tendencias/tendencias-encabezado.svg';
+import vistaCompacta from '../../assets/figma/tendencias/vista-compacta.svg';
+import vistaGrande from '../../assets/figma/tendencias/vista-grande.svg';
+import vistaLista from '../../assets/figma/tendencias/vista-lista.svg';
 import { useListado } from '../../api/consultas';
 import type { Tendencia } from '../../api/tipos';
 import { BarraFiltros } from '../../componentes/contenido/Controles';
@@ -10,7 +18,7 @@ import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
-import { fechaCorta } from '../../utilidades/formato';
+import { fechaCorta, numero } from '../../utilidades/formato';
 import { DetalleTendencia } from './DetalleTendencia';
 import { FormularioTendencia } from './FormularioTendencia';
 import { ImportarTendencias } from './ImportarTendencias';
@@ -31,75 +39,103 @@ const FECHAS = [
 ];
 
 function EtiquetaMega({ children }: { children: string }) {
-  return <span className="inline-block rounded-md bg-morado-claro px-2 py-0.5 text-[12px] font-semibold text-morado">{children}</span>;
+  return (
+    <span className="inline-flex h-[26px] items-center self-start rounded-[20px] bg-[#f6ecff] px-3 text-small font-bold tracking-[-0.5px] text-[#a32afa]">
+      {children}
+    </span>
+  );
 }
 
-function TarjetaTendencia({ t, compacta, onAbrir }: { t: Tendencia; compacta: boolean; onAbrir: () => void }) {
+function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void }) {
   return (
     <button
       type="button"
       onClick={onAbrir}
-      className="flex cursor-pointer flex-col gap-2 rounded-tarjeta border border-borde bg-white p-4 text-left shadow-tarjeta transition-shadow hover:shadow-menu"
+      className="flex min-w-0 cursor-pointer flex-col gap-3 rounded-[20px] border-2 border-black/10 bg-white pb-[21px] pl-[23px] pr-[31px] pt-[26px] text-left transition-shadow hover:shadow-menu"
     >
       <span className="flex items-center justify-between gap-2">
         <EtiquetaMega>{t.megatendencia}</EtiquetaMega>
-        {t.estado_te === 'Inactivo' && <span className="text-[11px] font-bold text-texto-suave">INACTIVA</span>}
+        {t.estado_te === 'Inactivo' && <span className="text-[12px] font-bold text-texto-suave">INACTIVA</span>}
       </span>
-      <span className="text-body font-bold text-texto">{t.tendencia}</span>
-      {!compacta && t.descripcion && <span className="line-clamp-2 text-caption text-texto-suave">{t.descripcion}</span>}
-      <span className="mt-auto flex items-center justify-between border-t border-borde pt-2.5 text-[12px]">
-        <span className="flex items-center gap-1 font-semibold text-texto">
-          <Globe className="size-3.5 text-exito" aria-hidden /> Global &amp; Colombia
+      <span className="flex flex-col gap-1.5 tracking-[-0.5px] text-[#232734]">
+        <span className="text-subtitle font-bold">{t.tendencia}</span>
+        <span className="line-clamp-2 min-h-[44px] text-body font-light">{t.descripcion}</span>
+      </span>
+      <span className="mt-auto flex items-center justify-between gap-3 border-t border-[#e2e8f0] pt-3.5">
+        <span className="flex items-center gap-2 text-small font-bold tracking-[-0.5px] text-[#232734]">
+          <img src={iconoGlobo} alt="" aria-hidden className="size-3.5" /> Global &amp; Colombia
         </span>
-        <span className="flex items-center gap-1 text-texto-suave">
-          <CalendarDays className="size-3.5" aria-hidden /> {fechaCorta(t.fecha_publicacion)}
+        <span className="flex items-center gap-2 text-small text-[#4d525c]">
+          <img src={iconoCalendario} alt="" aria-hidden className="size-3.5" /> {fechaCorta(t.fecha_publicacion)}
         </span>
       </span>
     </button>
   );
 }
 
+const COLUMNAS_TABLA = [
+  { titulo: 'ID', ancho: 49 },
+  { titulo: 'Megatendencia', ancho: 310 },
+  { titulo: 'Tendencia', ancho: 205 },
+  { titulo: 'Descripción', ancho: 210 },
+  { titulo: 'Mundo', ancho: 186 },
+  { titulo: 'Colombia', ancho: 190 },
+  { titulo: 'Fecha', ancho: 130 },
+  { titulo: 'Fuente', ancho: 83 },
+];
+
 function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onAbrir: (id: number) => void; onEditar?: (t: Tendencia) => void }) {
-  const celda = 'max-w-44 truncate px-3 py-2.5';
+  const columnas = onEditar ? [...COLUMNAS_TABLA, { titulo: 'Acciones', ancho: 141 }] : COLUMNAS_TABLA;
+  const celda = 'h-10 truncate px-1 text-center';
+  const tenue = `${celda} font-semibold text-black/40`;
   return (
-    <div className="overflow-x-auto rounded-tarjeta border border-borde bg-white shadow-tarjeta">
-      <table className="w-full min-w-[960px] text-caption">
-        <thead className="bg-[#eceef1] text-azul-titulo">
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[1100px] table-fixed border-separate border-spacing-0 text-body">
+        <colgroup>
+          {columnas.map((c) => (
+            <col key={c.titulo} style={{ width: c.ancho }} />
+          ))}
+        </colgroup>
+        <thead>
           <tr>
-            {['ID', 'Megatendencia', 'Tendencia', 'Descripción', 'Mundo', 'Colombia', 'Fecha', 'Fuente', ...(onEditar ? ['Acciones'] : [])].map((c) => (
-              <th key={c} scope="col" className="px-3 py-2.5 text-center font-semibold">
-                {c}
+            {columnas.map((c, i) => (
+              <th
+                key={c.titulo}
+                scope="col"
+                className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2' : ''} ${i === columnas.length - 1 ? 'border-r-2' : ''}`}
+              >
+                {c.titulo}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="bg-[#fdfdfc] [&_td:first-child]:border-l-2 [&_td:last-child]:border-r-2 [&_td]:border-black/10 [&_tr:last-child_td]:border-b-2">
           {datos.map((t) => (
-            <tr key={t.id_te} className="border-t border-borde hover:bg-fondo">
-              <td className="px-3 py-2.5 text-center text-texto-suave">{t.id_te}</td>
-              <td className="px-3 py-2.5 text-center font-semibold text-azul-titulo">{t.megatendencia}</td>
-              <td className="px-3 py-2.5 text-center font-semibold text-texto">
-                <button type="button" className="cursor-pointer hover:underline" onClick={() => onAbrir(t.id_te)}>
+            <tr key={t.id_te} className="hover:bg-fondo">
+              <td className={tenue}>{t.id_te}</td>
+              <td className={`${celda} font-bold text-azul-titulo`}>{t.megatendencia}</td>
+              <td className="h-10 px-1 text-center font-bold leading-[1.1] text-black">
+                <button type="button" className="line-clamp-2 max-w-full cursor-pointer hover:underline" onClick={() => onAbrir(t.id_te)}>
                   {t.tendencia}
                 </button>
               </td>
-              <td className={`${celda} text-texto-suave`} title={t.descripcion ?? ''}>{t.descripcion}</td>
-              <td className={`${celda} text-texto-suave`} title={t.comportamiento_mundo ?? ''}>{t.comportamiento_mundo}</td>
-              <td className={`${celda} text-texto-suave`} title={t.comportamiento_colombia ?? ''}>{t.comportamiento_colombia}</td>
-              <td className="whitespace-nowrap px-3 py-2.5 text-center text-texto-suave">{fechaCorta(t.fecha_publicacion)}</td>
-              <td className="px-3 py-2.5 text-center">
+              <td className={tenue} title={t.descripcion ?? ''}>{t.descripcion}</td>
+              <td className={tenue} title={t.comportamiento_mundo ?? ''}>{t.comportamiento_mundo}</td>
+              <td className={tenue} title={t.comportamiento_colombia ?? ''}>{t.comportamiento_colombia}</td>
+              <td className={tenue}>{fechaCorta(t.fecha_publicacion)}</td>
+              <td className={celda}>
                 {t.fuentes[0]?.link ? (
-                  <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 font-bold text-azul-oscuro hover:underline">
-                    Ver <ExternalLink className="size-3.5" aria-hidden />
+                  <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-azul-titulo hover:underline">
+                    Ver <img src={iconoEnlace} alt="" aria-hidden className="size-5" />
                   </a>
                 ) : (
-                  <span className="text-texto-tenue">—</span>
+                  <span className="text-black/40">—</span>
                 )}
               </td>
               {onEditar && (
-                <td className="px-3 py-2.5 text-center">
-                  <button type="button" aria-label={`Editar ${t.tendencia}`} onClick={() => onEditar(t)} className="cursor-pointer rounded p-1 text-azul-titulo hover:bg-white">
-                    <Pencil className="size-4" />
+                <td className={celda}>
+                  <button type="button" aria-label={`Editar ${t.tendencia}`} onClick={() => onEditar(t)} className="inline-grid cursor-pointer place-items-center rounded p-0.5 hover:bg-black/5">
+                    <img src={iconoEditar} alt="" className="size-[23px]" />
                   </button>
                 </td>
               )}
@@ -147,14 +183,55 @@ export function Tendencias() {
   const { data, isLoading, error, refetch } = useListado<Tendencia>('/tendencias', { ...consulta, pagina, limite });
   const abrir = (idT: number) => navegar(`/tendencias/${idT}`);
 
+  // Chips de "Filtros aplicados" (Figma: "Resultados").
+  const aplicados = [
+    filtros.megatendencia && { campo: 'megatendencia' as const, texto: filtros.megatendencia },
+    filtros.q && { campo: 'q' as const, texto: filtros.q },
+    filtros.dias && { campo: 'dias' as const, texto: FECHAS.find((f) => f.valor === filtros.dias)?.texto ?? '' },
+  ].filter((f): f is { campo: 'megatendencia' | 'q' | 'dias'; texto: string } => !!f);
+  const quitarFiltro = (campo?: 'megatendencia' | 'q' | 'dias') => {
+    const nuevos = campo ? { ...filtros, [campo]: '' } : { megatendencia: '', q: '', dias: '', estado: '' };
+    setFiltros(nuevos);
+    setBorrador(nuevos);
+    setPagina(1);
+  };
+
   const pestanaClase = (activa: boolean) =>
-    `h-9 flex-1 cursor-pointer rounded-full text-small font-bold ${activa ? 'bg-rojo text-white' : 'border border-borde bg-white text-texto hover:bg-fondo'}`;
-  const vistaClase = (activa: boolean) => `grid size-9 cursor-pointer place-items-center rounded-lg ${activa ? 'bg-rojo text-white' : 'text-texto hover:bg-fondo'}`;
+    `h-10 flex-1 cursor-pointer rounded-[15px] text-small font-bold tracking-[0.02em] sm:text-body ${
+      activa ? 'bg-rojo-activo text-white' : 'border-2 border-black/10 bg-[#fdfdfc] text-black hover:bg-fondo'
+    }`;
+  const vistas: { valor: VistaLista; etiqueta: string; icono: string; forma: string; ancho: string }[] = [
+    { valor: 'tarjetas', etiqueta: 'Vista en tarjetas', icono: vistaGrande, forma: 'rounded-l-[20px]', ancho: 'w-[47px]' },
+    { valor: 'compactas', etiqueta: 'Vista compacta', icono: vistaCompacta, forma: '', ancho: 'w-[47px]' },
+    { valor: 'tabla', etiqueta: 'Vista en tabla', icono: vistaLista, forma: 'rounded-r-[20px]', ancho: 'w-[50px]' },
+  ];
 
   return (
     <>
-      <EncabezadoPagina modulo="tendencias" titulo="Tendencias Empresariales" subtitulo="Megatendencias globales y su impacto en Colombia" />
-      <div role="tablist" aria-label="Secciones de tendencias" className="mb-5 flex gap-3 rounded-full bg-white p-2 shadow-tarjeta">
+      <EncabezadoPagina
+        iconoConCuadro={iconoEncabezado}
+        titulo="Tendencias Empresariales"
+        subtitulo="Megatendencias globales y su impacto en Colombia"
+        claseSubtitulo="text-body font-bold tracking-[-0.5px] text-[#0d2375] sm:text-subtitle"
+        acciones={
+          pestana === 'lista' ? (
+            <>
+              {gestiona && (
+                <Boton variante="secundario" pildora icono={<FileUp className="size-4" />} onClick={() => setImportar(true)}>
+                  Importar Excel
+                </Boton>
+              )}
+              <MenuExportar ruta="/tendencias" consulta={consulta} />
+            </>
+          ) : undefined
+        }
+        className="mb-6"
+      />
+      <div
+        role="tablist"
+        aria-label="Secciones de tendencias"
+        className={`mb-3.5 flex gap-3 rounded-[20px] border-2 border-black/10 bg-white/50 p-2 sm:gap-[21px] sm:pb-[9px] sm:pl-[26px] sm:pr-[23px] sm:pt-[7px] ${pestana === 'lista' ? 'xl:ml-1' : 'xl:mb-[27px]'}`}
+      >
         <button type="button" role="tab" aria-selected={pestana === 'lista'} className={pestanaClase(pestana === 'lista')} onClick={() => setPestana('lista')}>
           Tendencias
         </button>
@@ -168,29 +245,34 @@ export function Tendencias() {
       ) : (
         <>
           <BarraFiltros
+            className="min-h-[50px]! gap-3 xl:mb-[35px]"
             acciones={
               <>
                 {gestiona && (
-                  <>
-                    <Boton variante="secundario" pildora icono={<FileUp className="size-4" />} onClick={() => setImportar(true)}>
-                      Importar Excel
-                    </Boton>
-                    <Boton variante="secundario" pildora onClick={() => setFormulario({})}>
-                      Crear nuevo registro
-                    </Boton>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setFormulario({})}
+                    className="h-[50px] cursor-pointer rounded-[20px] border-2 border-black/10 bg-white px-6 text-body font-bold tracking-[-0.5px] text-black hover:bg-fondo xl:w-[286px]"
+                  >
+                    Crear nuevo registro
+                  </button>
                 )}
-                <MenuExportar ruta="/tendencias" consulta={consulta} />
-                <div role="group" aria-label="Vista" className="flex gap-1 rounded-xl bg-white p-1 shadow-tarjeta">
-                  <button type="button" aria-label="Vista en tarjetas" aria-pressed={vista === 'tarjetas'} className={vistaClase(vista === 'tarjetas')} onClick={() => { setVista('tarjetas'); setPagina(1); }}>
-                    <Columns2 className="size-4" />
-                  </button>
-                  <button type="button" aria-label="Vista compacta" aria-pressed={vista === 'compactas'} className={vistaClase(vista === 'compactas')} onClick={() => { setVista('compactas'); setPagina(1); }}>
-                    <LayoutGrid className="size-4" />
-                  </button>
-                  <button type="button" aria-label="Vista en tabla" aria-pressed={vista === 'tabla'} className={vistaClase(vista === 'tabla')} onClick={() => { setVista('tabla'); setPagina(1); }}>
-                    <List className="size-4" />
-                  </button>
+                <div role="group" aria-label="Vista" className="flex h-[50px] items-center rounded-[20px] border-2 border-black/10 bg-[#fdfdfc]/50 px-[10px]">
+                  {vistas.map((v) => (
+                    <button
+                      key={v.valor}
+                      type="button"
+                      aria-label={v.etiqueta}
+                      aria-pressed={vista === v.valor}
+                      onClick={() => {
+                        setVista(v.valor);
+                        setPagina(1);
+                      }}
+                      className={`grid h-[33px] cursor-pointer place-items-center ${v.ancho} ${v.forma} ${vista === v.valor ? 'bg-rojo-activo' : 'hover:bg-black/5'}`}
+                    >
+                      <img src={v.icono} alt="" />
+                    </button>
+                  ))}
                 </div>
               </>
             }
@@ -198,25 +280,41 @@ export function Tendencias() {
             <Filtro
               etiqueta="Megatendencia"
               todos="Todas las megatendencias"
+              className="xl:w-[280px]"
               opciones={megatendencias.map((m) => ({ valor: m, texto: m }))}
               valor={borrador.megatendencia}
               onChange={(v) => setBorrador({ ...borrador, megatendencia: v, q: '' })}
             />
-            <Filtro etiqueta="Tendencia" todos="Todas las tendencias" opciones={opcionesTendencia} valor={borrador.q} onChange={(v) => setBorrador({ ...borrador, q: v })} />
-            <Filtro etiqueta="Fecha" todos="Todas las fechas" opciones={FECHAS} valor={borrador.dias} onChange={(v) => setBorrador({ ...borrador, dias: v })} />
-            {gestiona && (
-              <Filtro
-                etiqueta="Estado"
-                todos="Todos los estados"
-                opciones={[{ valor: 'Activo', texto: 'Activas' }, { valor: 'Inactivo', texto: 'Inactivas' }]}
-                valor={borrador.estado}
-                onChange={(v) => setBorrador({ ...borrador, estado: v })}
-              />
-            )}
+            <Filtro etiqueta="Tendencia" todos="Todas las tendencias" className="xl:w-[250px]" opciones={opcionesTendencia} valor={borrador.q} onChange={(v) => setBorrador({ ...borrador, q: v })} />
+            <Filtro etiqueta="Fecha" todos="Todas las fechas" className="xl:w-[210px]" opciones={FECHAS} valor={borrador.dias} onChange={(v) => setBorrador({ ...borrador, dias: v })} />
             <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
               Buscar
             </Boton>
           </BarraFiltros>
+
+          {aplicados.length > 0 && (
+            <div className="mb-[21px] flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="text-small font-semibold text-gris-azulado">Filtros aplicados:</span>
+                {aplicados.map((f) => (
+                  <span key={f.campo} className="inline-flex h-[29px] items-center gap-2 rounded-full bg-azul-marino/8 px-3 text-caption font-semibold text-azul-marino">
+                    {f.texto}
+                    <button type="button" aria-label={`Quitar el filtro ${f.texto}`} className="cursor-pointer font-bold" onClick={() => quitarFiltro(f.campo)}>
+                      ✕
+                    </button>
+                  </span>
+                ))}
+                <button type="button" className="cursor-pointer text-small font-semibold text-rojo-vivo hover:underline" onClick={() => quitarFiltro()}>
+                  Limpiar filtros
+                </button>
+              </div>
+              {data && (
+                <p className="text-small font-semibold text-gris-azulado">
+                  Mostrando {data.datos.length} de {numero(data.total)} registros
+                </p>
+              )}
+            </div>
+          )}
 
           {isLoading ? (
             <Cargando />
@@ -229,9 +327,9 @@ export function Tendencias() {
               {vista === 'tabla' ? (
                 <TablaTendencias datos={data.datos} onAbrir={abrir} onEditar={gestiona ? (t) => setFormulario({ registro: t }) : undefined} />
               ) : (
-                <div className={`grid gap-5 ${vista === 'tarjetas' ? 'lg:grid-cols-2' : 'sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'}`}>
+                <div className={`grid gap-6 ${vista === 'tarjetas' ? 'lg:grid-cols-2 xl:gap-8' : 'sm:grid-cols-2 xl:grid-cols-3 xl:gap-x-[33px] xl:gap-y-[30px]'}`}>
                   {data.datos.map((t) => (
-                    <TarjetaTendencia key={t.id_te} t={t} compacta={vista === 'compactas'} onAbrir={() => abrir(t.id_te)} />
+                    <TarjetaTendencia key={t.id_te} t={t} onAbrir={() => abrir(t.id_te)} />
                   ))}
                 </div>
               )}

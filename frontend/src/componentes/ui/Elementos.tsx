@@ -47,16 +47,22 @@ export function InsigniaEstado({ estado }: { estado?: string }) {
 export function EncabezadoPagina({
   modulo,
   icono,
+  iconoConCuadro,
   titulo,
   subtitulo,
+  claseSubtitulo = 'text-small text-texto-suave sm:text-body',
   acciones,
   className = 'mb-6 xl:mb-[55px]',
 }: {
   modulo?: Modulo;
   /** Ícono propio del encabezado cuando el Figma no usa el de la barra lateral. */
   icono?: string;
+  /** Ícono que ya incluye su cuadro rojo (55 × 55). */
+  iconoConCuadro?: string;
   titulo: string;
   subtitulo?: string;
+  /** Estilo del subtítulo (Tendencias lo usa azul y en negrita). */
+  claseSubtitulo?: string;
   acciones?: ReactNode;
   /** Separación inferior (cambia entre pantallas del Figma). */
   className?: string;
@@ -64,14 +70,18 @@ export function EncabezadoPagina({
   return (
     <div className={`flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between ${className}`}>
       <div className="flex items-center gap-[13px]">
-        {(icono || modulo) && (
-          <span className="grid size-[55px] shrink-0 place-items-center rounded-[10px] bg-rojo">
-            <img src={icono ?? ICONOS_MODULO[modulo!]} alt="" aria-hidden className="size-[41px] object-contain" />
-          </span>
+        {iconoConCuadro ? (
+          <img src={iconoConCuadro} alt="" aria-hidden width={55} height={55} className="shrink-0" />
+        ) : (
+          (icono || modulo) && (
+            <span className="grid size-[55px] shrink-0 place-items-center rounded-[10px] bg-rojo">
+              <img src={icono ?? ICONOS_MODULO[modulo!]} alt="" aria-hidden className="size-[41px] object-contain" />
+            </span>
+          )
         )}
         <div>
           <h1 className="text-[24px] font-bold tracking-[0.02em] text-azul-titulo sm:text-titulo">{titulo}</h1>
-          {subtitulo && <p className="mt-0.5 text-small text-texto-suave sm:text-body">{subtitulo}</p>}
+          {subtitulo && <p className={`mt-0.5 ${claseSubtitulo}`}>{subtitulo}</p>}
         </div>
       </div>
       {acciones && <div className="flex flex-wrap items-center gap-3">{acciones}</div>}
