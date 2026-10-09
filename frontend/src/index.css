@@ -176,3 +176,23 @@
     display: none !important;
   }
 }
+
+/* ------------------------------------------------------------------ Fondo animado de autenticación
+   Figma: Paso 1 → Paso 2 → Paso 3 con Smart Animate de 4 s (ease-in-out). */
+@keyframes fondo-auth-onda-superior { to { transform: translate(-50px, 18px); } }
+@keyframes fondo-auth-onda-inferior { to { transform: translate(-50px, -18px); } }
+@keyframes fondo-auth-linea { to { transform: translateX(-70px); } }
+@keyframes fondo-auth-giro { to { transform: rotate(60deg); } }
+@keyframes fondo-auth-parpadeo { to { opacity: 0.2; } }
+@keyframes fondo-auth-parpadeo-inverso { from { opacity: 0.2; } to { opacity: 1; } }
+
+.fondo-auth .fondo-auth-onda-superior { animation: fondo-auth-onda-superior 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-onda-inferior { animation: fondo-auth-onda-inferior 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-linea { animation: fondo-auth-linea 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-hexagonos { transform-origin: 780px 945px; animation: fondo-auth-giro 8s ease-in-out infinite; }
+.fondo-auth .fondo-auth-punto { animation: fondo-auth-parpadeo 4s ease-in-out infinite alternate; }
+.fondo-auth .fondo-auth-punto-tenue { opacity: 0.2; animation: fondo-auth-parpadeo-inverso 4s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo-auth * { animation: none !important; }
+}

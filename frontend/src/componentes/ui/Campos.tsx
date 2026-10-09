@@ -5,13 +5,13 @@ import { forwardRef, useEffect, useId, useRef, useState, type InputHTMLAttribute
 const BASE_CONTROL =
   'w-full rounded-control border border-[#e2e8f0] bg-[#f8fafc] px-4 text-small text-[#0a1c40] placeholder:font-light placeholder:text-[#788fad] focus:border-azul-oscuro focus:bg-white focus:outline-none disabled:opacity-60';
 
-/** Campo de Mi perfil: blanco, 48 px y texto de 18 px. */
+/** Campo de Mi perfil y del registro: blanco, 48 px y texto de 18 px (52 px en el inicio de sesión). */
 const CONTROL_PERFIL =
-  'h-12 w-full rounded-control border border-[#d1d9e3] bg-white px-3.5 text-body text-[#1f293d] placeholder:text-[#788fad] focus:border-azul-oscuro focus:outline-none disabled:opacity-60';
+  'w-full rounded-control border border-[#d1d9e3] bg-white px-3.5 text-body text-[#1f293d] placeholder:text-[#788fad] focus:border-azul-oscuro focus:outline-none disabled:opacity-60';
 
 interface Envoltura {
-  /** "perfil": campos blancos de 48 px de Mi perfil; "formulario": campos grises de 43 px. */
-  variante?: 'formulario' | 'perfil';
+  /** "perfil": campos blancos de 48 px (Mi perfil, registro); "acceso": igual, de 52 px (inicio de sesión); "formulario": grises de 43 px. */
+  variante?: 'formulario' | 'perfil' | 'acceso';
   etiqueta?: string;
   error?: string;
   ayuda?: string;
@@ -22,9 +22,9 @@ interface Envoltura {
 
 function Contenedor({ id, etiqueta, error, ayuda, className = '', obligatorio, variante, children }: Envoltura & { id: string; children: ReactNode }) {
   return (
-    <div className={`flex flex-col ${variante === 'perfil' ? 'gap-1.5' : 'gap-2'} ${className}`}>
+    <div className={`flex flex-col ${variante && variante !== 'formulario' ? 'gap-1.5' : 'gap-2'} ${className}`}>
       {etiqueta && (
-        <label htmlFor={id} className={`text-small leading-[19px] font-semibold ${variante === 'perfil' ? 'text-azul-marino' : 'text-[#0a1c40]'}`}>
+        <label htmlFor={id} className={`text-small leading-[19px] font-semibold ${variante && variante !== 'formulario' ? 'text-azul-marino' : 'text-[#0a1c40]'}`}>
           {etiqueta}
           {obligatorio && <span aria-hidden> *</span>}
         </label>
@@ -59,7 +59,7 @@ export const Entrada = forwardRef<HTMLInputElement, PropsEntrada>(function Entra
           aria-invalid={!!error}
           aria-describedby={error ? `${idCampo}-error` : undefined}
           aria-required={obligatorio || undefined}
-          className={`${variante === 'perfil' ? CONTROL_PERFIL : `${BASE_CONTROL} h-[43px]`} ${icono ? 'pl-11' : ''} ${error ? 'border-rojo' : ''}`}
+          className={`${variante === 'perfil' ? `${CONTROL_PERFIL} h-12` : variante === 'acceso' ? `${CONTROL_PERFIL} h-[52px]` : `${BASE_CONTROL} h-[43px]`} ${icono ? 'pl-11' : ''} ${error ? 'border-rojo' : ''}`}
           {...resto}
         />
       </div>
@@ -149,6 +149,10 @@ export const Selector = forwardRef<HTMLSelectElement, PropsSelector>(function Se
   );
 });
 
+/** Casilla del Figma: 22 px, borde gris y relleno rojo con visto blanco al marcarla. */
+const CASILLA =
+  'size-[22px] shrink-0 cursor-pointer appearance-none rounded border-[1.5px] border-[#d1d9e3] bg-white bg-center bg-no-repeat checked:border-rojo-vivo checked:bg-rojo-vivo checked:bg-[url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2012%2012%27%20fill=%27none%27%3E%3Cpath%20d=%27M2.5%206.2%205%208.5l4.5-5%27%20stroke=%27white%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27/%3E%3C/svg%3E")] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-azul-oscuro';
+
 type PropsCasilla = InputHTMLAttributes<HTMLInputElement> & { etiqueta: ReactNode; error?: string };
 
 export const Casilla = forwardRef<HTMLInputElement, PropsCasilla>(function Casilla({ etiqueta, error, id, className = '', ...resto }, ref) {
@@ -156,8 +160,8 @@ export const Casilla = forwardRef<HTMLInputElement, PropsCasilla>(function Casil
   const idCampo = id ?? generado;
   return (
     <div className={className}>
-      <label htmlFor={idCampo} className="flex cursor-pointer items-start gap-2 text-caption text-texto-suave">
-        <input ref={ref} id={idCampo} type="checkbox" className="mt-0.5 size-4 shrink-0 cursor-pointer accent-rojo" {...resto} />
+      <label htmlFor={idCampo} className="flex cursor-pointer items-start gap-3 text-small text-gris-azulado">
+        <input ref={ref} id={idCampo} type="checkbox" className={CASILLA} {...resto} />
         <span>{etiqueta}</span>
       </label>
       {error && (

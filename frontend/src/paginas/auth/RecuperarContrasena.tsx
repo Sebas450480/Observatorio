@@ -1,13 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { api, mensajeDeError } from '../../api/cliente';
-import { Boton } from '../../componentes/ui/Boton';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso } from '../../componentes/ui/Modal';
-import { PantallaAuth } from './PantallaAuth';
+import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
 
 const esquema = z.object({ correo: z.email('Escribe un correo válido') });
 
@@ -32,12 +32,12 @@ export function RecuperarContrasena() {
 
   return (
     <PantallaAuth>
-      <h1 className="text-[26px] font-bold text-azul-titulo">Recuperar contraseña</h1>
-      <p className="mt-1 text-small text-texto-suave">
-        Escribe el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.
-      </p>
-      <form onSubmit={enviar} noValidate className="mt-7 flex flex-col gap-5">
+      <EncabezadoAuth titulo="Recupera tu contraseña">
+        Ingresa el correo con el que te registraste y te enviaremos un enlace para crear una nueva contraseña.
+      </EncabezadoAuth>
+      <form onSubmit={enviar} noValidate className="flex flex-col gap-6">
         <Entrada
+          variante="acceso"
           etiqueta="Correo electrónico"
           type="email"
           autoComplete="email"
@@ -45,25 +45,21 @@ export function RecuperarContrasena() {
           error={formState.errors.correo?.message}
           {...register('correo')}
         />
-        {error && (
-          <p role="alert" className="rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">
-            {error}
-          </p>
-        )}
-        <Boton type="submit" tamano="lg" cargando={formState.isSubmitting}>
+        {error && <ErrorAuth>{error}</ErrorAuth>}
+        <button type="submit" disabled={formState.isSubmitting} className={`${BOTON_AUTH.principal} h-[54px]`}>
+          {formState.isSubmitting && <LoaderCircle className="size-4 animate-spin" aria-hidden />}
           Enviar enlace
-        </Boton>
+        </button>
       </form>
-      <p className="mt-6 text-center text-caption text-texto-suave">
-        <Link to="/iniciar-sesion" className="font-bold text-azul-titulo hover:underline">
-          Volver a iniciar sesión
-        </Link>
-      </p>
+      <hr className="border-[#e8ebf2]" />
+      <Link to="/iniciar-sesion" className="flex items-center justify-center gap-2 text-small font-bold text-azul-marino hover:underline">
+        <span aria-hidden>←</span> Volver a iniciar sesión
+      </Link>
       <Aviso
         abierto={enviado}
         titulo="Enlace enviado"
         mensaje="Revisa tu correo electrónico."
-        detalle="Si el correo está registrado, recibirás un enlace para restablecer tu contraseña. El enlace vence en 60 minutos."
+        detalle="Si el correo está registrado, recibirás un enlace para crear una nueva contraseña en los próximos minutos."
         onCerrar={() => navegar('/iniciar-sesion')}
       />
     </PantallaAuth>
