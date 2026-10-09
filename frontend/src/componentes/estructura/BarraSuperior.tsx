@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { Menu } from 'lucide-react';
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
 import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
 import { descripcionRol, etiquetaRol, RUTA_MODULO, useSesion } from '../../sesion/sesion';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
+import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 
 export const RUTA_DE: Record<TipoContenido, string> = {
   Flash: '/flash-informativo',
@@ -37,16 +38,9 @@ export function BarraSuperior({ onAbrirMenu }: { onAbrirMenu: () => void }) {
 }
 
 /** Buscador de la barra superior: busca en todos los módulos a la vez. */
-// En celular el texto completo del buscador no cabe: se usa uno corto.
-const consultaAncha = '(min-width: 640px)';
-const suscribirAncho = (avisar: () => void) => {
-  const medio = window.matchMedia(consultaAncha);
-  medio.addEventListener('change', avisar);
-  return () => medio.removeEventListener('change', avisar);
-};
-
 function BuscadorGlobal() {
-  const ancha = useSyncExternalStore(suscribirAncho, () => window.matchMedia(consultaAncha).matches, () => true);
+  // En celular el texto completo del buscador no cabe: se usa uno corto.
+  const ancha = useConsultaMedia(DESDE_SM);
   const [texto, setTexto] = useState('');
   const [consulta, setConsulta] = useState('');
   const [abierto, setAbierto] = useState(false);

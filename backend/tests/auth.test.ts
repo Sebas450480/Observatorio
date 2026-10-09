@@ -7,7 +7,7 @@ describe('Salud', () => {
   it('responde con el estado de la base de datos', async () => {
     const r = await invitado().get('/api/salud');
     expect(r.status).toBe(200);
-    expect(r.body).toEqual({ estado: 'ok', baseDeDatos: 'ok' });
+    expect(r.body).toEqual({ estado: 'ok', baseDeDatos: 'ok', correo: 'sin configurar' });
   });
 
   it('publica la documentación OpenAPI', async () => {

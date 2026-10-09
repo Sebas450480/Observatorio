@@ -176,19 +176,24 @@ rutasAuth.post('/recuperar', limiteIntentos, async (req, res) => {
   });
 
   if (envio) {
+    // Si el correo falla se registra el motivo; la respuesta sigue siendo la misma para no revelar qué cuentas existen.
     const enlace = `${config.frontendUrl}/restablecer-contrasena?codigo=${encodeURIComponent(envio.codigo)}`;
-    await enviarCorreo({
-      para: envio.correo,
-      asunto: 'Restablece tu contraseña del Observatorio Empresarial',
-      texto: `Hola ${envio.nombre_usuario}:\n\nPara crear una nueva contraseña abre este enlace (vence en ${VIGENCIA_CODIGO_MINUTOS} minutos):\n${enlace}\n\nSi no lo solicitaste, ignora este correo.`,
-      html: plantillaCorreo(
-        'Restablece tu contraseña',
-        `<p>Hola ${escaparHtml(envio.nombre_usuario)}:</p>
-         <p>Recibimos una solicitud para restablecer tu contraseña. El enlace vence en ${VIGENCIA_CODIGO_MINUTOS} minutos.</p>
-         <p><a href="${escaparHtml(enlace)}" style="background:#C8102E;color:#fff;padding:10px 18px;border-radius:20px;text-decoration:none">Crear nueva contraseña</a></p>
-         <p style="font-size:12px;color:#777">Si no lo solicitaste, ignora este correo.</p>`,
-      ),
-    });
+    try {
+      await enviarCorreo({
+        para: envio.correo,
+        asunto: 'Restablece tu contraseña del Observatorio Empresarial',
+        texto: `Hola ${envio.nombre_usuario}:\n\nPara crear una nueva contraseña abre este enlace (vence en ${VIGENCIA_CODIGO_MINUTOS} minutos):\n${enlace}\n\nSi no lo solicitaste, ignora este correo.`,
+        html: plantillaCorreo(
+          'Restablece tu contraseña',
+          `<p>Hola ${escaparHtml(envio.nombre_usuario)}:</p>
+           <p>Recibimos una solicitud para restablecer tu contraseña. El enlace vence en ${VIGENCIA_CODIGO_MINUTOS} minutos.</p>
+           <p><a href="${escaparHtml(enlace)}" style="background:#C8102E;color:#fff;padding:10px 18px;border-radius:20px;text-decoration:none">Crear nueva contraseña</a></p>
+           <p style="font-size:12px;color:#777">Si no lo solicitaste, ignora este correo.</p>`,
+        ),
+      });
+    } catch (error) {
+      console.error('[correo] No se pudo enviar el enlace de recuperación:', error instanceof Error ? error.message : error);
+    }
   }
 
   // La respuesta es la misma exista o no el correo, para no revelar qué cuentas existen.

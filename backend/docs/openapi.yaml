@@ -252,7 +252,7 @@ security:
 paths:
   /api/salud:
     get:
-      summary: Estado del servidor y de la base de datos
+      summary: Estado del servidor, de la base de datos y del correo (SMTP configurado o no)
       responses: { '200': { description: OK } }
 
   # ------------------------------------------------------------------ Autenticación

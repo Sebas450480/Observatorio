@@ -8,8 +8,7 @@ import iconoNit from '../../assets/figma/iconos/nit.svg';
 import iconoSector from '../../assets/figma/iconos/sector.svg';
 import { useListado } from '../../api/consultas';
 import type { Empresa } from '../../api/tipos';
-import { BarraFiltros } from '../../componentes/contenido/Controles';
-import { Boton } from '../../componentes/ui/Boton';
+import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
@@ -77,12 +76,14 @@ function TarjetaEmpresa({ empresa }: { empresa: Empresa }) {
 }
 
 /** Directorio de Empresas Coformadoras (Figma: "Empresas coformadoras — Galería"). */
+const FILTROS_INICIALES = { sector: '', departamento: '', estado: '', q: '' };
+
 export function DirectorioEmpresas() {
   const { puedeGestionar } = useSesion();
   const gestiona = puedeGestionar('empresas');
   const { data: resumen } = useResumenEmpresas();
 
-  const [borrador, setBorrador] = useState({ sector: '', departamento: '', estado: '', q: '' });
+  const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const consulta = {
@@ -103,7 +104,19 @@ export function DirectorioEmpresas() {
         acciones={<MenuExportar ruta="/empresas" consulta={consulta} />}
         className="mb-6 xl:mb-[46px]"
       />
-      <BarraFiltros className="gap-4">
+      <BarraFiltros
+        className="gap-4"
+        activos={contarActivos(filtros, FILTROS_INICIALES)}
+        onBuscar={() => { setFiltros(borrador); setPagina(1); }}
+        onLimpiar={() => { setBorrador(FILTROS_INICIALES); setFiltros(FILTROS_INICIALES); setPagina(1); }}
+        extra={
+          gestiona && (
+            <Link to="/empresas/nueva" className="inline-flex h-[42px] items-center justify-center rounded-full bg-rojo px-5 text-body font-semibold text-white shadow-boton hover:bg-[#c2002e]">
+              Crear empresa coformadora
+            </Link>
+          )
+        }
+      >
         <Filtro
           etiqueta="Sector"
           todos="Todos los sectores"
@@ -122,14 +135,6 @@ export function DirectorioEmpresas() {
             valor={borrador.estado}
             onChange={(v) => setBorrador({ ...borrador, estado: v })}
           />
-        )}
-        <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
-          Buscar
-        </Boton>
-        {gestiona && (
-          <Link to="/empresas/nueva" className="inline-flex h-[42px] items-center rounded-full bg-rojo px-5 text-body font-semibold text-white shadow-boton hover:bg-[#c2002e]">
-            Crear empresa coformadora
-          </Link>
         )}
       </BarraFiltros>
 

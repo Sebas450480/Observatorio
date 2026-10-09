@@ -1,4 +1,4 @@
-import { Check, ImagePlus } from 'lucide-react';
+import { Check, ImagePlus, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, mensajeDeError } from '../../api/cliente';
@@ -10,15 +10,110 @@ import iconoDescargar from '../../assets/figma/compartir/descargar.svg';
 import iconoEnlace from '../../assets/figma/compartir/enlace.svg';
 import iconoInfo from '../../assets/figma/compartir/info.svg';
 import iconoWhatsapp from '../../assets/figma/compartir/whatsapp.svg';
+import { Boton } from '../ui/Boton';
 import { BotonModal, Modal } from '../ui/Modal';
+import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 
-/** Barra de filtros de los módulos: filtros, píldora "Buscar" y acciones. */
-export function BarraFiltros({ children, acciones, className = 'gap-3' }: { children: ReactNode; acciones?: ReactNode; className?: string }) {
+/** Cuántos filtros aplicados difieren de su valor inicial (para el contador del botón "Filtros"). */
+export function contarActivos<T extends Record<string, string>>(filtros: T, inicial: T, ignorar: (keyof T)[] = []) {
+  return (Object.keys(inicial) as (keyof T)[]).filter((k) => !ignorar.includes(k) && filtros[k] !== inicial[k]).length;
+}
+
+/**
+ * Barra de filtros de los módulos. Desde sm: filtros, píldora "Buscar", `extra` y las acciones
+ * a la derecha, como en el Figma. En celular los filtros pasan a un panel que sube desde abajo:
+ * en la página solo queda el botón "Filtros" con el número de filtros activos.
+ */
+export function BarraFiltros({
+  children,
+  onBuscar,
+  onLimpiar,
+  activos = 0,
+  busqueda,
+  extra,
+  acciones,
+  className = 'gap-3',
+}: {
+  /** Los filtros desplegables. */
+  children: ReactNode;
+  onBuscar: () => void;
+  /** Vuelve los filtros a su valor inicial y los aplica. */
+  onLimpiar: () => void;
+  activos?: number;
+  /** Campo de búsqueda: en celular queda siempre a la vista. */
+  busqueda?: ReactNode;
+  /** Botones que van justo después de "Buscar" (p. ej. "Crear registro"). */
+  extra?: ReactNode;
+  acciones?: ReactNode;
+  className?: string;
+}) {
+  const ancha = useConsultaMedia(DESDE_SM);
+  const [panel, setPanel] = useState(false);
+
+  if (ancha) {
+    return (
+      <div className={`mb-[18px] flex min-h-14 flex-wrap items-center ${className}`}>
+        {busqueda}
+        {children}
+        <Boton pildora className="font-bold! shadow-none!" onClick={onBuscar}>
+          Buscar
+        </Boton>
+        {extra}
+        {acciones && <div className="flex flex-wrap items-center gap-3 sm:ml-auto">{acciones}</div>}
+      </div>
+    );
+  }
+
   return (
-    // En celular: una columna con los filtros de ancho completo; desde sm, una fila que se acomoda.
-    <div className={`mb-[18px] flex min-h-14 flex-col items-stretch sm:flex-row sm:flex-wrap sm:items-center [&>select]:w-full sm:[&>select]:w-auto ${className}`}>
-      {children}
-      {acciones && <div className="flex flex-wrap items-center gap-3 sm:ml-auto [&>*]:flex-1 sm:[&>*]:flex-none">{acciones}</div>}
+    <div className="mb-[18px] flex flex-col gap-3">
+      {busqueda}
+      <div className="flex flex-wrap items-center gap-3 [&>*]:flex-1">
+        <button
+          type="button"
+          onClick={() => setPanel(true)}
+          className="inline-flex h-[46px] min-w-[140px] cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-black/10 bg-white px-5 text-body font-bold text-[#0a1c40] hover:bg-fondo"
+        >
+          <SlidersHorizontal className="size-[18px]" aria-hidden />
+          Filtros
+          {activos > 0 && (
+            <span className="grid size-6 place-items-center rounded-full bg-rojo-vivo text-caption font-bold text-white" aria-label={`${activos} activos`}>
+              {activos}
+            </span>
+          )}
+        </button>
+        {extra}
+        {acciones}
+      </div>
+      <Modal
+        abierto={panel}
+        onCerrar={() => setPanel(false)}
+        hoja
+        titulo="Filtros"
+        claseCuerpo="p-5"
+        pie={
+          <div className="flex gap-3 [&>*]:flex-1">
+            <BotonModal
+              variante="secundario"
+              onClick={() => {
+                onLimpiar();
+                setPanel(false);
+              }}
+            >
+              Limpiar
+            </BotonModal>
+            <BotonModal
+              onClick={() => {
+                onBuscar();
+                setPanel(false);
+              }}
+            >
+              Aplicar filtros
+            </BotonModal>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-3 [&>select]:w-full">{children}</div>
+      </Modal>
     </div>
   );
 }

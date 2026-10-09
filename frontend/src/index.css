@@ -170,6 +170,26 @@
   border-radius: 9999px;
   margin: 2px 2px 0;
 }
+/* En celular el mes se compacta: encabezados y celdas más bajos para ver la semana completa. */
+@media (max-width: 639px) {
+  .calendario-mes .fc .fc-col-header-cell {
+    height: 44px;
+  }
+  .calendario-mes .fc .fc-col-header-cell-cushion {
+    font-size: 13px;
+    padding: 2px 0;
+  }
+  .calendario-mes .fc .fc-daygrid-day-frame {
+    min-height: 84px;
+  }
+  .calendario-mes .fc .fc-daygrid-day-number {
+    font-size: 15px;
+    padding: 4px 4px 0;
+  }
+  .calendario-mes .fc .fc-daygrid-event {
+    margin: 2px 1px 0;
+  }
+}
 
 @media print {
   .no-imprimir {
@@ -223,6 +243,10 @@
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
+@keyframes entrada-hoja {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
 @keyframes crecer-bloque {
   from { opacity: 0; transform: scale(0.82); }
   to { opacity: 1; transform: none; }
@@ -251,6 +275,8 @@
 .entrada-carrusel-derecha { animation: entrada-carrusel-derecha 450ms ease-out both; }
 .entrada-carrusel-izquierda { animation: entrada-carrusel-izquierda 450ms ease-out both; }
 .progreso-carrusel { transform-origin: left; animation: progreso-carrusel 8s linear both; }
+/* Panel de filtros en celular: sube desde abajo. */
+.entrada-hoja { animation: entrada-hoja 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 /* 9. Mapa de tendencias: los bloques crecen al aparecer. */
 .bloque-mapa { transform-box: fill-box; transform-origin: center; animation: crecer-bloque 500ms ease-out both; }
 /* 10. Avisos de éxito: la insignia rebota, el visto se dibuja y el aviso hace un leve rebote. */
@@ -259,7 +285,7 @@
 .rebote-aviso { animation: rebote-aviso 420ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .entrada-modulo, .entrada-fondo-modal, .entrada-modal, .entrada-carrusel-derecha,
+  .entrada-modulo, .entrada-fondo-modal, .entrada-modal, .entrada-hoja, .entrada-carrusel-derecha,
   .entrada-carrusel-izquierda, .progreso-carrusel, .bloque-mapa, .rebote-insignia, .dibujar-visto, .rebote-aviso {
     animation: none !important;
   }
