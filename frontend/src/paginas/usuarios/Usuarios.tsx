@@ -1,16 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { mensajeDeError } from '../../api/cliente';
+import iconoBuscar from '../../assets/figma/usuarios/buscar-tabla.svg';
+import iconoLapiz from '../../assets/figma/usuarios/lapiz.png';
 import { useEliminar, useGuardar, useListado, useRoles } from '../../api/consultas';
 import type { Perfil } from '../../api/tipos';
 import { BarraFiltros } from '../../componentes/contenido/Controles';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { Boton } from '../../componentes/ui/Boton';
 import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, InsigniaEstado, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { descripcionRol, etiquetaRol, useSesion } from '../../sesion/sesion';
 
 const base = {
@@ -143,10 +144,16 @@ export function Usuarios() {
 
   return (
     <>
-      <EncabezadoPagina modulo="usuarios" titulo="Usuarios" subtitulo="Usuarios registrados en la plataforma" />
+      <EncabezadoPagina
+        modulo="usuarios"
+        titulo="Usuarios"
+        subtitulo="Usuarios registrados en la plataforma"
+        claseSubtitulo="text-body font-bold tracking-[-0.5px] text-[#0d2375] sm:text-subtitle"
+        className="mb-6 xl:mb-[25px]"
+      />
       <BarraFiltros
         acciones={
-          <Boton pildora onClick={() => setFormulario({})}>
+          <Boton pildora className="px-5! font-semibold" onClick={() => setFormulario({})}>
             Crear usuario
           </Boton>
         }
@@ -158,18 +165,22 @@ export function Usuarios() {
             buscar();
           }}
         >
-          <Entrada
-            aria-label="Buscar usuarios"
-            placeholder="Buscar por nombre, apodo o correo"
-            icono={<Search className="size-4" />}
-            className="w-full sm:w-72"
-            value={borrador.q}
-            onChange={(ev) => setBorrador({ ...borrador, q: ev.target.value })}
-          />
+          <label className="flex h-[42px] w-full items-center gap-2.5 rounded-control border border-borde bg-white px-4 focus-within:border-azul-oscuro sm:w-[380px]">
+            <img src={iconoBuscar} alt="" aria-hidden className="size-[18px]" />
+            <input
+              type="search"
+              aria-label="Buscar usuarios"
+              placeholder="Buscar por nombre, apodo o correo"
+              className="min-w-0 flex-1 bg-transparent text-small text-texto placeholder:text-[#788fad] focus:outline-none"
+              value={borrador.q}
+              onChange={(ev) => setBorrador({ ...borrador, q: ev.target.value })}
+            />
+          </label>
         </form>
         <Filtro
           etiqueta="Rol"
           todos="Todos los roles"
+          className="xl:w-[210px]"
           opciones={roles.map((r) => ({ valor: String(r.id_rol), texto: descripcionRol(r.nombre_rol) }))}
           valor={borrador.id_rol}
           onChange={(v) => setBorrador({ ...borrador, id_rol: v })}
@@ -177,6 +188,7 @@ export function Usuarios() {
         <Filtro
           etiqueta="Estado"
           todos="Todos los estados"
+          className="xl:w-[230px]"
           opciones={[{ valor: 'Activo', texto: 'Activos' }, { valor: 'Inactivo', texto: 'Inactivos' }]}
           valor={borrador.estado}
           onChange={(v) => setBorrador({ ...borrador, estado: v })}
@@ -194,42 +206,56 @@ export function Usuarios() {
         <EstadoVacio titulo="No hay usuarios para estos filtros" />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-tarjeta border border-borde bg-white shadow-tarjeta">
-            <table className="w-full min-w-[860px] text-caption">
-              <thead className="bg-[#eceef1] text-azul-titulo">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1100px] table-fixed border-separate border-spacing-0 text-body">
+              <colgroup>
+                {[71, 152, 160, 262, 312, 104, 238, 205].map((ancho, i) => (
+                  <col key={i} style={{ width: ancho }} />
+                ))}
+              </colgroup>
+              <thead>
                 <tr>
-                  {['ID', 'Apodo', 'Nombre', 'Apellido', 'Correo', 'Estado', 'Rol', 'Acciones'].map((c) => (
-                    <th key={c} scope="col" className="px-3 py-2.5 text-center font-semibold">
+                  {['ID', 'Apodo', 'Nombre', 'Apellido', 'Correo', 'Estado', 'Rol', 'Acciones'].map((c, i) => (
+                    <th
+                      key={c}
+                      scope="col"
+                      className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2 pr-[23px]' : ''} ${i === 6 ? 'pl-14' : ''} ${i === 7 ? 'border-r-2' : ''}`}
+                    >
                       {c}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-[#fdfdfc] [&_td]:h-10 [&_td]:border-b [&_td]:border-black/10 [&_td]:text-center [&_td:first-child]:border-l-2 [&_td:last-child]:border-r-2 [&_tr:last-child_td]:border-b-2">
                 {data.datos.map((u) => (
-                  <tr key={u.id_usuario} className="border-t border-borde text-center hover:bg-fondo">
-                    <td className="px-3 py-2.5 text-texto-suave">{u.id_usuario}</td>
-                    <td className="px-3 py-2.5 font-semibold text-azul-titulo">{u.apodo_usuario ?? '—'}</td>
-                    <td className="px-3 py-2.5 font-semibold text-texto">{u.nombre_usuario}</td>
-                    <td className="px-3 py-2.5 font-semibold text-texto">{u.apellido_usuario}</td>
-                    <td className="px-3 py-2.5 text-texto-suave">{u.correo}</td>
-                    <td className="px-3 py-2.5">
-                      <InsigniaEstado estado={u.estado_usuario} />
+                  <tr key={u.id_usuario} className="hover:bg-fondo">
+                    <td className="pr-[23px] font-semibold text-black/40">{u.id_usuario}</td>
+                    <td className="truncate px-1 font-bold text-azul-titulo">{u.apodo_usuario ?? '—'}</td>
+                    <td className="truncate px-1 font-bold text-black">{u.nombre_usuario}</td>
+                    <td className="truncate px-1 font-semibold text-black">{u.apellido_usuario}</td>
+                    <td className="truncate px-1 font-semibold text-black/40" title={u.correo}>
+                      {u.correo}
                     </td>
-                    <td className="px-3 py-2.5 font-semibold text-texto" title={descripcionRol(u.nombre_rol)}>
+                    <td>
+                      <span
+                        className={`inline-block w-[76px] rounded-full text-caption font-bold leading-5 ${
+                          u.estado_usuario === 'Activo' ? 'bg-[#ddf7ea] text-[#159b65]' : 'bg-[#eef0f3] text-[#8c94a1]'
+                        }`}
+                      >
+                        {u.estado_usuario}
+                      </span>
+                    </td>
+                    <td className="truncate pl-14 font-bold text-[#172033]" title={descripcionRol(u.nombre_rol)}>
                       {etiquetaRol(u.nombre_rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(u.nombre_rol)}
-                      {u.nombre_rol.startsWith('Gestor') && (
-                        <span className="block text-[11px] font-normal text-texto-suave">{u.nombre_rol.replace('Gestor ', '')}</span>
-                      )}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td>
                       <button
                         type="button"
                         aria-label={`Editar a ${u.nombre_usuario} ${u.apellido_usuario}`}
                         onClick={() => setFormulario({ registro: u })}
-                        className="cursor-pointer rounded p-1 text-azul-titulo hover:bg-white"
+                        className="inline-grid cursor-pointer place-items-center rounded p-1 hover:bg-black/5"
                       >
-                        <Pencil className="size-4" />
+                        <img src={iconoLapiz} alt="" className="size-[18px]" />
                       </button>
                     </td>
                   </tr>

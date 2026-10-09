@@ -49,6 +49,7 @@ export function EncabezadoPagina({
   icono,
   iconoConCuadro,
   cuadroRedondo = false,
+  tamanoIcono = 41,
   titulo,
   subtitulo,
   claseSubtitulo = 'text-small text-texto-suave sm:text-body',
@@ -62,6 +63,8 @@ export function EncabezadoPagina({
   iconoConCuadro?: string;
   /** Cuadro rojo con esquinas de 20 px (Tendencias y Calendario). */
   cuadroRedondo?: boolean;
+  /** Tamaño del ícono dentro del cuadro (41 px por defecto). */
+  tamanoIcono?: number;
   titulo: string;
   subtitulo?: string;
   /** Estilo del subtítulo (Tendencias lo usa azul y en negrita). */
@@ -78,7 +81,7 @@ export function EncabezadoPagina({
         ) : (
           (icono || modulo) && (
             <span className={`grid size-[55px] shrink-0 place-items-center ${cuadroRedondo ? 'rounded-[20px] bg-rojo-activo' : 'rounded-[10px] bg-rojo'}`}>
-              <img src={icono ?? ICONOS_MODULO[modulo!]} alt="" aria-hidden className="size-[41px] object-contain" />
+              <img src={icono ?? ICONOS_MODULO[modulo!]} alt="" aria-hidden width={tamanoIcono} height={tamanoIcono} className="object-contain" />
             </span>
           )
         )}
