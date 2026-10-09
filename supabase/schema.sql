@@ -1078,7 +1078,7 @@ grant select on public.v_estadisticas_resumen_mes, public.v_estadisticas_top5_co
    to obs_superadmin;
 
 
--- >>> migrations/20261009030000_tipo_otro_categorias_superior.sql
+-- >>> migrations/20261009030014_tipo_otro_categorias_superior.sql
 -- =============================================================================
 -- Tipo de evento personalizado, categorías creadas por los gestores y el rol
 -- "SuperAdmin Superior".
