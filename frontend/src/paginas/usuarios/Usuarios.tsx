@@ -7,7 +7,7 @@ import iconoBuscar from '../../assets/figma/usuarios/buscar-tabla.svg';
 import iconoLapiz from '../../assets/figma/usuarios/lapiz.png';
 import { useEliminar, useGuardar, useListado, useRoles } from '../../api/consultas';
 import type { Perfil } from '../../api/tipos';
-import { BarraFiltros } from '../../componentes/contenido/Controles';
+import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { Boton } from '../../componentes/ui/Boton';
 import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos';
@@ -136,9 +136,11 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
 }
 
 /** Gestión de usuarios (solo SuperAdmin). */
+const FILTROS_INICIALES = { q: '', id_rol: '', estado: '' };
+
 export function Usuarios() {
   const { data: roles = [] } = useRoles();
-  const [borrador, setBorrador] = useState({ q: '', id_rol: '', estado: '' });
+  const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const [formulario, setFormulario] = useState<{ registro?: Perfil } | null>(null);
@@ -165,31 +167,40 @@ export function Usuarios() {
         className="mb-6 xl:mb-[25px]"
       />
       <BarraFiltros
+        activos={contarActivos(filtros, FILTROS_INICIALES, ['q'])}
+        onBuscar={buscar}
+        onLimpiar={() => {
+          setBorrador(FILTROS_INICIALES);
+          setFiltros(FILTROS_INICIALES);
+          setPagina(1);
+        }}
+        busqueda={
+          <form
+            className="contents"
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              buscar();
+            }}
+          >
+            <label className="flex h-[42px] w-full items-center gap-2.5 rounded-control border border-borde bg-white px-4 focus-within:border-azul-oscuro sm:w-[380px]">
+              <img src={iconoBuscar} alt="" aria-hidden className="size-[18px]" />
+              <input
+                type="search"
+                aria-label="Buscar usuarios"
+                placeholder="Buscar por nombre, apodo o correo"
+                className="min-w-0 flex-1 bg-transparent text-small text-texto placeholder:text-[#788fad] focus:outline-none"
+                value={borrador.q}
+                onChange={(ev) => setBorrador({ ...borrador, q: ev.target.value })}
+              />
+            </label>
+          </form>
+        }
         acciones={
           <Boton pildora className="px-5! font-semibold" onClick={() => setFormulario({})}>
             Crear usuario
           </Boton>
         }
       >
-        <form
-          className="contents"
-          onSubmit={(ev) => {
-            ev.preventDefault();
-            buscar();
-          }}
-        >
-          <label className="flex h-[42px] w-full items-center gap-2.5 rounded-control border border-borde bg-white px-4 focus-within:border-azul-oscuro sm:w-[380px]">
-            <img src={iconoBuscar} alt="" aria-hidden className="size-[18px]" />
-            <input
-              type="search"
-              aria-label="Buscar usuarios"
-              placeholder="Buscar por nombre, apodo o correo"
-              className="min-w-0 flex-1 bg-transparent text-small text-texto placeholder:text-[#788fad] focus:outline-none"
-              value={borrador.q}
-              onChange={(ev) => setBorrador({ ...borrador, q: ev.target.value })}
-            />
-          </label>
-        </form>
         <Filtro
           etiqueta="Rol"
           todos="Todos los roles"
@@ -206,9 +217,6 @@ export function Usuarios() {
           valor={borrador.estado}
           onChange={(v) => setBorrador({ ...borrador, estado: v })}
         />
-        <Boton pildora className="font-bold! shadow-none!" onClick={buscar}>
-          Buscar
-        </Boton>
       </BarraFiltros>
 
       {isLoading ? (

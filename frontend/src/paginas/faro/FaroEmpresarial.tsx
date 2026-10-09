@@ -10,7 +10,7 @@ import maletin from '../../assets/figma/tarjetas/maletin.svg';
 import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import { MODALIDADES, TIPOS_FARO, type Faro, type TipoFaro } from '../../api/tipos';
-import { BarraFiltros } from '../../componentes/contenido/Controles';
+import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
@@ -81,6 +81,8 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
 }
 
 /** Faro Empresarial: becas, convocatorias, cursos y talleres. */
+const FILTROS_INICIALES = { tipo: '', modalidad: '', categoria: '', estado: '', vigentes: 'true' };
+
 export function FaroEmpresarial() {
   const { id } = useParams();
   const navegar = useNavigate();
@@ -88,7 +90,7 @@ export function FaroEmpresarial() {
   const gestiona = puedeGestionar('faro');
   const { data: categorias = [] } = useCategorias();
 
-  const [borrador, setBorrador] = useState({ tipo: '', modalidad: '', categoria: '', estado: '', vigentes: 'true' });
+  const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const [formulario, setFormulario] = useState<{ registro?: Faro } | null>(null);
@@ -105,7 +107,18 @@ export function FaroEmpresarial() {
   return (
     <>
       <EncabezadoPagina modulo="faro" titulo="Faro Empresarial" subtitulo="Becas, convocatorias, cursos y talleres para impulsar tu crecimiento empresarial." acciones={<MenuExportar ruta="/faro" consulta={consulta} />} />
-      <BarraFiltros>
+      <BarraFiltros
+        activos={contarActivos(filtros, FILTROS_INICIALES)}
+        onBuscar={() => { setFiltros(borrador); setPagina(1); }}
+        onLimpiar={() => { setBorrador(FILTROS_INICIALES); setFiltros(FILTROS_INICIALES); setPagina(1); }}
+        extra={
+          gestiona && (
+            <Boton pildora onClick={() => setFormulario({})}>
+              Crear registro
+            </Boton>
+          )
+        }
+      >
         <Filtro
           etiqueta="Tipo de registro"
           todos="Todos los tipos"
@@ -141,14 +154,6 @@ export function FaroEmpresarial() {
             valor={borrador.estado}
             onChange={(v) => setBorrador({ ...borrador, estado: v })}
           />
-        )}
-        <Boton pildora className="font-bold! shadow-none!" onClick={() => { setFiltros(borrador); setPagina(1); }}>
-          Buscar
-        </Boton>
-        {gestiona && (
-          <Boton pildora onClick={() => setFormulario({})}>
-            Crear registro
-          </Boton>
         )}
       </BarraFiltros>
 

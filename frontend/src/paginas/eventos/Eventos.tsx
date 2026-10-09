@@ -243,7 +243,7 @@ export function Eventos() {
 
   const editarSeleccionado = gestiona && seleccionado ? () => setFormulario({ registro: seleccionado }) : undefined;
   const claseVista = (v: Vista) =>
-    `h-[39px] cursor-pointer rounded-full px-[22px] text-small font-semibold ${vista === v ? 'bg-rojo-vivo text-white' : 'text-[#0a1c40] hover:bg-fondo'}`;
+    `h-[39px] flex-1 cursor-pointer rounded-full px-[22px] text-small font-semibold sm:flex-none ${vista === v ? 'bg-rojo-vivo text-white' : 'text-[#0a1c40] hover:bg-fondo'}`;
 
   return (
     <>
@@ -255,13 +255,14 @@ export function Eventos() {
         claseSubtitulo="text-body font-bold tracking-[-0.5px] text-[#0d2375] sm:text-subtitle"
         className={vista === 'timeGridWeek' ? 'mb-6 xl:mb-8' : 'mb-6 xl:mb-[38px]'}
         acciones={
-          <div className="flex flex-wrap items-center gap-4">
+          // En celular cada control ocupa su propia fila a lo ancho; desde sm van en una sola fila.
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             {gestiona && (
               <Boton pildora className="px-5!" onClick={() => setFormulario({})}>
                 Crear evento
               </Boton>
             )}
-            <div role="group" aria-label="Vista del calendario" className="flex gap-1 rounded-full border border-[#d9dee8] bg-white p-1">
+            <div role="group" aria-label="Vista del calendario" className="flex gap-1 rounded-full border border-[#d9dee8] bg-white p-1 sm:w-auto">
               <button type="button" aria-pressed={vista === 'timeGridWeek'} className={claseVista('timeGridWeek')} onClick={() => cambiarVista('timeGridWeek')}>
                 Semanal
               </button>
@@ -269,14 +270,14 @@ export function Eventos() {
                 Mensual
               </button>
             </div>
-            <div className="flex h-11 items-center gap-5 rounded-full border border-[#d9dee8] bg-white px-[18px] text-[#0a1c40]">
-              <button type="button" aria-label="Periodo anterior" className="cursor-pointer text-body font-bold" onClick={() => calendario.current?.getApi().prev()}>
+            <div className="flex h-11 items-center justify-between gap-5 rounded-full border border-[#d9dee8] bg-white px-2 text-[#0a1c40] sm:justify-start sm:px-[10px]">
+              <button type="button" aria-label="Periodo anterior" className="grid size-9 cursor-pointer place-items-center rounded-full text-body font-bold hover:bg-fondo" onClick={() => calendario.current?.getApi().prev()}>
                 ‹
               </button>
               <span className="min-w-[110px] text-center text-small font-bold" aria-live="polite">
                 {rango?.titulo}
               </span>
-              <button type="button" aria-label="Periodo siguiente" className="cursor-pointer text-body font-bold" onClick={() => calendario.current?.getApi().next()}>
+              <button type="button" aria-label="Periodo siguiente" className="grid size-9 cursor-pointer place-items-center rounded-full text-body font-bold hover:bg-fondo" onClick={() => calendario.current?.getApi().next()}>
                 ›
               </button>
             </div>

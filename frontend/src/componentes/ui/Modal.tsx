@@ -24,6 +24,8 @@ interface PropsModal {
   destacado?: boolean;
   /** Relleno del cuerpo (Figma: 32 px en avisos, 28 px en formularios). */
   claseCuerpo?: string;
+  /** Panel que sube desde abajo, pegado al borde de la pantalla (filtros en celular). */
+  hoja?: boolean;
 }
 
 const INSIGNIAS = { advertencia: insigniaAdvertencia, editar: insigniaEditar, exito: insigniaExito };
@@ -85,6 +87,7 @@ export function Modal({
   ancho = 620,
   destacado = false,
   claseCuerpo = 'p-6 sm:p-7',
+  hoja = false,
 }: PropsModal) {
   const idTitulo = useId();
   const panel = useRef<HTMLDivElement>(null);
@@ -113,7 +116,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="entrada-fondo-modal fixed inset-0 z-50 flex items-center justify-center bg-[#0b1437]/60 p-3 sm:p-6"
+      className={`entrada-fondo-modal fixed inset-0 z-50 flex justify-center bg-[#0b1437]/60 ${hoja ? 'items-end' : 'items-center p-3 sm:p-6'}`}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onCerrar();
       }}
@@ -125,7 +128,7 @@ export function Modal({
         aria-labelledby={idTitulo}
         tabIndex={-1}
         style={{ maxWidth: ancho }}
-        className={`${insignia === 'exito' ? 'rebote-aviso' : 'entrada-modal'} flex max-h-[min(900px,calc(100vh-24px))] w-full flex-col overflow-hidden bg-white focus:outline-none ${destacado ? 'rounded-2xl shadow-[0_0_40px_0_rgba(0,0,0,0.15)]' : 'rounded-[20px] shadow-[0_12px_32px_0_rgba(7,31,93,0.13)]'}`}
+        className={`${hoja ? 'entrada-hoja max-h-[85dvh] rounded-t-[24px]' : `${insignia === 'exito' ? 'rebote-aviso' : 'entrada-modal'} max-h-[min(900px,calc(100vh-24px))] ${destacado ? 'rounded-2xl' : 'rounded-[20px]'}`} flex w-full flex-col overflow-hidden bg-white focus:outline-none ${destacado ? 'shadow-[0_0_40px_0_rgba(0,0,0,0.15)]' : 'shadow-[0_12px_32px_0_rgba(7,31,93,0.13)]'}`}
       >
         <header className={`relative shrink-0 bg-azul-oscuro text-white ${destacado ? 'p-6 sm:p-7' : 'px-6 py-5'}`}>
           {sobreTitulo && <div className={`flex flex-wrap items-center gap-2 pr-10 ${destacado ? 'mb-3' : 'mb-2'}`}>{sobreTitulo}</div>}
