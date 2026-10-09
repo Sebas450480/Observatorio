@@ -28,10 +28,11 @@ const PALETA = ['#c2185b', '#00838f', '#6d4c41', '#5e35b1', '#2e7d32', '#ef6c00'
 export const MEGATENDENCIAS = Object.keys(COLORES);
 
 type Periodo = 'semana' | 'mes' | 'anio';
-const PERIODOS: { valor: Periodo; texto: string; comparacion: string }[] = [
-  { valor: 'semana', texto: 'Última semana', comparacion: 'Última semana' },
-  { valor: 'mes', texto: 'Último mes', comparacion: 'Último mes · vs. mes anterior' },
-  { valor: 'anio', texto: 'Último año', comparacion: 'Último año' },
+/** `corto`: texto en celulares angostos, donde las tres opciones no caben completas. */
+const PERIODOS: { valor: Periodo; texto: string; corto: string; comparacion: string }[] = [
+  { valor: 'semana', texto: 'Última semana', corto: 'Semana', comparacion: 'Última semana' },
+  { valor: 'mes', texto: 'Último mes', corto: 'Mes', comparacion: 'Último mes · vs. mes anterior' },
+  { valor: 'anio', texto: 'Último año', corto: 'Año', comparacion: 'Último año' },
 ];
 
 interface Nodo {
@@ -202,10 +203,12 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
                 key={p.valor}
                 type="button"
                 aria-pressed={periodo === p.valor}
+                aria-label={p.texto}
                 onClick={() => setPeriodo(p.valor)}
                 className={`h-[33px] flex-1 cursor-pointer whitespace-nowrap rounded-full px-3 text-caption font-semibold sm:flex-none sm:px-4 ${periodo === p.valor ? 'bg-rojo-vivo text-white' : 'text-[#0a1c40] hover:bg-fondo'}`}
               >
-                {p.texto}
+                <span className="min-[420px]:hidden">{p.corto}</span>
+                <span className="hidden min-[420px]:inline">{p.texto}</span>
               </button>
             ))}
           </div>
