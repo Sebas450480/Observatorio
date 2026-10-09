@@ -12,6 +12,7 @@ process.env.BCRYPT_COSTO = '4';
 process.env.ALERTAS_ACTIVAS = 'false';
 process.env.CRON_SECRET = 'secreto-cron-de-pruebas-1234';
 delete process.env.BLOB_READ_WRITE_TOKEN;
+delete process.env.BLOB_STORE_ID;
 process.env.UPLOADS_DIR = mkdtempSync(path.join(tmpdir(), 'obs-uploads-'));
 delete process.env.SMTP_HOST;
 
