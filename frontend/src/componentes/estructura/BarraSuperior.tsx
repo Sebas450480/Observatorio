@@ -164,7 +164,7 @@ function MenuSesion() {
   if (!usuario) {
     return (
       <Link to="/iniciar-sesion" className={claseBoton}>
-        <span className="hidden sm:inline">Iniciar sesión</span>
+        <span className="hidden whitespace-nowrap sm:inline">Iniciar sesión</span>
         <img src={iconoUsuario} alt="" aria-hidden className="size-10" />
       </Link>
     );

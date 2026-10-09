@@ -95,7 +95,7 @@ export function PerfilEmpresa() {
       <Migas actual="Ver perfil" />
       <section className={`overflow-hidden ${TARJETA}`}>
         <Portada empresa={empresa} className="h-[150px] w-full sm:h-[185px]" />
-        <div className="flex flex-col gap-4 px-5 py-6 sm:min-h-[153px] sm:flex-row sm:items-end sm:justify-between sm:px-8">
+        <div className={`flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-8 ${gestiona ? 'sm:min-h-[153px]' : ''}`}>
           <div className="flex items-start gap-6">
             {empresa.logo_ec && <img src={empresa.logo_ec} alt={`Logo de ${nombre}`} className="size-16 rounded-lg border border-borde bg-white object-contain p-1" />}
             <div className="flex flex-col gap-2">
@@ -137,7 +137,7 @@ export function PerfilEmpresa() {
         </div>
       </section>
 
-      <div className="mt-6 grid items-start gap-4 lg:grid-cols-[1fr_300px] xl:mt-[43px] xl:grid-cols-[1fr_400px]">
+      <div className={`mt-6 grid items-start gap-4 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_400px] ${gestiona ? 'xl:mt-[43px]' : 'xl:mt-[15px]'}`}>
         <section className={`flex flex-col gap-6 p-5 sm:p-8 ${TARJETA}`}>
           <h2 className="flex items-center gap-2.5 text-subtitle font-extrabold text-[#0a1c40]">
             <img src={documento} alt="" aria-hidden className="size-[18px]" /> Información de la empresa
@@ -173,14 +173,16 @@ export function PerfilEmpresa() {
 
         <section className={`flex flex-col gap-5 p-6 ${TARJETA}`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-body font-extrabold text-[#0a1c40]">Estado y acciones</h2>
-            <span
-              className={`rounded-full px-2 py-1 text-caption font-bold ${
-                (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
-              }`}
-            >
-              {empresa.estado_ec ?? 'Activo'}
-            </span>
+            <h2 className="text-body font-extrabold text-[#0a1c40]">{gestiona ? 'Estado y acciones' : 'Acciones'}</h2>
+            {gestiona && (
+              <span
+                className={`rounded-full px-2 py-1 text-caption font-bold ${
+                  (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
+                }`}
+              >
+                {empresa.estado_ec ?? 'Activo'}
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-2.5">
             <button type="button" onClick={() => setModal('contacto')} className={`${BOTON_ACCION} bg-[#0a3eb3] font-bold text-white hover:bg-azul`}>

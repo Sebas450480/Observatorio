@@ -111,7 +111,7 @@ function Carrusel({ eventos }: { eventos: Evento[] }) {
             </div>
           )}
         </div>
-        <div className="hidden w-[260px] shrink-0 flex-col items-center gap-0.5 rounded-2xl bg-white px-9 py-7 text-center lg:flex xl:mr-[60px]">
+        <div className="ml-auto hidden w-[260px] shrink-0 flex-col items-center gap-0.5 rounded-2xl bg-white px-9 py-7 text-center lg:flex xl:mr-[60px]">
           <p className="text-small font-semibold text-azul-marino/70">Próximo evento</p>
           <p className="text-[64px] font-extrabold leading-[1.15] tracking-[-0.01em] text-azul-marino">{dia}</p>
           <p className="text-small font-bold text-rojo-vivo">{mesAnio}</p>
