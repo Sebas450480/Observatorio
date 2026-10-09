@@ -170,6 +170,26 @@
   border-radius: 9999px;
   margin: 2px 2px 0;
 }
+/* En celular el mes se compacta: encabezados y celdas más bajos para ver la semana completa. */
+@media (max-width: 639px) {
+  .calendario-mes .fc .fc-col-header-cell {
+    height: 44px;
+  }
+  .calendario-mes .fc .fc-col-header-cell-cushion {
+    font-size: 13px;
+    padding: 2px 0;
+  }
+  .calendario-mes .fc .fc-daygrid-day-frame {
+    min-height: 84px;
+  }
+  .calendario-mes .fc .fc-daygrid-day-number {
+    font-size: 15px;
+    padding: 4px 4px 0;
+  }
+  .calendario-mes .fc .fc-daygrid-event {
+    margin: 2px 1px 0;
+  }
+}
 
 @media print {
   .no-imprimir {
