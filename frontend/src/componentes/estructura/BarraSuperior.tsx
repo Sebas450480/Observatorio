@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Menu } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
 import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
@@ -37,7 +37,16 @@ export function BarraSuperior({ onAbrirMenu }: { onAbrirMenu: () => void }) {
 }
 
 /** Buscador de la barra superior: busca en todos los módulos a la vez. */
+// En celular el texto completo del buscador no cabe: se usa uno corto.
+const consultaAncha = '(min-width: 640px)';
+const suscribirAncho = (avisar: () => void) => {
+  const medio = window.matchMedia(consultaAncha);
+  medio.addEventListener('change', avisar);
+  return () => medio.removeEventListener('change', avisar);
+};
+
 function BuscadorGlobal() {
+  const ancha = useSyncExternalStore(suscribirAncho, () => window.matchMedia(consultaAncha).matches, () => true);
   const [texto, setTexto] = useState('');
   const [consulta, setConsulta] = useState('');
   const [abierto, setAbierto] = useState(false);
@@ -105,7 +114,7 @@ function BuscadorGlobal() {
             setAbierto(false);
           }
         }}
-        placeholder="Buscar eventos, becas, convocatorias, cursos, tendencias, empresas"
+        placeholder={ancha ? 'Buscar eventos, becas, convocatorias, cursos, tendencias, empresas' : 'Buscar...'}
         className="h-[52px] w-full rounded-[20px] border-2 border-black/10 bg-white pl-[49px] pr-4 text-small font-bold text-black placeholder:text-black focus:border-azul-oscuro/40 focus:outline-none sm:text-subtitle sm:tracking-[-0.5px]"
       />
       {abierto && consulta.length >= 2 && (

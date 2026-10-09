@@ -126,7 +126,7 @@ function Carrusel({ eventos }: { eventos: Evento[] }) {
             </div>
           )}
         </div>
-        <div key={`dato-${indice}`} className="entrada-modal ml-auto hidden w-[260px] shrink-0 flex-col items-center gap-0.5 rounded-2xl bg-white px-9 py-7 text-center lg:flex xl:mr-[60px]">
+        <div key={`dato-${indice}`} className="entrada-modal ml-auto hidden w-[260px] shrink-0 flex-col items-center gap-0.5 rounded-2xl bg-white px-9 py-7 text-center min-[1400px]:flex xl:mr-[60px]">
           <p className="text-small font-semibold text-azul-marino/70">Próximo evento</p>
           <p className="text-[64px] font-extrabold leading-[1.15] tracking-[-0.01em] text-azul-marino">{dia}</p>
           <p className="text-small font-bold text-rojo-vivo">{mesAnio}</p>
@@ -161,7 +161,7 @@ export function Inicio() {
         <p className="text-small text-gris-azulado sm:text-body">Lo más actual en eventos, oportunidades y tendencias para el sector empresarial.</p>
       </div>
       {listaEventos.length > 0 && <Carrusel eventos={listaEventos.slice(0, 4)} />}
-      <div className="mt-7 grid gap-6 lg:grid-cols-3">
+      <div className="mt-7 grid gap-6 min-[1400px]:grid-cols-3">
         <Columna titulo="Próximos eventos" ruta="/eventos" vacio="No hay eventos próximos.">
           {listaEventos.slice(0, 3).map((e) => {
             const { dia, mes } = diaMes(e.fecha_inicio);

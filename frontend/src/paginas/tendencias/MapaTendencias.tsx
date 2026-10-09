@@ -181,7 +181,7 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
       </div>
 
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <span className="shrink-0 text-caption font-semibold text-gris-azulado">{todas.length} megatendencias</span>
             <BarraChips>
@@ -196,14 +196,14 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
               ))}
             </BarraChips>
           </div>
-          <div role="group" aria-label="Periodo" className="flex shrink-0 gap-1 self-start rounded-full border border-[#d9dee8] bg-white p-1">
+          <div role="group" aria-label="Periodo" className="flex w-full shrink-0 gap-1 rounded-full border border-[#d9dee8] bg-white p-1 sm:w-auto sm:self-start xl:self-auto">
             {PERIODOS.map((p) => (
               <button
                 key={p.valor}
                 type="button"
                 aria-pressed={periodo === p.valor}
                 onClick={() => setPeriodo(p.valor)}
-                className={`h-[33px] cursor-pointer rounded-full px-4 text-caption font-semibold ${periodo === p.valor ? 'bg-rojo-vivo text-white' : 'text-[#0a1c40] hover:bg-fondo'}`}
+                className={`h-[33px] flex-1 cursor-pointer whitespace-nowrap rounded-full px-3 text-caption font-semibold sm:flex-none sm:px-4 ${periodo === p.valor ? 'bg-rojo-vivo text-white' : 'text-[#0a1c40] hover:bg-fondo'}`}
               >
                 {p.texto}
               </button>
@@ -211,8 +211,8 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_330px]">
-          <div className="min-h-[420px]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_330px]">
+          <div className="min-w-0">
             {mapa.isLoading ? (
               <Cargando />
             ) : mapa.error ? (
@@ -223,26 +223,29 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
                 detalle={mega ? 'Prueba con un periodo más amplio o elige otra megatendencia.' : 'Prueba con un periodo más amplio.'}
               />
             ) : (
-              <ResponsiveContainer width="100%" height={717}>
-                <Treemap
-                  key={`${mega ?? 'todas'}-${periodo}`}
-                  data={nodos}
-                  dataKey="size"
-                  isAnimationActive={false}
-                  content={<Bloque />}
-                  onClick={(n: unknown) => {
-                    const nodo = n as Partial<Nodo>;
-                    // Megatendencia → muestra sus tendencias; tendencia → abre el listado filtrado por ella.
-                    if (nodo.id_te && nodo.megatendencia && nodo.name) onVerTendencia(nodo.megatendencia, nodo.name);
-                    else if (nodo.megatendencia) setMega(nodo.megatendencia);
-                  }}
-                >
-                  <Tooltip
-                    formatter={(valor) => [`${numero(Number(valor))} menciones`, 'Menciones']}
-                    labelFormatter={(_, carga) => String((carga?.[0]?.payload as Nodo | undefined)?.name ?? '')}
-                  />
-                </Treemap>
-              </ResponsiveContainer>
+              // El alto acompaña al ancho de la pantalla para que los bloques no se descuadren.
+              <div className="h-[440px] w-full overflow-hidden sm:h-[560px] xl:h-[717px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <Treemap
+                    key={`${mega ?? 'todas'}-${periodo}`}
+                    data={nodos}
+                    dataKey="size"
+                    isAnimationActive={false}
+                    content={<Bloque />}
+                    onClick={(n: unknown) => {
+                      const nodo = n as Partial<Nodo>;
+                      // Megatendencia → muestra sus tendencias; tendencia → abre el listado filtrado por ella.
+                      if (nodo.id_te && nodo.megatendencia && nodo.name) onVerTendencia(nodo.megatendencia, nodo.name);
+                      else if (nodo.megatendencia) setMega(nodo.megatendencia);
+                    }}
+                  >
+                    <Tooltip
+                      formatter={(valor) => [`${numero(Number(valor))} menciones`, 'Menciones']}
+                      labelFormatter={(_, carga) => String((carga?.[0]?.payload as Nodo | undefined)?.name ?? '')}
+                    />
+                  </Treemap>
+                </ResponsiveContainer>
+              </div>
             )}
             {mega && <p className="mt-2 text-caption text-gris-azulado">Haz clic en una tendencia para ver sus registros en Tendencias.</p>}
           </div>
