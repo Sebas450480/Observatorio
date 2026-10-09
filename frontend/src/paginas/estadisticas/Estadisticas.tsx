@@ -46,7 +46,7 @@ function Indicador({ titulo, valor, pct, detalle }: { titulo: string; valor: num
     <div className={`flex flex-col gap-1.5 sm:min-h-[169px] ${TARJETA}`}>
       <p className="text-small font-semibold text-gris-azulado">{titulo}</p>
       <p className="flex items-center gap-3">
-        <span className="text-[32px] font-bold leading-[1.15] text-azul-marino sm:text-display">{numero(valor)}</span>
+        <span className="text-[28px] font-bold leading-[1.15] text-azul-marino sm:text-display">{numero(valor)}</span>
         <Variacion pct={pct} />
       </p>
       <p className="text-caption text-gris-azulado">{detalle}</p>

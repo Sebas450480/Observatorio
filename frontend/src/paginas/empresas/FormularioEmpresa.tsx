@@ -190,7 +190,7 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
         </div>
         <div className="flex flex-col gap-4 px-5 py-6 sm:min-h-[153px] sm:flex-row sm:items-end sm:justify-between sm:px-8">
           <div className="flex flex-col gap-2">
-            <h1 className="text-[24px] font-extrabold text-[#0a1c40] sm:text-titulo">{editar ? 'Editar empresa coformadora' : 'Nueva empresa coformadora'}</h1>
+            <h1 className="text-titulo font-extrabold text-[#0a1c40]">{editar ? 'Editar empresa coformadora' : 'Nueva empresa coformadora'}</h1>
             <p className="flex items-center gap-1.5 text-small text-[#788fad] sm:text-body">
               <img src={iconoEtiqueta} alt="" aria-hidden className="size-3.5" />
               {editar ? 'Actualiza los datos de la empresa' : 'Completa los datos para registrar la empresa'}
