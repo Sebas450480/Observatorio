@@ -14,10 +14,23 @@ const GESTOR_DE: Record<Modulo, string> = {
   calendario: 'Gestor Calendario',
 };
 
+/** Página de cada módulo; un gestor solo puede entrar a la de su módulo. */
+export const RUTA_MODULO: Record<Modulo, string> = {
+  flash: '/flash-informativo',
+  faro: '/faro-empresarial',
+  empresas: '/empresas',
+  tendencias: '/tendencias',
+  calendario: '/eventos',
+};
+
+/** Roles con todas las funciones del SuperAdmin. */
+export const ROLES_SUPERADMIN = ['SuperAdmin', 'SuperAdmin Superior'];
+export const esRolSuperAdmin = (nombreRol: string | undefined) => !!nombreRol && ROLES_SUPERADMIN.includes(nombreRol);
+
 /** Texto del botón del menú de sesión, como en el Figma. */
 export function etiquetaRol(nombreRol: string | undefined): string {
   if (!nombreRol) return 'Iniciar sesión';
-  if (nombreRol === 'SuperAdmin') return 'SuperAdmin';
+  if (esRolSuperAdmin(nombreRol)) return 'SuperAdmin';
   if (nombreRol.startsWith('Gestor')) return 'Gestor';
   return 'Usuario';
 }
@@ -25,6 +38,7 @@ export function etiquetaRol(nombreRol: string | undefined): string {
 /** Descripción del rol para el menú de sesión y Mi perfil. */
 export function descripcionRol(nombreRol: string): string {
   if (nombreRol === 'SuperAdmin') return 'Superadministrador';
+  if (nombreRol === 'SuperAdmin Superior') return 'Superadministrador superior';
   return nombreRol;
 }
 
@@ -33,6 +47,8 @@ interface ContextoSesion {
   cargando: boolean;
   esSuperAdmin: boolean;
   esGestor: boolean;
+  /** Módulo del gestor (solo ve y entra a ese módulo); null para los demás roles. */
+  moduloGestor: Modulo | null;
   /** ¿Puede crear, editar y eliminar en este módulo? */
   puedeGestionar: (modulo: Modulo) => boolean;
   iniciarSesion: (correo: string, contrasena: string, recordar: boolean) => Promise<Perfil>;
@@ -85,9 +101,10 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     return {
       usuario,
       cargando: isLoading,
-      esSuperAdmin: rol === 'SuperAdmin',
+      esSuperAdmin: esRolSuperAdmin(rol),
       esGestor: !!rol?.startsWith('Gestor'),
-      puedeGestionar: (modulo) => rol === 'SuperAdmin' || rol === GESTOR_DE[modulo],
+      moduloGestor: (Object.keys(GESTOR_DE) as Modulo[]).find((m) => GESTOR_DE[m] === rol) ?? null,
+      puedeGestionar: (modulo) => esRolSuperAdmin(rol) || rol === GESTOR_DE[modulo],
       iniciarSesion,
       cerrarSesion,
       establecerUsuario,

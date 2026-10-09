@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useId, useState, type TextareaHTMLAttributes } from 'react';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useCategorias, useEliminar, useGuardar } from '../../api/consultas';
 import type { Tendencia } from '../../api/tipos';
@@ -36,8 +36,11 @@ export function leerFuentes(texto: string): { nombre: string; link: string | nul
     });
 }
 
-const escribirFuentes = (fuentes: { nombre: string; link: string | null }[]) =>
-  fuentes.map((f) => (f.link ? (f.link.includes(f.nombre) ? f.link : `${f.nombre} — ${f.link}`) : f.nombre)).join('\n');
+/** Una fuente como texto del campo: "Nombre — https://enlace", solo el enlace o solo el nombre. */
+const escribirFuente = (f: { nombre: string; link: string | null }) => (f.link ? (f.link.includes(f.nombre) ? f.link : `${f.nombre} — ${f.link}`) : f.nombre);
+
+/** Máximo de fuentes que se agregan desde el formulario (el Excel puede traer más). */
+const MAX_FUENTES = 5;
 
 const esquema = z.object({
   megatendencia: z.string().trim().min(1, 'Selecciona la megatendencia o agrega una nueva').max(60),
@@ -47,7 +50,9 @@ const esquema = z.object({
   comportamiento_colombia: z.string().trim(),
   fecha_publicacion: z.string().min(1, 'Elige la fecha'),
   estado_te: z.enum(['Activo', 'Inactivo']),
-  fuentes: z.string().refine((t) => leerFuentes(t).every((f) => f.nombre.length <= 150), 'Cada fuente debe tener máximo 150 caracteres'),
+  fuentes: z.array(
+    z.object({ texto: z.string().refine((t) => leerFuentes(t).every((f) => f.nombre.length <= 150), 'Máximo 150 caracteres') }),
+  ),
 });
 type Datos = z.infer<typeof esquema>;
 
@@ -86,7 +91,7 @@ export function FormularioTendencia({
     .sort((a, b) => a.localeCompare(b, 'es'))
     .map((m) => ({ valor: m, texto: m }));
   const [eleccion, setEleccion] = useState(registro?.megatendencia ?? '');
-  const { register, trigger, getValues, setValue, formState } = useForm<Datos>({
+  const { register, trigger, getValues, setValue, formState, control } = useForm<Datos>({
     resolver: zodResolver(esquema),
     defaultValues: {
       megatendencia: registro?.megatendencia ?? '',
@@ -96,10 +101,11 @@ export function FormularioTendencia({
       comportamiento_colombia: registro?.comportamiento_colombia ?? '',
       fecha_publicacion: registro?.fecha_publicacion ?? new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
       estado_te: registro?.estado_te ?? 'Activo',
-      fuentes: escribirFuentes(registro?.fuentes ?? []),
+      fuentes: registro?.fuentes.length ? registro.fuentes.map((f) => ({ texto: escribirFuente(f) })) : [{ texto: '' }],
     },
   });
   const e = formState.errors;
+  const fuentes = useFieldArray({ control, name: 'fuentes' });
 
   const guardar = async () => {
     const d = getValues();
@@ -107,7 +113,7 @@ export function FormularioTendencia({
     const existente = opcionesMega.find((o) => o.valor.toLocaleLowerCase('es') === d.megatendencia.trim().toLocaleLowerCase('es'));
     await guardarApi.mutateAsync({
       id: registro?.id_te,
-      datos: { ...d, megatendencia: existente?.valor ?? d.megatendencia.trim(), fuentes: leerFuentes(d.fuentes), categorias: seleccion },
+      datos: { ...d, megatendencia: existente?.valor ?? d.megatendencia.trim(), fuentes: d.fuentes.flatMap((f) => leerFuentes(f.texto)), categorias: seleccion },
     });
   };
 
@@ -153,14 +159,48 @@ export function FormularioTendencia({
       <AreaTexto etiqueta="Descripción de la tendencia" rows={3} placeholder="Escribe una descripción breve de la tendencia" {...register('descripcion')} />
       <CampoUbicacion etiqueta="Tendencia a nivel mundial" icono={iconoMundo} placeholder="Describe el comportamiento de la tendencia en el mundo" {...register('comportamiento_mundo')} />
       <CampoUbicacion etiqueta="Tendencia a nivel Colombia" icono={iconoColombia} placeholder="Describe el comportamiento de la tendencia en Colombia" {...register('comportamiento_colombia')} />
-      <AreaTexto
-        etiqueta="Fuentes de la tendencia"
-        rows={3}
-        placeholder="Pega los enlaces de las fuentes (uno por línea)"
-        ayuda="Puedes escribir «Nombre — https://enlace» para darle nombre a la fuente."
-        error={e.fuentes?.message}
-        {...register('fuentes')}
-      />
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-small font-semibold leading-[19px] text-[#0a1c40]">Fuentes de la tendencia</legend>
+        {fuentes.fields.map((campo, i) => {
+          const ultima = i === fuentes.fields.length - 1;
+          return (
+            <div key={campo.id} className="flex items-start gap-2">
+              <Entrada
+                className="flex-1"
+                aria-label={`Fuente ${i + 1}`}
+                placeholder="Nombre — https://enlace, o solo el enlace"
+                error={e.fuentes?.[i]?.texto?.message}
+                {...register(`fuentes.${i}.texto`)}
+              />
+              {fuentes.fields.length > 1 && (
+                <button
+                  type="button"
+                  aria-label={`Quitar la fuente ${i + 1}`}
+                  onClick={() => fuentes.remove(i)}
+                  className="grid size-[43px] shrink-0 cursor-pointer place-items-center rounded-control border border-[#e2e8f0] bg-white text-body text-[#64748b] hover:bg-fondo"
+                >
+                  −
+                </button>
+              )}
+              {ultima && (
+                <button
+                  type="button"
+                  aria-label="Agregar otra fuente"
+                  title={fuentes.fields.length >= MAX_FUENTES ? `Máximo ${MAX_FUENTES} fuentes` : 'Agregar otra fuente'}
+                  disabled={fuentes.fields.length >= MAX_FUENTES}
+                  onClick={() => fuentes.append({ texto: '' })}
+                  className="grid size-[43px] shrink-0 cursor-pointer place-items-center rounded-control bg-rojo text-subtitle font-bold text-white hover:bg-[#c2002e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  +
+                </button>
+              )}
+            </div>
+          );
+        })}
+        <p className="text-[13px] text-texto-suave">
+          Hasta {MAX_FUENTES} fuentes. Escribe «Nombre — https://enlace» para darle nombre a la fuente.
+        </p>
+      </fieldset>
       <SelectorCategorias categorias={categorias} seleccion={seleccion} onCambiar={setSeleccion} />
     </FormularioCrud>
   );

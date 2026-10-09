@@ -73,6 +73,10 @@ test.describe('SuperAdmin', () => {
     await formulario.getByLabel('Megatendencia').selectOption('__nueva__');
     await formulario.getByLabel('Nueva megatendencia').fill('Megatendencia E2E');
     await formulario.getByLabel('Título de la tendencia').fill('Tendencia E2E');
+    await formulario.getByRole('textbox', { name: 'Fuente 1' }).fill('MinTIC — https://www.mintic.gov.co');
+    for (let i = 0; i < 4; i++) await formulario.getByRole('button', { name: 'Agregar otra fuente' }).click();
+    await expect(formulario.getByRole('textbox', { name: /^Fuente \d$/ })).toHaveCount(5);
+    await expect(formulario.getByRole('button', { name: 'Agregar otra fuente' })).toBeDisabled();
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
     await expect(page.getByRole('dialog', { name: 'Registro creado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();

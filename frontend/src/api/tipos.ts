@@ -74,6 +74,8 @@ export interface Flash extends Auditoria {
   imagen: string | null;
   info_adicional: string | null;
   tipo_evento: TipoEvento;
+  /** Nombre del tipo cuando tipo_evento es "Otro". */
+  tipo_otro?: string | null;
   departamento: string | null;
   estado_fi?: Estado;
   categorias: CategoriaRef[];
@@ -165,6 +167,8 @@ export interface Evento extends Auditoria {
   lugar: string | null;
   link_externo: string | null;
   tipo_evento: TipoEvento;
+  /** Nombre del tipo cuando tipo_evento es "Otro". */
+  tipo_otro?: string | null;
   costo: number | null;
   es_gratuito: boolean;
 }

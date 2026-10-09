@@ -97,3 +97,8 @@ export function vinetas(texto: string | null): string[] {
     .map((linea) => linea.replace(/^[•\-*]\s*/, '').trim())
     .filter(Boolean);
 }
+
+/** Tipo de evento para mostrar: el nombre escrito cuando se eligió "Otro". */
+export function nombreTipoEvento(e: { tipo_evento: string; tipo_otro?: string | null }): string {
+  return e.tipo_evento === 'Otro' && e.tipo_otro ? e.tipo_otro : e.tipo_evento;
+}

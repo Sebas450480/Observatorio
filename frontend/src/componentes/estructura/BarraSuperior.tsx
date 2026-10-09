@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
 import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
-import { descripcionRol, etiquetaRol, useSesion } from '../../sesion/sesion';
+import { descripcionRol, etiquetaRol, RUTA_MODULO, useSesion } from '../../sesion/sesion';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
 
 export const RUTA_DE: Record<TipoContenido, string> = {
@@ -43,6 +43,7 @@ function BuscadorGlobal() {
   const [abierto, setAbierto] = useState(false);
   const [activo, setActivo] = useState(-1);
   const navegar = useNavigate();
+  const { moduloGestor } = useSesion();
   const idLista = useId();
   const contenedor = useRef<HTMLDivElement>(null);
 
@@ -56,7 +57,10 @@ function BuscadorGlobal() {
     queryFn: ({ signal }) => api<{ resultados: ResultadoBusqueda[] }>('/buscar', { consulta: { q: consulta, limite: 4 }, senal: signal }),
     enabled: consulta.length >= 2,
   });
-  const resultados = consulta.length >= 2 ? (data?.resultados ?? []) : [];
+  // El gestor solo busca en su módulo.
+  const resultados = (consulta.length >= 2 ? (data?.resultados ?? []) : []).filter(
+    (r) => !moduloGestor || RUTA_DE[r.tipo] === RUTA_MODULO[moduloGestor],
+  );
 
   useEffect(() => {
     const cerrar = (e: MouseEvent) => {

@@ -25,6 +25,7 @@ export const CONTRASENA = 'Clave-segura-123';
 
 export type NombreRol =
   | 'SuperAdmin'
+  | 'SuperAdmin Superior'
   | 'Usuario'
   | 'Gestor Faro Empresarial'
   | 'Gestor Flash Informativo'

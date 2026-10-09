@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Outlet, useLocation } from 'react-router';
+import { Navigate, Outlet, useLocation } from 'react-router';
+import { RUTA_MODULO, useSesion } from '../../sesion/sesion';
 import { BarraLateral } from './BarraLateral';
 import { BarraSuperior } from './BarraSuperior';
 import semicirculo from '../../assets/figma/decoraciones/semicirculo.svg';
@@ -11,11 +12,19 @@ import semicirculo from '../../assets/figma/decoraciones/semicirculo.svg';
 export function Estructura() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const ubicacion = useLocation();
+  const { moduloGestor } = useSesion();
   const [rutaAnterior, setRutaAnterior] = useState(ubicacion.pathname);
   // Al navegar en móvil se cierra el menú.
   if (rutaAnterior !== ubicacion.pathname) {
     setRutaAnterior(ubicacion.pathname);
     setMenuAbierto(false);
+  }
+
+  // Un gestor solo trabaja en su módulo (y en Mi perfil): cualquier otra página lo lleva a su módulo.
+  if (moduloGestor) {
+    const propia = RUTA_MODULO[moduloGestor];
+    const permitida = ubicacion.pathname === propia || ubicacion.pathname.startsWith(`${propia}/`) || ubicacion.pathname === '/mi-perfil';
+    if (!permitida) return <Navigate to={propia} replace />;
   }
 
   return (

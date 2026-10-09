@@ -14,6 +14,16 @@ const nuevoFlash = (titulo: string, extra: Record<string, unknown> = {}) => ({
 });
 
 describe('Flash Informativo', () => {
+  it('guarda el nombre del tipo cuando es "Otro" y lo borra si cambia de tipo', async () => {
+    const { agente } = await sesion('Gestor Flash Informativo');
+    const creado = await agente.post('/api/flash').send(nuevoFlash('Feria con tipo propio', { tipo_evento: 'Otro', tipo_otro: 'Feria' }));
+    expect(creado.status).toBe(201);
+    expect(creado.body).toMatchObject({ tipo_evento: 'Otro', tipo_otro: 'Feria' });
+    const cambiado = await agente.patch(`/api/flash/${creado.body.id_fi}`).send({ tipo_evento: 'Foro' });
+    expect(cambiado.status).toBe(200);
+    expect(cambiado.body.tipo_otro).toBeNull();
+  });
+
   it('el invitado ve los flashes activos sin el campo de estado', async () => {
     const r = await invitado().get('/api/flash');
     expect(r.status).toBe(200);
