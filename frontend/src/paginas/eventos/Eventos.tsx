@@ -5,7 +5,6 @@ import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, Clock, DollarSign, ExternalLink, MapPin, MonitorSmartphone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { api, mensajeDeError } from '../../api/cliente';
@@ -13,21 +12,25 @@ import { registrarActividad, useDetalle } from '../../api/consultas';
 import type { Evento, Pagina, TipoEvento } from '../../api/tipos';
 import { Boton } from '../../componentes/ui/Boton';
 import iconoPanel from '../../assets/figma/eventos/calendario-panel.svg';
-import { DatoConIcono, EncabezadoPagina, Insignia, MensajeError } from '../../componentes/ui/Elementos';
+import {
+  AccionesDetalle, BotonDetalle, CajaDetalle, CUERPO_DETALLE, codigoDetalle, DatoDetalle, DatosDetalle, EnlaceDetalle, ICONO_DETALLE,
+  MetaDetalle, SeccionDetalle, TextoDetalle,
+} from '../../componentes/contenido/Detalle';
+import { EncabezadoPagina, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
 import { costo, fechaLarga, modalidadTexto, rangoHoras } from '../../utilidades/formato';
 import { FormularioEvento } from './FormularioEvento';
 
 /** Color de cada tipo de evento (Figma: texto del color y fondo al 12 %). */
-const COLOR_TIPO: Record<TipoEvento, { color: string; tono: 'azul' | 'verde' | 'rojo' | 'morado' | 'naranja' | 'gris' }> = {
-  Congreso: { color: '#266bd9', tono: 'azul' },
-  Foro: { color: '#0a8c5c', tono: 'verde' },
-  Cumbre: { color: '#0a8c5c', tono: 'verde' },
-  Seminario: { color: '#e4002b', tono: 'rojo' },
-  Taller: { color: '#a32afa', tono: 'morado' },
-  Hackathon: { color: '#e07314', tono: 'naranja' },
-  Otro: { color: '#69788c', tono: 'gris' },
+const COLOR_TIPO: Record<TipoEvento, { color: string }> = {
+  Congreso: { color: '#266bd9' },
+  Foro: { color: '#0a8c5c' },
+  Cumbre: { color: '#0a8c5c' },
+  Seminario: { color: '#e4002b' },
+  Taller: { color: '#a32afa' },
+  Hackathon: { color: '#e07314' },
+  Otro: { color: '#69788c' },
 };
 const fondoTipo = (tipo: TipoEvento) => `${COLOR_TIPO[tipo].color}1f`;
 
@@ -54,51 +57,63 @@ function tituloPeriodo(vista: Vista, inicio: Date, fin: Date): string {
 type Vista = 'timeGridWeek' | 'dayGridMonth';
 const aDia = (fecha: Date) => fecha.toLocaleDateString('en-CA');
 
-function DetalleEvento({ evento, onEditar }: { evento: Evento; onEditar?: () => void }) {
+/** Modal de detalle de un evento (Figma: "Modal — Detalle evento: Talent for Business 2026"). */
+function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerrar: () => void; onEditar?: () => void }) {
+  const abrirEnlace = () => registrarActividad('Evento', evento.id_evento, 'Clic_acceder');
+  const varios = evento.fecha_fin && fechaLarga(evento.fecha_fin) !== fechaLarga(evento.fecha_inicio);
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Insignia tono={COLOR_TIPO[evento.tipo_evento].tono}>{evento.tipo_evento}</Insignia>
-        <h2 className="mt-2 text-subtitle font-bold leading-snug text-azul-titulo">{evento.titulo}</h2>
-      </div>
-      <DatoConIcono icono={<CalendarDays />} etiqueta="Fecha">
-        {fechaLarga(evento.fecha_inicio)}
-        {evento.fecha_fin && fechaLarga(evento.fecha_fin) !== fechaLarga(evento.fecha_inicio) && ` al ${fechaLarga(evento.fecha_fin)}`}
-      </DatoConIcono>
-      <DatoConIcono icono={<Clock />} etiqueta="Horario">
-        {rangoHoras(evento.fecha_inicio, evento.fecha_fin)}
-      </DatoConIcono>
-      <DatoConIcono icono={<MonitorSmartphone />} etiqueta="Modalidad">
-        {modalidadTexto(evento.modalidad)}
-      </DatoConIcono>
-      {evento.lugar && (
-        <DatoConIcono icono={<MapPin />} etiqueta="Lugar">
-          {evento.lugar}
-        </DatoConIcono>
+    <Modal
+      abierto
+      onCerrar={onCerrar}
+      ancho={700}
+      destacado
+      claseCuerpo={CUERPO_DETALLE}
+      titulo={<span className="uppercase">{evento.titulo}</span>}
+      sobreTitulo={<MetaDetalle etiqueta={evento.tipo_evento}>{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</MetaDetalle>}
+    >
+      <DatosDetalle>
+        <DatoDetalle icono={ICONO_DETALLE.calendario} etiqueta="Fecha de inicio">
+          {fechaLarga(evento.fecha_inicio)}
+          {varios && ` al ${fechaLarga(evento.fecha_fin!)}`}
+        </DatoDetalle>
+        <DatoDetalle icono={ICONO_DETALLE.modalidad} etiqueta="Modalidad">
+          {modalidadTexto(evento.modalidad)}
+        </DatoDetalle>
+        <DatoDetalle icono={ICONO_DETALLE.reloj} etiqueta="Horario">
+          {rangoHoras(evento.fecha_inicio, evento.fecha_fin)}
+        </DatoDetalle>
+        <DatoDetalle icono={ICONO_DETALLE.costo} etiqueta="Costo de participación">
+          {evento.es_gratuito || !evento.costo ? <span className="text-exito">Gratuito</span> : costo(evento.costo, false)}
+        </DatoDetalle>
+      </DatosDetalle>
+      {evento.descripcion && (
+        <SeccionDetalle titulo="Descripción">
+          <TextoDetalle>{evento.descripcion}</TextoDetalle>
+        </SeccionDetalle>
       )}
-      <DatoConIcono icono={<DollarSign />} etiqueta="Costo">
-        <span className={evento.es_gratuito || !evento.costo ? 'text-exito' : ''}>{costo(evento.costo, evento.es_gratuito)}</span>
-      </DatoConIcono>
-      {evento.descripcion && <p className="whitespace-pre-line text-small leading-relaxed text-texto-suave">{evento.descripcion}</p>}
-      <div className="flex flex-col gap-2.5">
-        {evento.link_externo && (
-          <a
-            href={evento.link_externo}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => registrarActividad('Evento', evento.id_evento, 'Clic_acceder')}
-            className="inline-flex h-[42px] items-center justify-center gap-2 rounded-control bg-rojo px-5 text-small font-bold uppercase text-white hover:bg-[#c2002e]"
-          >
-            Más información <ExternalLink className="size-4" aria-hidden />
-          </a>
-        )}
-        {onEditar && (
-          <Boton variante="secundario" onClick={onEditar}>
-            Editar evento
-          </Boton>
-        )}
-      </div>
-    </div>
+      {evento.lugar && (
+        <SeccionDetalle titulo="Lugar de referencia">
+          <CajaDetalle>{evento.lugar}</CajaDetalle>
+        </SeccionDetalle>
+      )}
+      {evento.link_externo && (
+        <SeccionDetalle titulo="Link de referencia">
+          <CajaDetalle href={evento.link_externo} onClick={abrirEnlace}>
+            {evento.link_externo.replace(/^https?:\/\//, '')}
+          </CajaDetalle>
+        </SeccionDetalle>
+      )}
+      {(onEditar || evento.link_externo) && (
+        <AccionesDetalle>
+          {onEditar && <BotonDetalle onClick={onEditar}>Editar</BotonDetalle>}
+          {evento.link_externo && (
+            <EnlaceDetalle href={evento.link_externo} onClick={abrirEnlace}>
+              Más información
+            </EnlaceDetalle>
+          )}
+        </AccionesDetalle>
+      )}
+    </Modal>
   );
 }
 
@@ -273,26 +288,18 @@ export function Eventos() {
 
         {vista === 'timeGridWeek' && (
           <aside className="flex flex-col rounded-2xl border border-[#e5e8f0] bg-white p-6 xl:h-[800px]">
-            {seleccionado ? (
-              <DetalleEvento evento={seleccionado} onEditar={editarSeleccionado} />
-            ) : (
-              <div className="m-auto flex max-w-[340px] flex-col items-center gap-3.5 py-10 text-center">
-                <span className="grid size-20 place-items-center rounded-full bg-[#0d1f87]/8">
-                  <img src={iconoPanel} alt="" aria-hidden className="size-9" />
-                </span>
-                <p className="text-subtitle font-bold text-[#0a1c40]">Selecciona un evento</p>
-                <p className="text-small text-gris-azulado sm:text-body">Haz clic en un evento del calendario para ver aquí su información.</p>
-              </div>
-            )}
+            <div className="m-auto flex max-w-[340px] flex-col items-center gap-3.5 py-10 text-center">
+              <span className="grid size-20 place-items-center rounded-full bg-[#0d1f87]/8">
+                <img src={iconoPanel} alt="" aria-hidden className="size-9" />
+              </span>
+              <p className="text-subtitle font-bold text-[#0a1c40]">Selecciona un evento</p>
+              <p className="text-small text-gris-azulado sm:text-body">Haz clic en un evento del calendario para ver aquí su información.</p>
+            </div>
           </aside>
         )}
       </div>
 
-      {vista === 'dayGridMonth' && seleccionado && !formulario && (
-        <Modal abierto onCerrar={() => navegar('/eventos')} titulo="Detalle del evento" ancho={520}>
-          <DetalleEvento evento={seleccionado} onEditar={editarSeleccionado} />
-        </Modal>
-      )}
+      {seleccionado && !formulario && <DetalleEvento evento={seleccionado} onCerrar={() => navegar('/eventos')} onEditar={editarSeleccionado} />}
       {formulario && (
         <FormularioEvento
           registro={formulario.registro}

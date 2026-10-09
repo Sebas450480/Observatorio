@@ -212,15 +212,3 @@ export function MenuExportar({ ruta, consulta }: { ruta: string; consulta: Recor
   );
 }
 
-/** Fila de dato con ícono, etiqueta pequeña y valor (detalles de modales y perfiles). */
-export function DatoConIcono({ icono, etiqueta, children }: { icono: ReactNode; etiqueta: string; children: ReactNode }) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-fondo text-azul-titulo [&_svg]:size-4">{icono}</span>
-      <div className="min-w-0">
-        <p className="text-caption text-texto-suave">{etiqueta}</p>
-        <div className="break-words text-small font-semibold text-texto">{children}</div>
-      </div>
-    </div>
-  );
-}

@@ -1,6 +1,7 @@
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useId, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import iconoCerrarDetalle from '../../assets/figma/detalle/cerrar-14.svg';
 import iconoCerrar from '../../assets/figma/modal/cerrar.svg';
 import insigniaAdvertencia from '../../assets/figma/modal/insignia-advertencia.svg';
 import insigniaEditar from '../../assets/figma/modal/insignia-editar.svg';
@@ -19,7 +20,7 @@ interface PropsModal {
   pie?: ReactNode;
   /** Ancho máximo en px (Figma: 700 detalle, 620 formularios, 520 avisos). */
   ancho?: number;
-  /** Encabezado grande con línea roja (modales de detalle). */
+  /** Plantilla de los modales de detalle: encabezado grande con línea roja y pie con la firma. */
   destacado?: boolean;
   /** Relleno del cuerpo (Figma: 32 px en avisos, 28 px en formularios). */
   claseCuerpo?: string;
@@ -110,29 +111,46 @@ export function Modal({
         aria-labelledby={idTitulo}
         tabIndex={-1}
         style={{ maxWidth: ancho }}
-        className="flex max-h-[min(900px,calc(100vh-24px))] w-full flex-col overflow-hidden rounded-[20px] bg-white shadow-[0_12px_32px_0_rgba(7,31,93,0.13)] focus:outline-none"
+        className={`flex max-h-[min(900px,calc(100vh-24px))] w-full flex-col overflow-hidden bg-white focus:outline-none ${destacado ? 'rounded-2xl shadow-[0_0_40px_0_rgba(0,0,0,0.15)]' : 'rounded-[20px] shadow-[0_12px_32px_0_rgba(7,31,93,0.13)]'}`}
       >
-        <header className="relative shrink-0 bg-azul-oscuro px-6 py-5 text-white">
-          {sobreTitulo && <div className="mb-2 flex flex-wrap items-center gap-2 pr-10">{sobreTitulo}</div>}
+        <header className={`relative shrink-0 bg-azul-oscuro text-white ${destacado ? 'p-6 sm:p-7' : 'px-6 py-5'}`}>
+          {sobreTitulo && <div className={`flex flex-wrap items-center gap-2 pr-10 ${destacado ? 'mb-3' : 'mb-2'}`}>{sobreTitulo}</div>}
           <div className="flex items-center gap-3 pr-10">
             {insignia && <img src={INSIGNIAS[insignia]} alt="" aria-hidden width={28} height={28} className="shrink-0" />}
-            <h2 id={idTitulo} className={`font-extrabold uppercase ${destacado ? 'text-[22px] leading-tight sm:text-[26px]' : 'text-subtitle'}`}>
+            <h2 id={idTitulo} className={destacado ? 'text-[22px] font-black sm:text-titulo' : 'text-subtitle font-extrabold uppercase'}>
               {titulo}
             </h2>
           </div>
           {subtitulo && <p className="mt-1 pr-10 text-small text-[#9eb1e0]">{subtitulo}</p>}
-          {destacado && <span className="mt-3 block h-1 w-16 rounded-full bg-rojo" />}
-          <button
-            type="button"
-            onClick={onCerrar}
-            aria-label="Cerrar"
-            className={`absolute right-6 grid size-6 cursor-pointer place-items-center rounded-full hover:bg-white/15 ${subtitulo || sobreTitulo || destacado ? 'top-1/2 -translate-y-1/2' : 'top-[22px]'}`}
-          >
-            <img src={iconoCerrar} alt="" width={24} height={24} />
-          </button>
+          {destacado && <span className="mt-3 block h-1 w-20 rounded-xs bg-rojo" />}
+          {destacado ? (
+            <button
+              type="button"
+              onClick={onCerrar}
+              aria-label="Cerrar"
+              className="absolute right-6 top-6 grid size-8 cursor-pointer place-items-center rounded-full bg-white/15 hover:bg-white/25"
+            >
+              <img src={iconoCerrarDetalle} alt="" width={14} height={14} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onCerrar}
+              aria-label="Cerrar"
+              className={`absolute right-6 grid size-6 cursor-pointer place-items-center rounded-full hover:bg-white/15 ${subtitulo || sobreTitulo ? 'top-1/2 -translate-y-1/2' : 'top-[22px]'}`}
+            >
+              <img src={iconoCerrar} alt="" width={24} height={24} />
+            </button>
+          )}
         </header>
         <div className={`min-h-0 flex-1 overflow-y-auto ${claseCuerpo}`}>{children}</div>
-        {pie && <footer className="shrink-0 border-t border-[#e2e8f0] p-6">{pie}</footer>}
+        {destacado ? (
+          <footer className="shrink-0 border-t border-borde p-5 text-center text-caption font-semibold uppercase tracking-[0.04em] text-texto-suave">
+            Observatorio Empresarial
+          </footer>
+        ) : (
+          pie && <footer className="shrink-0 border-t border-[#e2e8f0] p-6">{pie}</footer>
+        )}
       </div>
     </div>,
     document.body,
