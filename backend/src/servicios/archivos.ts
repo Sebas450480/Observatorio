@@ -8,7 +8,7 @@ import { ErrorApi } from '../errores.js';
 
 /**
  * Imágenes subidas. La base de datos guarda solo la dirección pública de la imagen:
- * - Con BLOB_READ_WRITE_TOKEN (Vercel): se guardan en Vercel Blob y la dirección es https://....blob.vercel-storage.com/...
+ * - Con BLOB_STORE_ID o BLOB_READ_WRITE_TOKEN (Vercel): se guardan en Vercel Blob y la dirección es https://....blob.vercel-storage.com/...
  * - Sin él (desarrollo y pruebas): se guardan como archivo en UPLOADS_DIR y la dirección es /uploads/<carpeta>/<id>.jpg
  */
 
@@ -33,7 +33,8 @@ export async function guardarImagen(archivo: Express.Multer.File | undefined, ca
   if (!tipo) throw new ErrorApi(415, 'La imagen debe ser JPG o PNG');
 
   const nombre = `${randomUUID()}.${tipo.extension}`;
-  if (config.uploads.tokenBlob) {
+  if (config.uploads.usarBlob) {
+    // Sin token explícito, la librería usa la credencial OIDC de Vercel con BLOB_STORE_ID.
     const blob = await put(`${carpeta}/${nombre}`, archivo.buffer, {
       access: 'public',
       contentType: tipo.extension === 'png' ? 'image/png' : 'image/jpeg',
@@ -60,7 +61,7 @@ function esBlob(direccion: string): boolean {
 
 /** Borra una imagen guardada antes. Ignora rutas fuera de la carpeta de imágenes. */
 export async function borrarImagen(rutaPublica: string | null | undefined): Promise<void> {
-  if (rutaPublica && config.uploads.tokenBlob && esBlob(rutaPublica)) {
+  if (rutaPublica && config.uploads.usarBlob && esBlob(rutaPublica)) {
     await del(rutaPublica, { token: config.uploads.tokenBlob }).catch((e) => console.error('No se pudo borrar la imagen:', e));
     return;
   }
