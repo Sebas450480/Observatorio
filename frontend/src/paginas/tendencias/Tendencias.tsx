@@ -182,6 +182,15 @@ export function Tendencias() {
   const limite = vista === 'tabla' ? 15 : vista === 'compactas' ? 12 : 8;
   const { data, isLoading, error, refetch } = useListado<Tendencia>('/tendencias', { ...consulta, pagina, limite });
   const abrir = (idT: number) => navegar(`/tendencias/${idT}`);
+  // Desde el mapa: vuelve al listado con la megatendencia y la tendencia elegidas como filtros.
+  const verTendencia = (megatendencia: string, tendencia: string) => {
+    const nuevos = { megatendencia, q: tendencia, dias: '', estado: '' };
+    setFiltros(nuevos);
+    setBorrador(nuevos);
+    setPagina(1);
+    setPestana('lista');
+    window.scrollTo({ top: 0 });
+  };
 
   // Chips de "Filtros aplicados" (Figma: "Resultados").
   const aplicados = [
@@ -241,7 +250,7 @@ export function Tendencias() {
       </div>
 
       {pestana === 'mapa' ? (
-        <MapaTendencias onAbrir={abrir} />
+        <MapaTendencias onVerTendencia={verTendencia} />
       ) : (
         <>
           <BarraFiltros

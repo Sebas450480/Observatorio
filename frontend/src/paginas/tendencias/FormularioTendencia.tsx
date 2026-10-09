@@ -9,6 +9,10 @@ import iconoMundo from '../../assets/figma/tendencias/mundo.png';
 import { SelectorCategorias } from '../../componentes/contenido/Controles';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { AreaTexto, Entrada, Selector } from '../../componentes/ui/Campos';
+import { MEGATENDENCIAS } from './MapaTendencias';
+
+/** Opción del selector que abre el campo para escribir una megatendencia nueva. */
+const NUEVA = '__nueva__';
 
 /** Una fuente por línea: "Nombre — https://enlace", solo el enlace o solo el nombre. */
 export function leerFuentes(texto: string): { nombre: string; link: string | null }[] {
@@ -36,7 +40,7 @@ const escribirFuentes = (fuentes: { nombre: string; link: string | null }[]) =>
   fuentes.map((f) => (f.link ? (f.link.includes(f.nombre) ? f.link : `${f.nombre} — ${f.link}`) : f.nombre)).join('\n');
 
 const esquema = z.object({
-  megatendencia: z.string().trim().min(1, 'Escribe la megatendencia').max(60),
+  megatendencia: z.string().trim().min(1, 'Selecciona la megatendencia o agrega una nueva').max(60),
   tendencia: z.string().trim().min(1, 'Escribe la tendencia').max(80),
   descripcion: z.string().trim(),
   comportamiento_mundo: z.string().trim(),
@@ -77,7 +81,12 @@ export function FormularioTendencia({
   const guardarApi = useGuardar<Tendencia>('/tendencias');
   const eliminarApi = useEliminar('/tendencias');
   const [seleccion, setSeleccion] = useState<number[]>(registro?.categorias.map((c) => c.id_categoria) ?? []);
-  const { register, trigger, getValues, formState } = useForm<Datos>({
+  // Todas las megatendencias: las del Figma y las que ya existen en la base, sin repetir.
+  const opcionesMega = [...new Set([...MEGATENDENCIAS, ...megatendencias, ...(registro ? [registro.megatendencia] : [])])]
+    .sort((a, b) => a.localeCompare(b, 'es'))
+    .map((m) => ({ valor: m, texto: m }));
+  const [eleccion, setEleccion] = useState(registro?.megatendencia ?? '');
+  const { register, trigger, getValues, setValue, formState } = useForm<Datos>({
     resolver: zodResolver(esquema),
     defaultValues: {
       megatendencia: registro?.megatendencia ?? '',
@@ -94,9 +103,11 @@ export function FormularioTendencia({
 
   const guardar = async () => {
     const d = getValues();
+    // Una "nueva" megatendencia que ya existe (con otras mayúsculas) se guarda con el nombre existente.
+    const existente = opcionesMega.find((o) => o.valor.toLocaleLowerCase('es') === d.megatendencia.trim().toLocaleLowerCase('es'));
     await guardarApi.mutateAsync({
       id: registro?.id_te,
-      datos: { ...d, fuentes: leerFuentes(d.fuentes), categorias: seleccion },
+      datos: { ...d, megatendencia: existente?.valor ?? d.megatendencia.trim(), fuentes: leerFuentes(d.fuentes), categorias: seleccion },
     });
   };
 
@@ -111,19 +122,29 @@ export function FormularioTendencia({
       eliminar={registro ? () => eliminarApi.mutateAsync(registro.id_te) : undefined}
       onCerrar={onCerrar}
     >
-      <Entrada
+      <Selector
         etiqueta="Megatendencia"
         obligatorio
-        list="megatendencias"
-        placeholder="Selecciona la megatendencia"
-        error={e.megatendencia?.message}
-        {...register('megatendencia')}
+        vacio="Selecciona la megatendencia"
+        opciones={[...opcionesMega, { valor: NUEVA, texto: '+ Agregar nueva megatendencia' }]}
+        value={eleccion}
+        onChange={(ev) => {
+          const valor = ev.target.value;
+          setEleccion(valor);
+          setValue('megatendencia', valor === NUEVA ? '' : valor, { shouldValidate: formState.isSubmitted });
+        }}
+        error={eleccion === NUEVA ? undefined : e.megatendencia?.message}
       />
-      <datalist id="megatendencias">
-        {megatendencias.map((m) => (
-          <option key={m} value={m} />
-        ))}
-      </datalist>
+      {eleccion === NUEVA && (
+        <Entrada
+          etiqueta="Nueva megatendencia"
+          obligatorio
+          autoFocus
+          placeholder="Escribe el nombre de la nueva megatendencia"
+          error={e.megatendencia?.message}
+          {...register('megatendencia')}
+        />
+      )}
       <Entrada etiqueta="Título de la tendencia" obligatorio placeholder="Escribe el título de la tendencia" error={e.tendencia?.message} {...register('tendencia')} />
       <div className="grid gap-5 sm:grid-cols-2">
         <Selector etiqueta="Estado" opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo' }]} {...register('estado_te')} />
