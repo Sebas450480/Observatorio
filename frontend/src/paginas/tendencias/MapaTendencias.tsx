@@ -7,7 +7,7 @@ import type { MapaTendencias as DatosMapa, TendenciaCrecimiento } from '../../ap
 import { Cargando, EstadoVacio, MensajeError } from '../../componentes/ui/Elementos';
 import { numero } from '../../utilidades/formato';
 
-/** Color de cada megatendencia en el Figma; las nuevas toman la paleta en orden. */
+/** Color de cada megatendencia en el Figma; las nuevas toman la PALETA en orden. */
 const COLORES: Record<string, string> = {
   'Tecnología y sociedad': '#7338d9',
   'Medio ambiente y sostenibilidad': '#178c52',
@@ -22,7 +22,8 @@ const COLORES: Record<string, string> = {
   'Agroindustria y alimentos': '#61851a',
   'Energía y recursos': '#0a7ac7',
 };
-const PALETA = Object.values(COLORES);
+/** Colores para las megatendencias agregadas después (distintos de los del Figma). */
+const PALETA = ['#c2185b', '#00838f', '#6d4c41', '#5e35b1', '#2e7d32', '#ef6c00', '#455a64', '#ad1457'];
 /** Megatendencias del Figma (el formulario las ofrece aunque todavía no tengan registros). */
 export const MEGATENDENCIAS = Object.keys(COLORES);
 
@@ -80,9 +81,13 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
     queryFn: () => api<DatosMapa>('/tendencias/mapa', { consulta: { periodo } }),
   });
   const top = useQuery({ queryKey: ['/tendencias', 'top5'], queryFn: () => api<TendenciaCrecimiento[]>('/tendencias/top5') });
+  const registradas = useQuery({ queryKey: ['/tendencias', 'megatendencias'], queryFn: () => api<string[]>('/tendencias/megatendencias') });
 
   const megas = mapa.data?.megatendencias ?? [];
-  const color = (m: string) => COLORES[m] ?? PALETA[Math.max(0, megas.findIndex((x) => x.megatendencia === m)) % PALETA.length]!;
+  // Chips: todas las megatendencias del campo del formulario (las del Figma y las agregadas), tengan o no menciones.
+  const todas = [...new Set([...MEGATENDENCIAS, ...(registradas.data ?? []), ...megas.map((m) => m.megatendencia)])].sort((a, b) => a.localeCompare(b, 'es'));
+  const nuevas = todas.filter((m) => !COLORES[m]);
+  const color = (m: string) => COLORES[m] ?? PALETA[Math.max(0, nuevas.indexOf(m)) % PALETA.length]!;
   const nodos: Nodo[] = mega
     ? (mapa.data?.tendencias ?? [])
         .filter((t) => t.megatendencia === mega && Number(t.menciones) > 0)
@@ -120,16 +125,16 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
 
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-          <div className="flex min-w-0 items-center gap-3 pt-1">
-            <span className="shrink-0 text-caption font-semibold text-gris-azulado">{megas.length} megatendencias</span>
-            <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex min-w-0 items-start gap-3 pt-1">
+            <span className="shrink-0 pt-2 text-caption font-semibold text-gris-azulado">{todas.length} megatendencias</span>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <button type="button" className={chip(mega === null)} aria-pressed={mega === null} onClick={() => setMega(null)}>
                 Todas
               </button>
-              {megas.map((m) => (
-                <button key={m.megatendencia} type="button" className={chip(mega === m.megatendencia)} aria-pressed={mega === m.megatendencia} onClick={() => setMega(m.megatendencia)}>
-                  <span className="size-2.5 rounded-full" style={{ background: color(m.megatendencia) }} aria-hidden />
-                  {m.megatendencia}
+              {todas.map((m) => (
+                <button key={m} type="button" className={chip(mega === m)} aria-pressed={mega === m} onClick={() => setMega(m)}>
+                  <span className="size-2.5 rounded-full" style={{ background: color(m) }} aria-hidden />
+                  {m}
                 </button>
               ))}
             </div>
@@ -156,7 +161,10 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
             ) : mapa.error ? (
               <MensajeError mensaje={mensajeDeError(mapa.error)} onReintentar={() => mapa.refetch()} />
             ) : !nodos.length ? (
-              <EstadoVacio titulo="Sin menciones en este periodo" detalle="Prueba con un periodo más amplio." />
+              <EstadoVacio
+                titulo={mega ? `«${mega}» no tiene menciones en este periodo` : 'Sin menciones en este periodo'}
+                detalle={mega ? 'Prueba con un periodo más amplio o elige otra megatendencia.' : 'Prueba con un periodo más amplio.'}
+              />
             ) : (
               <ResponsiveContainer width="100%" height={717}>
                 <Treemap

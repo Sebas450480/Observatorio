@@ -78,6 +78,9 @@ test.describe('SuperAdmin', () => {
     await page.getByRole('button', { name: 'Aceptar' }).click();
     await page.getByRole('button', { name: 'Crear nuevo registro' }).click();
     await expect(page.getByRole('dialog', { name: 'Nueva tendencia' }).getByLabel('Megatendencia')).toContainText('Megatendencia E2E');
+    await page.getByRole('button', { name: 'Cancelar' }).click();
+    await page.getByRole('tab', { name: 'Mapa de tendencias' }).click();
+    await expect(page.getByRole('button', { name: 'Megatendencia E2E', exact: true })).toBeVisible();
   });
 
   test('desde el mapa abre el listado filtrado por la tendencia', async ({ page }) => {
