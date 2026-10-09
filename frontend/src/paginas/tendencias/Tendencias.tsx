@@ -242,8 +242,9 @@ export function Tendencias() {
   };
 
   const pestanaClase = (activa: boolean) =>
-    `h-10 flex-1 cursor-pointer whitespace-nowrap rounded-[15px] px-2 text-caption font-bold tracking-[0.02em] min-[400px]:text-small sm:text-body ${
-      activa ? 'bg-rojo-activo text-white' : 'border-2 border-black/10 bg-[#fdfdfc] text-black hover:bg-fondo'
+    // En celular es un control segmentado (como Semanal/Mensual); desde sm, las pestañas del Figma.
+    `h-10 flex-1 cursor-pointer whitespace-nowrap rounded-full px-2 text-caption font-bold tracking-[0.02em] min-[400px]:text-small sm:rounded-[15px] sm:text-body ${
+      activa ? 'bg-rojo-activo text-white' : 'text-black hover:bg-fondo sm:border-2 sm:border-black/10 sm:bg-[#fdfdfc]'
     }`;
   const vistas: { valor: VistaLista; etiqueta: string; icono: string; forma: string; ancho: string }[] = [
     { valor: 'tarjetas', etiqueta: 'Vista en tarjetas', icono: vistaGrande, forma: 'rounded-l-[20px]', ancho: 'w-[47px]' },
@@ -275,7 +276,7 @@ export function Tendencias() {
       <div
         role="tablist"
         aria-label="Secciones de tendencias"
-        className={`mb-3.5 flex gap-3 rounded-[20px] border-2 border-black/10 bg-white/50 p-2 sm:gap-[21px] sm:pb-[9px] sm:pl-[26px] sm:pr-[23px] sm:pt-[7px] ${pestana === 'lista' ? 'xl:ml-1' : 'xl:mb-[27px]'}`}
+        className={`mb-3.5 flex gap-1 rounded-full border-2 border-black/10 bg-white p-1 sm:gap-[21px] sm:rounded-[20px] sm:bg-white/50 sm:pb-[9px] sm:pl-[26px] sm:pr-[23px] sm:pt-[7px] ${pestana === 'lista' ? 'xl:ml-1' : 'xl:mb-[27px]'}`}
       >
         <button type="button" role="tab" aria-selected={pestana === 'lista'} className={pestanaClase(pestana === 'lista')} onClick={() => setPestana('lista')}>
           Tendencias
@@ -300,9 +301,11 @@ export function Tendencias() {
                   <button
                     type="button"
                     onClick={() => setFormulario({})}
-                    className="h-[50px] w-full cursor-pointer whitespace-nowrap rounded-[20px] border-2 border-black/10 bg-white px-6 text-body font-bold tracking-[-0.5px] text-black hover:bg-fondo sm:w-auto xl:w-[286px]"
+                    className="inline-flex h-[46px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-rojo px-4 text-body font-bold text-white hover:bg-[#c2002e] sm:h-[50px] sm:rounded-[20px] sm:border-2 sm:border-black/10 sm:bg-white sm:px-6 sm:tracking-[-0.5px] sm:text-black sm:hover:bg-fondo xl:w-[286px]"
                   >
-                    Crear nuevo registro
+                    {/* En celular comparte fila con "Filtros": texto corto. */}
+                    <span className="sm:hidden">+ Nuevo registro</span>
+                    <span className="hidden sm:inline">Crear nuevo registro</span>
                   </button>
                 )}
                 {ancha && (
