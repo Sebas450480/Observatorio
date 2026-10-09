@@ -32,8 +32,10 @@ const esquemaEntorno = z.object({
   UPLOADS_DIR: z.string().default('uploads'),
   // En Vercel una petición puede pesar como máximo 4,5 MB.
   UPLOADS_MAX_MB: z.coerce.number().positive().default(4),
-  // Vercel Blob: si está, las imágenes se guardan ahí en lugar de UPLOADS_DIR.
+  // Vercel Blob: con cualquiera de las dos, las imágenes se guardan ahí en lugar de UPLOADS_DIR.
+  // BLOB_STORE_ID lo agrega Vercel al conectar el almacenamiento (autenticación OIDC).
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  BLOB_STORE_ID: z.string().optional(),
 
   // Correo. Sin SMTP_HOST los correos se muestran en la consola en lugar de enviarse.
   SMTP_HOST: z.string().optional(),
@@ -78,6 +80,7 @@ export const config = {
     directorio: path.resolve(env.UPLOADS_DIR),
     maxBytes: Math.round(env.UPLOADS_MAX_MB * 1024 * 1024),
     tokenBlob: env.BLOB_READ_WRITE_TOKEN || undefined,
+    usarBlob: !!(env.BLOB_READ_WRITE_TOKEN || env.BLOB_STORE_ID),
   },
   correo: {
     host: env.SMTP_HOST,

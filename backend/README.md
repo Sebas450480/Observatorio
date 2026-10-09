@@ -196,5 +196,5 @@ backend/
 - Configura `FRONTEND_URL` y `API_URL_PUBLICA` con las direcciones reales (se usan en CORS y en los enlaces de los correos).
 - La carpeta `UPLOADS_DIR` debe conservarse entre despliegues (ahí están las imágenes subidas) y tener copia de seguridad.
 - En **Vercel** el backend corre como función (`api/index.mjs` en la raíz), las imágenes van a **Vercel Blob**
-  (`BLOB_READ_WRITE_TOKEN`) y las alertas las dispara **Vercel Cron** (`CRON_SECRET`). Ver el
+  (`BLOB_STORE_ID` o `BLOB_READ_WRITE_TOKEN`) y las alertas las dispara **Vercel Cron** (`CRON_SECRET`). Ver el
   [README principal](../README.md#publicación-en-vercel).

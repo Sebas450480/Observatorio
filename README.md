@@ -63,5 +63,5 @@ Variables de entorno del proyecto en Vercel (*Settings → Environment Variables
 | `JWT_SECRETO` | Texto aleatorio de 48 caracteres o más. |
 | `FRONTEND_URL`, `API_URL_PUBLICA` | La dirección pública del sitio, por ejemplo `https://observatorio.vercel.app`. |
 | `CRON_SECRET` | Texto aleatorio; Vercel lo envía al ejecutar los cron. |
-| `BLOB_READ_WRITE_TOKEN` | Lo agrega Vercel al conectar el almacenamiento Blob al proyecto. |
+| `BLOB_STORE_ID` | Lo agrega Vercel al conectar el almacenamiento Blob al proyecto (autenticación OIDC). También sirve `BLOB_READ_WRITE_TOKEN`. |
 | `SMTP_*`, `CORREO_REMITENTE` | Datos del servidor de correo. Sin `SMTP_HOST` los correos no se envían (solo se registran). |
