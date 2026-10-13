@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+.git
+capturas-figma
+despliegue/datos
+frontend/test-results
+frontend/playwright-report
+**/.env
