@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express from 'express';
+import express, { type Express } from 'express';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
@@ -68,8 +69,45 @@ export function crearApp() {
   app.use('/api/alertas', rutasAlertas);
   app.use('/api/buscar', rutasBuscar);
 
+  if (config.frontendDir) servirFrontend(app, config.frontendDir);
+
   app.use(rutaNoEncontrada);
   app.use(manejadorErrores);
 
   return app;
+}
+
+/**
+ * Servidor propio (no Vercel): la misma aplicación entrega la página web compilada.
+ * Las rutas que no son de la API devuelven index.html para que React resuelva la pantalla.
+ */
+function servirFrontend(app: Express, directorio: string) {
+  // La página carga el mapa de Google (iframe) y muestra imágenes de enlaces externos.
+  const politica = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    'frame-src https://maps.google.com https://www.google.com',
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'self'",
+  ].join('; ');
+  const indice = path.join(directorio, 'index.html');
+
+  app.use((req, res, siguiente) => {
+    if (req.path.startsWith('/api/') || req.path === '/api') return siguiente();
+    res.setHeader('Content-Security-Policy', politica);
+    siguiente();
+  });
+  // Los archivos de /assets llevan un hash en el nombre: se pueden guardar en caché un año.
+  app.use('/assets', express.static(path.join(directorio, 'assets'), { immutable: true, maxAge: '1y', fallthrough: false }));
+  app.use(express.static(directorio, { index: false, maxAge: '1h' }));
+  app.use((req, res, siguiente) => {
+    if ((req.method !== 'GET' && req.method !== 'HEAD') || req.path.startsWith('/api/') || req.path === '/api') return siguiente();
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(indice);
+  });
 }

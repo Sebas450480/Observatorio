@@ -1,0 +1,49 @@
+# Observatorio Empresarial en el servidor de la universidad.
+#   cd despliegue && cp .env.ejemplo .env   (y completar los valores)
+#   docker compose up -d --build
+# La página y la API quedan en http://<servidor>:${PUERTO_PUBLICO}. Ver docs/MIGRACION.md.
+name: observatorio
+
+services:
+  bd:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: observatorio
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
+      OBS_BACKEND_PASSWORD: ${OBS_BACKEND_PASSWORD:?Falta OBS_BACKEND_PASSWORD en .env}
+      TZ: America/Bogota
+    volumes:
+      - basedatos:/var/lib/postgresql/data
+      - ./bd/inicializar.sh:/docker-entrypoint-initdb.d/inicializar.sh:ro
+      - ../supabase/schema.sql:/estructura/schema.sql:ro
+      - ../supabase/seed.sql:/estructura/seed.sql:ro
+      - ./datos:/datos:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d observatorio"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Sin "ports": la base solo es accesible desde la aplicación, no desde la red.
+
+  app:
+    build:
+      context: ..
+      dockerfile: despliegue/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      bd:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://obs_backend:${OBS_BACKEND_PASSWORD}@bd:5432/observatorio
+      DATABASE_SSL: "false"
+      TZ: America/Bogota
+    ports:
+      - "${PUERTO_PUBLICO:-3000}:3000"
+    volumes:
+      - ./datos/uploads:/app/uploads
+
+volumes:
+  basedatos:

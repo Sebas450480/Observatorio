@@ -65,3 +65,10 @@ Variables de entorno del proyecto en Vercel (*Settings → Environment Variables
 | `CRON_SECRET` | Texto aleatorio; Vercel lo envía al ejecutar los cron. |
 | `BLOB_STORE_ID` | Lo agrega Vercel al conectar el almacenamiento Blob al proyecto (autenticación OIDC). También sirve `BLOB_READ_WRITE_TOKEN`. |
 | `SMTP_*`, `CORREO_REMITENTE` | Datos del servidor de correo. Sin `SMTP_HOST` los correos no se envían (solo se registran). |
+
+## Servidor propio (migración a Uniempresarial)
+
+La carpeta [`despliegue/`](despliegue/) tiene todo para instalar la plataforma en un servidor propio con
+Docker (PostgreSQL + una sola imagen con la API y la página web), y el script que exporta los datos de
+Supabase y las imágenes de Vercel Blob. Paso a paso, requisitos y preguntas para TI:
+[`docs/MIGRACION.md`](docs/MIGRACION.md).

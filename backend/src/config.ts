@@ -27,6 +27,9 @@ const esquemaEntorno = z.object({
   // URL del frontend (CORS y enlaces de los correos) y URL pública de esta API.
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
   API_URL_PUBLICA: z.string().url().default('http://localhost:3000'),
+  // Servidor propio: carpeta con el frontend compilado (frontend/dist). Si se define, esta misma
+  // aplicación sirve la página web y la API en un solo puerto. En Vercel queda vacía.
+  FRONTEND_DIR: z.string().optional(),
 
   // Imágenes subidas.
   UPLOADS_DIR: z.string().default('uploads'),
@@ -76,6 +79,7 @@ export const config = {
   bcryptCosto: env.BCRYPT_COSTO,
   frontendUrl: env.FRONTEND_URL.replace(/\/$/, ''),
   apiUrlPublica: env.API_URL_PUBLICA.replace(/\/$/, ''),
+  frontendDir: env.FRONTEND_DIR ? path.resolve(env.FRONTEND_DIR) : undefined,
   uploads: {
     directorio: path.resolve(env.UPLOADS_DIR),
     maxBytes: Math.round(env.UPLOADS_MAX_MB * 1024 * 1024),
