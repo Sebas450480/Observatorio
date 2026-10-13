@@ -1,0 +1,4 @@
+# Datos exportados de producción (correos y contraseñas cifradas) y secretos.
+datos/
+.env
+!.env.ejemplo
