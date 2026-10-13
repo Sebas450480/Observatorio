@@ -31,6 +31,14 @@ test.describe('Invitado (sin sesión)', () => {
     await expect(page.getByRole('dialog', { name: 'IA generativa' })).toBeVisible();
   });
 
+  test('el perfil de una empresa muestra el mapa con su dirección', async ({ page }) => {
+    await page.goto('/empresas/1');
+    await expect(page.getByRole('heading', { name: 'Ubicación' })).toBeVisible();
+    const mapa = page.locator('iframe[title^="Mapa con la ubicación de"]');
+    await expect(mapa).toHaveAttribute('src', /maps\.google\.com\/maps\?q=Cra%2043A.*Medell%C3%ADn.*output=embed/);
+    await expect(page.getByRole('link', { name: 'Abrir en Google Maps' })).toHaveAttribute('href', /google\.com\/maps\/search/);
+  });
+
   test('las páginas de administración piden iniciar sesión', async ({ page }) => {
     await page.goto('/usuarios');
     await expect(page).toHaveURL(/\/iniciar-sesion$/);
