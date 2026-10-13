@@ -66,6 +66,38 @@ export const TARJETA = 'rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4
 const BOTON_ACCION = 'inline-flex h-[43px] w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] px-4 text-small';
 
 /** Perfil de una empresa coformadora (Figma: "Empresas coformadoras — Ver perfil"). */
+/**
+ * Mapa de Google Maps con la dirección de la empresa (inserción sin clave de API).
+ * Si no hay dirección se muestra el municipio, con menos acercamiento.
+ */
+export function MapaEmpresa({ empresa, nombre }: { empresa: Empresa; nombre: string }) {
+  const lugar = [empresa.direccion, empresa.municipio, empresa.departamento, 'Colombia'].filter(Boolean).join(', ');
+  const consulta = encodeURIComponent(lugar);
+  return (
+    <section className={`flex flex-col gap-4 p-6 ${TARJETA}`}>
+      <h2 className="flex items-center gap-2.5 text-body font-extrabold text-[#0a1c40]">
+        <img src={ubicacion16} alt="" aria-hidden className="size-4" /> Ubicación
+      </h2>
+      <iframe
+        title={`Mapa con la ubicación de ${nombre}`}
+        src={`https://maps.google.com/maps?q=${consulta}&z=${empresa.direccion ? 16 : 12}&hl=es&output=embed`}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        className="aspect-[4/3] w-full rounded-xl border border-[#e2e8f0] bg-[#f1f5f9]"
+      />
+      <p className="text-small text-[#1e293b]">{lugar.replace(/, Colombia$/, '')}</p>
+      <a
+        href={`https://www.google.com/maps/search/?api=1&query=${consulta}`}
+        target="_blank"
+        rel="noreferrer"
+        className={`${BOTON_ACCION} border border-[#e2e8f0] font-semibold text-[#0a3eb3] hover:bg-fondo`}
+      >
+        <img src={ubicacion14} alt="" aria-hidden className="size-3.5" /> Abrir en Google Maps
+      </a>
+    </section>
+  );
+}
+
 export function PerfilEmpresa() {
   const { id } = useParams();
   const idEmpresa = Number(id);
@@ -171,31 +203,34 @@ export function PerfilEmpresa() {
           </div>
         </section>
 
-        <section className={`flex flex-col gap-5 p-6 ${TARJETA}`}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-body font-extrabold text-[#0a1c40]">{gestiona ? 'Estado y acciones' : 'Acciones'}</h2>
-            {gestiona && (
-              <span
-                className={`rounded-full px-2 py-1 text-caption font-bold ${
-                  (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
-                }`}
-              >
-                {empresa.estado_ec ?? 'Activo'}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <button type="button" onClick={() => setModal('contacto')} className={`${BOTON_ACCION} bg-[#0a3eb3] font-bold text-white hover:bg-azul`}>
-              <img src={contacto14} alt="" aria-hidden className="size-3.5" /> Ver contacto principal
-            </button>
-            <a href={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })} className={`${BOTON_ACCION} bg-[#f1f5f9] font-semibold text-[#1e293b] hover:bg-[#e2e8f0]`}>
-              <img src={descargar14} alt="" aria-hidden className="size-3.5" /> Descargar información
-            </a>
-            <button type="button" onClick={() => setModal('compartir')} className={`${BOTON_ACCION} border border-[#e2e8f0] font-semibold text-[#64748b] hover:bg-fondo`}>
-              <img src={compartir14} alt="" aria-hidden className="size-3.5" /> Compartir
-            </button>
-          </div>
-        </section>
+        <div className="flex flex-col gap-4">
+          <section className={`flex flex-col gap-5 p-6 ${TARJETA}`}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-body font-extrabold text-[#0a1c40]">{gestiona ? 'Estado y acciones' : 'Acciones'}</h2>
+              {gestiona && (
+                <span
+                  className={`rounded-full px-2 py-1 text-caption font-bold ${
+                    (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
+                  }`}
+                >
+                  {empresa.estado_ec ?? 'Activo'}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <button type="button" onClick={() => setModal('contacto')} className={`${BOTON_ACCION} bg-[#0a3eb3] font-bold text-white hover:bg-azul`}>
+                <img src={contacto14} alt="" aria-hidden className="size-3.5" /> Ver contacto principal
+              </button>
+              <a href={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })} className={`${BOTON_ACCION} bg-[#f1f5f9] font-semibold text-[#1e293b] hover:bg-[#e2e8f0]`}>
+                <img src={descargar14} alt="" aria-hidden className="size-3.5" /> Descargar información
+              </a>
+              <button type="button" onClick={() => setModal('compartir')} className={`${BOTON_ACCION} border border-[#e2e8f0] font-semibold text-[#64748b] hover:bg-fondo`}>
+                <img src={compartir14} alt="" aria-hidden className="size-3.5" /> Compartir
+              </button>
+            </div>
+          </section>
+          <MapaEmpresa empresa={empresa} nombre={nombre} />
+        </div>
       </div>
 
       <Modal
