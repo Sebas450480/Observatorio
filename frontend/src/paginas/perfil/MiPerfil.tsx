@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { ErrorApi, api, mensajeDeError } from '../../api/cliente';
 import { useCategorias } from '../../api/consultas';
@@ -21,7 +21,8 @@ const esquema = z.object({
   correo: z.email('Escribe un correo válido'),
   ciudad: z.string().trim().max(60),
   apodo_usuario: z.string().trim().max(20),
-  frecuencia_alertas: z.enum(['Inmediata', 'Semanal', 'Ninguna']),
+  frecuencia_alertas: z.enum(['Inmediata', 'Diaria', 'Semanal', 'Ninguna']),
+  recordatorios_eventos: z.boolean(),
 });
 type Datos = z.infer<typeof esquema>;
 
@@ -36,8 +37,9 @@ type DatosContrasena = z.infer<typeof esquemaContrasena>;
 
 const FRECUENCIAS: { valor: FrecuenciaAlertas; titulo: string; detalle: string }[] = [
   { valor: 'Inmediata', titulo: 'En el momento', detalle: 'Cada vez que se publique algo de tu interés' },
+  { valor: 'Diaria', titulo: 'Resumen diario', detalle: 'Un correo cada mañana con lo publicado el día anterior' },
   { valor: 'Semanal', titulo: 'Resumen semanal', detalle: 'Un correo los lunes con lo más importante' },
-  { valor: 'Ninguna', titulo: 'No recibir alertas', detalle: 'Solo verás las novedades al entrar al sitio' },
+  { valor: 'Ninguna', titulo: 'No recibir el boletín', detalle: 'Solo verás las novedades al entrar al sitio' },
 ];
 
 function CambiarContrasena({ onCerrar, onListo }: { onCerrar: () => void; onListo: () => void }) {
@@ -99,8 +101,9 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
     ciudad: p.ciudad ?? '',
     apodo_usuario: p.apodo_usuario ?? '',
     frecuencia_alertas: p.frecuencia_alertas,
+    recordatorios_eventos: p.recordatorios_eventos,
   });
-  const { register, handleSubmit, reset, setError, formState } = useForm<Datos>({ resolver: zodResolver(esquema), defaultValues: valores(usuario) });
+  const { register, handleSubmit, reset, setError, setValue, control, formState } = useForm<Datos>({ resolver: zodResolver(esquema), defaultValues: valores(usuario) });
   const e = formState.errors;
 
   const guardar = useMutation({
@@ -123,6 +126,8 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
     setIntereses(usuario.intereses.map((i) => i.id_categoria));
   };
 
+  const [frecuencia, recordatorios] = useWatch({ control, name: ['frecuencia_alertas', 'recordatorios_eventos'] });
+  const silenciado = frecuencia === 'Ninguna' && !recordatorios;
   const esAdmin = esRolSuperAdmin(usuario.nombre_rol);
   const esGestor = usuario.nombre_rol.startsWith('Gestor');
   const institucional = esAdmin || esGestor;
@@ -213,9 +218,12 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
               <SelectorIntereses categorias={categorias} seleccion={intereses} onCambiar={setIntereses} />
             </section>
             <section className={TARJETA}>
-              <EncabezadoTarjeta titulo="Alertas por correo" detalle="¿Con qué frecuencia quieres recibirlas?" />
-              <fieldset className="flex flex-col gap-5">
-                <legend className="sr-only">Frecuencia de las alertas</legend>
+              <EncabezadoTarjeta titulo="Alertas por correo" detalle="Elige qué correos quieres recibir y con qué frecuencia." />
+              <fieldset className="flex flex-col gap-3">
+                <legend className="mb-2 flex flex-col gap-0.5">
+                  <span className="text-small font-bold text-azul-marino">Boletín de novedades</span>
+                  <span className="text-small text-gris-azulado">Tendencias, contenidos nuevos y empresas coformadoras nuevas.</span>
+                </legend>
                 {FRECUENCIAS.map((f) => (
                   <label
                     key={f.valor}
@@ -235,6 +243,38 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
                   </label>
                 ))}
               </fieldset>
+              <fieldset className="flex flex-col gap-3 border-t border-[#e5ebf2] pt-5">
+                <legend className="sr-only">Recordatorios de eventos favoritos</legend>
+                <label className="flex cursor-pointer items-start gap-3 rounded-[10px] border border-[#d1d9e3] bg-white px-3.5 py-3 has-checked:border-rojo-vivo has-checked:bg-rojo-vivo/6">
+                  <input type="checkbox" className="peer sr-only" {...register('recordatorios_eventos')} />
+                  <span
+                    aria-hidden
+                    className="mt-0.5 grid size-[22px] shrink-0 place-items-center rounded-md border-[1.5px] border-[#d1d9e3] bg-white text-white peer-checked:border-rojo-vivo peer-checked:bg-rojo-vivo peer-focus-visible:outline-2 peer-focus-visible:outline-azul-oscuro"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6.5 4.5 9 10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </span>
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-small font-semibold text-azul-marino">Recordatorios de eventos favoritos</span>
+                    <span className="text-small text-gris-azulado">Un correo una semana antes y otro el mismo día de cada evento que guardes con la banderita.</span>
+                  </span>
+                </label>
+              </fieldset>
+              {silenciado ? (
+                <p className="rounded-[10px] bg-fondo px-3.5 py-3 text-small text-gris-azulado" role="status">
+                  Todos los correos están silenciados. Guarda los cambios para aplicarlo.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue('frecuencia_alertas', 'Ninguna', { shouldDirty: true });
+                    setValue('recordatorios_eventos', false, { shouldDirty: true });
+                  }}
+                  className={`h-[45px] px-5 text-small ${botonClaro}`}
+                >
+                  Silenciar todos los correos
+                </button>
+              )}
             </section>
           </div>
         )}

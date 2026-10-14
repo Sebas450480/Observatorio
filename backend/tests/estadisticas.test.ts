@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { correosDePrueba } from '../src/servicios/correo.js';
-import { ejecutarAlertas } from '../src/servicios/alertas.js';
+import { ejecutarAlertas, ejecutarEnvioDiario, ejecutarRecordatorios } from '../src/servicios/alertas.js';
 import { crearUsuario, db, invitado, sesion } from './ayudas.js';
 
 describe('Actividad y estadísticas', () => {
@@ -79,6 +79,66 @@ describe('Alertas por correo', () => {
     expect(envio.rows[0].fecha_apertura).not.toBeNull();
   });
 
+  it('envía recordatorios de los eventos favoritos una semana antes y el mismo día, una sola vez', async () => {
+    const usuario = await crearUsuario('Usuario', { frecuencia: 'Ninguna' });
+    const silenciado = await crearUsuario('Usuario', { frecuencia: 'Ninguna' });
+    await db().query('update usuario set recordatorios_eventos = false where id_usuario = $1', [silenciado.id]);
+
+    // Fechas en hora de Bogotá: hoy a las 6 p. m., en 7 días y en 3 días.
+    const enDias = (dias: number) => `((now() at time zone 'America/Bogota')::date + ${dias} + time '18:00') at time zone 'America/Bogota'`;
+    const flash = async (titulo: string, dias: number) =>
+      (await db().query<{ id_fi: number }>(
+        `insert into flash_informativo (titulo, fecha_inicio, modalidad, tipo_evento) values ($1, ${enDias(dias)}, 'Virtual', 'Foro') returning id_fi`,
+        [titulo],
+      )).rows[0]!.id_fi;
+    const hoy = await flash('Foro de hoy', 0);
+    const semana = await flash('Foro en una semana', 7);
+    const otro = await flash('Foro en tres días', 3);
+    const evento = (await db().query<{ id_evento: number }>(
+      `insert into calendario_eventos (titulo, fecha_inicio, modalidad, tipo_evento) values ('Evento institucional de hoy', ${enDias(0)}, 'Presencial', 'Foro') returning id_evento`,
+    )).rows[0]!.id_evento;
+    for (const u of [usuario, silenciado]) {
+      await db().query(
+        `insert into favorito (id_usuario, tipo_contenido, id_contenido)
+         values ($1, 'Flash', $2), ($1, 'Flash', $3), ($1, 'Flash', $4), ($1, 'Evento', $5)`,
+        [u.id, hoy, semana, otro, evento],
+      );
+    }
+
+    correosDePrueba.length = 0;
+    const r = await ejecutarRecordatorios();
+    expect(r.errores).toBe(0);
+    const asuntos = correosDePrueba.filter((c) => c.para === usuario.correo).map((c) => c.asunto).sort();
+    expect(asuntos).toEqual([
+      'Recordatorio: Hoy es «Evento institucional de hoy»',
+      'Recordatorio: Hoy es «Foro de hoy»',
+      'Recordatorio: «Foro en una semana» es en una semana',
+    ]);
+    expect(correosDePrueba.find((c) => c.para === silenciado.correo)).toBeUndefined();
+
+    // No se repiten.
+    correosDePrueba.length = 0;
+    await ejecutarRecordatorios();
+    expect(correosDePrueba.find((c) => c.para === usuario.correo)).toBeUndefined();
+  });
+
+  it('el boletín diario incluye las empresas nuevas y el envío diario corre todas las tareas', async () => {
+    const diario = await crearUsuario('Usuario', { frecuencia: 'Diaria' });
+    await db().query("update usuario set fecha_registro = now() - interval '2 hours' where id_usuario = $1", [diario.id]);
+    await db().query(
+      `insert into empresa_coformadora (nit, razon_social, nombre_comercial, sector_economico, departamento, municipio)
+       values ('BOL-' || floor(random() * 1e9)::text, 'Empresa Nueva S.A.S.', 'Empresa Nueva', 'Comercio', 'Bogotá D.C.', 'Bogotá')`,
+    );
+    correosDePrueba.length = 0;
+    // Un martes: corre el boletín inmediato, el diario y los recordatorios, pero no el semanal.
+    const resultado = await ejecutarEnvioDiario(new Date('2026-10-20T13:00:00Z'));
+    expect(Object.keys(resultado)).toEqual(['Inmediata', 'Diaria', 'Recordatorios']);
+    const correo = correosDePrueba.find((c) => c.para === diario.correo);
+    expect(correo?.texto).toContain('Nueva empresa coformadora: Empresa Nueva');
+    // Un lunes también corre el semanal.
+    expect(Object.keys(await ejecutarEnvioDiario(new Date('2026-10-19T13:00:00Z')))).toContain('Semanal');
+  });
+
   it('el SuperAdmin puede ejecutar el envío manualmente', async () => {
     const { agente } = await sesion('SuperAdmin');
     const r = await agente.post('/api/alertas/ejecutar').send({ frecuencia: 'Semanal' });
@@ -93,6 +153,9 @@ describe('Alertas por correo', () => {
     const r = await invitado().get(ruta).set('Authorization', 'Bearer secreto-cron-de-pruebas-1234');
     expect(r.status).toBe(200);
     expect(r.body).toHaveProperty('enviados');
+    const todo = await invitado().get('/api/alertas/cron').set('Authorization', 'Bearer secreto-cron-de-pruebas-1234');
+    expect(todo.status).toBe(200);
+    expect(todo.body).toHaveProperty('Recordatorios');
     expect((await invitado().get(ruta)).status).toBe(404);
     expect((await invitado().get(ruta).set('Authorization', 'Bearer otro-secreto-de-prueba-00')).status).toBe(404);
     const { agente } = await sesion('SuperAdmin');

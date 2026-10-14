@@ -46,6 +46,8 @@ export default defineConfig({
         DATABASE_SSL: 'false',
         JWT_SECRETO: 'secreto-de-pruebas-e2e-con-mas-de-32-caracteres',
         BCRYPT_COSTO: '4',
+        // Las pruebas inician sesión muchas veces seguidas desde la misma IP.
+        LIMITE_INTENTOS_AUTH: '1000',
         FRONTEND_URL: `http://localhost:${PUERTO_FRONTEND}`,
         API_URL_PUBLICA: `http://localhost:${PUERTO_FRONTEND}`,
         UPLOADS_DIR: mkdtempSync(path.join(tmpdir(), 'obs-e2e-')),

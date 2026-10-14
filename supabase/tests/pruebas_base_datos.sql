@@ -244,6 +244,13 @@ begin
     exception when insufficient_privilege then null;
     end;
 
+    update public.usuario set recordatorios_eventos = false, frecuencia_alertas = 'Diaria'
+     where id_usuario = current_setting('prueba.usuario')::int;
+    get diagnostics v_filas = row_count;
+    if v_filas <> 1 then
+        raise exception 'FALLO 3.11: el usuario no puede cambiar sus preferencias de correo';
+    end if;
+
     insert into public.favorito (id_usuario, tipo_contenido, id_contenido)
     values (current_setting('prueba.usuario')::int, 'Flash', current_setting('prueba.flash_activo')::int);
 
@@ -406,6 +413,22 @@ begin
         insert into public.tendencia_empresarial (megatendencia, tendencia)
         values ('PRUEBA mega', 'PRUEBA tendencia inactiva');
         raise exception 'FALLO 6.8: se aceptó una tendencia duplicada';
+    exception when unique_violation then null;
+    end;
+
+    begin
+        insert into public.envio_alerta (id_usuario, tipo_envio)
+        values (current_setting('prueba.usuario')::int, 'Recordatorio');
+        raise exception 'FALLO 6.10: se aceptó un recordatorio sin evento';
+    exception when check_violation then null;
+    end;
+
+    insert into public.envio_alerta (id_usuario, tipo_envio, tipo_contenido, id_contenido, aviso)
+    values (current_setting('prueba.usuario')::int, 'Recordatorio', 'Evento', 1, 'Semana');
+    begin
+        insert into public.envio_alerta (id_usuario, tipo_envio, tipo_contenido, id_contenido, aviso)
+        values (current_setting('prueba.usuario')::int, 'Recordatorio', 'Evento', 1, 'Semana');
+        raise exception 'FALLO 6.11: se repitió un recordatorio';
     exception when unique_violation then null;
     end;
 

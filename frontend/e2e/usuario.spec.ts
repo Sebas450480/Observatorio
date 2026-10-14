@@ -32,6 +32,25 @@ test.describe('Usuario registrado', () => {
     await expect(page.getByRole('radio', { name: /En el momento/ })).toBeChecked();
   });
 
+  test('elige el boletín diario y luego silencia todos los correos', async ({ page }) => {
+    await page.goto('/mi-perfil');
+    const recordatorios = page.getByRole('checkbox', { name: /Recordatorios de eventos favoritos/ });
+    await expect(recordatorios).toBeChecked();
+    await page.getByText('Resumen diario').click();
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+    await page.getByRole('dialog', { name: 'Perfil actualizado' }).getByRole('button', { name: 'Aceptar' }).click();
+    await page.reload();
+    await expect(page.getByRole('radio', { name: /Resumen diario/ })).toBeChecked();
+
+    await page.getByRole('button', { name: 'Silenciar todos los correos' }).click();
+    await expect(page.getByText('Todos los correos están silenciados')).toBeVisible();
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+    await page.getByRole('dialog', { name: 'Perfil actualizado' }).getByRole('button', { name: 'Aceptar' }).click();
+    await page.reload();
+    await expect(page.getByRole('radio', { name: /No recibir el boletín/ })).toBeChecked();
+    await expect(page.getByRole('checkbox', { name: /Recordatorios de eventos favoritos/ })).not.toBeChecked();
+  });
+
   test('no puede cambiar la contraseña sin la actual correcta', async ({ page }) => {
     await page.goto('/mi-perfil');
     await page.getByRole('button', { name: 'Cambiar contraseña' }).click();

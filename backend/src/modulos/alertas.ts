@@ -4,7 +4,9 @@ import { config } from '../config.js';
 import { z } from 'zod';
 import { verificarFirmaEnvio } from '../auth/tokens.js';
 import { requiereSuperAdmin } from '../middlewares/sesion.js';
-import { ejecutarAlertas, marcarAbierto } from '../servicios/alertas.js';
+import { ejecutarEnvioDiario, ejecutarTarea, marcarAbierto } from '../servicios/alertas.js';
+
+const TAREAS = ['Inmediata', 'Diaria', 'Semanal', 'Recordatorios'] as const;
 
 export const rutasAlertas = Router();
 
@@ -20,8 +22,10 @@ rutasAlertas.get('/abierto/:id/:firma', async (req, res) => {
 });
 
 /**
- * Envío programado en Vercel (Cron Jobs, ver vercel.json). Vercel envía la cabecera
- * "Authorization: Bearer <CRON_SECRET>". Sin CRON_SECRET configurado la ruta no existe.
+ * Envío programado en Vercel (Cron Jobs, ver vercel.json): una vez al día, a las 8:00 de
+ * Bogotá, ejecuta todas las tareas del día; con ?frecuencia=... ejecuta solo una.
+ * Vercel envía la cabecera "Authorization: Bearer <CRON_SECRET>". Sin CRON_SECRET
+ * configurado la ruta no existe.
  */
 rutasAlertas.get('/cron', async (req, res) => {
   const secreto = config.alertas.secretoCron;
@@ -31,14 +35,14 @@ rutasAlertas.get('/cron', async (req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
     return;
   }
-  const { frecuencia } = z.object({ frecuencia: z.enum(['Inmediata', 'Semanal']) }).parse(req.query);
-  const resultado = await ejecutarAlertas(frecuencia);
-  console.info(`[alertas ${frecuencia}] enviados: ${resultado.enviados}, errores: ${resultado.errores}`);
+  const { frecuencia } = z.object({ frecuencia: z.enum(TAREAS).optional() }).parse(req.query);
+  const resultado = frecuencia ? await ejecutarTarea(frecuencia) : await ejecutarEnvioDiario();
+  console.info(`[alertas ${frecuencia ?? 'diarias'}]`, JSON.stringify(resultado));
   res.json(resultado);
 });
 
 /** Permite al SuperAdmin ejecutar el envío manualmente (útil para pruebas y demostraciones). */
 rutasAlertas.post('/ejecutar', requiereSuperAdmin, async (req, res) => {
-  const { frecuencia } = z.object({ frecuencia: z.enum(['Inmediata', 'Semanal']) }).parse(req.body);
-  res.json(await ejecutarAlertas(frecuencia));
+  const { frecuencia } = z.object({ frecuencia: z.enum(TAREAS) }).parse(req.body);
+  res.json(await ejecutarTarea(frecuencia));
 });

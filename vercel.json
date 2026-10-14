@@ -15,7 +15,6 @@
     { "source": "/:ruta((?!api/).*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/alertas/cron?frecuencia=Inmediata", "schedule": "0 13 * * *" },
-    { "path": "/api/alertas/cron?frecuencia=Semanal", "schedule": "0 13 * * 1" }
+    { "path": "/api/alertas/cron", "schedule": "0 13 * * *" }
   ]
 }

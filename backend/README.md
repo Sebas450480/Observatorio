@@ -175,14 +175,23 @@ Fechas: con hora en ISO 8601 con zona (`2026-10-20T08:00:00-05:00`); sin hora co
 
 ## Alertas por correo
 
-Tareas programadas en [`src/servicios/alertas.ts`](src/servicios/alertas.ts):
+Tareas programadas en [`src/servicios/alertas.ts`](src/servicios/alertas.ts). Hay dos tipos de correo,
+cada uno con su control en Mi perfil:
 
-- **Inmediata:** cada 15 minutos, lo publicado desde la última alerta.
-- **Semanal:** lunes 8:00 (hora de Bogotá), lo publicado en la semana.
+**Boletín de novedades** (Flash, Faro y Tendencias que coinciden con los intereses del usuario, o todo si no
+marcó intereses; eventos institucionales y empresas coformadoras nuevas):
 
-Incluyen Flash, Faro y Tendencias que coinciden con los intereses del usuario (todo si no marcó intereses)
-y los eventos institucionales nuevos. Cada envío queda en `envio_alerta`; una imagen invisible marca la apertura
-para el panel de estadísticas. Se desactivan con `ALERTAS_ACTIVAS=false`.
+- **Inmediata:** cada 15 minutos, lo publicado desde el último boletín.
+- **Diaria:** todos los días a las 8:00 (hora de Bogotá), lo publicado en el día.
+- **Semanal:** lunes 8:00, lo publicado en la semana.
+- **Ninguna:** sin boletín.
+
+**Recordatorios de eventos favoritos** (Flash y Calendario): una semana antes y el mismo día del evento, a las
+8:00. Se desactivan con la casilla de Mi perfil; cada recordatorio se envía una sola vez.
+
+En Vercel hay un solo Cron diario (`GET /api/alertas/cron`, 8:00 de Bogotá) que corre todas las tareas del día
+(el boletín inmediato pasa a ser diario). Cada envío queda en `envio_alerta`; una imagen invisible marca la
+apertura para el panel de estadísticas. Se desactivan con `ALERTAS_ACTIVAS=false`.
 
 ## Estructura
 
