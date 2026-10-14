@@ -86,7 +86,7 @@ export function FormularioFaro({ registro, onCerrar }: { registro?: Faro; onCerr
       modo={registro ? 'editar' : 'crear'}
       titulo={registro ? 'Editar registro' : 'Nuevo registro'}
       sustantivo={{ palabra: 'registro', demostrativo: 'este' }}
-      seccion="Faro Empresarial"
+      seccion="Faro"
       validar={() => trigger()}
       guardar={guardar}
       eliminar={registro ? () => eliminarApi.mutateAsync(registro.id_fe) : undefined}

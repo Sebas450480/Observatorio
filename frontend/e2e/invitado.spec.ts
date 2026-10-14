@@ -13,8 +13,8 @@ test.describe('Invitado (sin sesión)', () => {
 
   test('consulta el detalle de un Flash pero no puede crear', async ({ page }) => {
     await page.goto('/flash-informativo');
-    await expect(page.getByRole('heading', { name: 'Flash', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Crear Flash' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Flash Informativo', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Crear Flash Informativo' })).toHaveCount(0);
     await page.getByRole('button', { name: /^Acceder/ }).first().click();
     const detalle = page.getByRole('dialog');
     await expect(detalle).toBeVisible();

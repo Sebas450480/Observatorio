@@ -30,8 +30,8 @@ export const ROL_POR_NOMBRE: Record<string, RolBD> = {
   Usuario: 'obs_usuario',
   /** Usuario que además edita la ficha de su propia empresa (registro por invitación). */
   'Empresa Coformadora': 'obs_empresa',
-  'Gestor Faro Empresarial': 'obs_gestor_faro',
-  'Gestor Flash': 'obs_gestor_flash',
+  'Gestor Faro': 'obs_gestor_faro',
+  'Gestor Flash Informativo': 'obs_gestor_flash',
   'Gestor Empresas Coformadoras': 'obs_gestor_empresas',
   'Gestor Tendencias': 'obs_gestor_tendencias',
   'Gestor Calendario': 'obs_gestor_calendario',
@@ -48,7 +48,8 @@ const clave = (nombre: string) => nombre.trim().replace(/\s+/g, ' ').toLowerCase
 const NOMBRES_ANTERIORES: Record<string, string> = {
   'superadmin superior': 'Super Admin',
   superadmin: 'Gestor Observatorio',
-  'gestor flash informativo': 'Gestor Flash',
+  'gestor flash': 'Gestor Flash Informativo',
+  'gestor faro empresarial': 'Gestor Faro',
 };
 
 const NOMBRE_POR_CLAVE = new Map([

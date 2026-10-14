@@ -6,10 +6,10 @@ import type { Perfil } from '../api/tipos';
 /** Módulos de contenido; cada uno tiene su gestor. */
 export type Modulo = 'flash' | 'faro' | 'empresas' | 'tendencias' | 'calendario' | 'glosario';
 
-/** Nombres del rol gestor de cada módulo ("Gestor Flash Informativo" es el nombre anterior de "Gestor Flash"). */
+/** Nombres del rol gestor de cada módulo (con sus nombres anteriores: "Gestor Flash" y "Gestor Faro Empresarial"). */
 const GESTOR_DE: Record<Modulo, string[]> = {
-  flash: ['Gestor Flash', 'Gestor Flash Informativo'],
-  faro: ['Gestor Faro Empresarial'],
+  flash: ['Gestor Flash Informativo', 'Gestor Flash'],
+  faro: ['Gestor Faro', 'Gestor Faro Empresarial'],
   empresas: ['Gestor Empresas Coformadoras'],
   tendencias: ['Gestor Tendencias'],
   calendario: ['Gestor Calendario'],
@@ -40,7 +40,8 @@ const clave = (nombre: string) => nombre.trim().replace(/\s+/g, ' ').toLowerCase
 const NOMBRES_ANTERIORES: Record<string, string> = {
   'superadmin superior': SUPER_ADMIN,
   superadmin: GESTOR_OBSERVATORIO,
-  'gestor flash informativo': 'Gestor Flash',
+  'gestor flash': 'Gestor Flash Informativo',
+  'gestor faro empresarial': 'Gestor Faro',
 };
 
 /** Nombre oficial del rol, sin importar mayúsculas, espacios de más ni el nombre anterior. */
@@ -92,7 +93,7 @@ export function descripcionRol(nombre: string): string {
   return nombreRol(nombre);
 }
 
-/** Roles con los que actúa, en una línea ("Gestor Faro Empresarial · Empresa Coformadora"). */
+/** Roles con los que actúa, en una línea ("Gestor Faro · Empresa Coformadora"). */
 export function descripcionRoles(perfil: Pick<Perfil, 'nombre_rol' | 'roles' | 'rol_activo'>): string {
   return rolesActivosDe(perfil).join(' · ');
 }

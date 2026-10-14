@@ -125,7 +125,7 @@ export function FlashInformativo() {
     <>
       <EncabezadoPagina
         modulo="flash"
-        titulo="Flash"
+        titulo="Flash Informativo"
         subtitulo="Mantente informado sobre los últimos acontecimientos empresariales, innovaciones y tendencias del mundo corporativo." />
       <BarraFiltros
         activos={contarActivos(filtros, FILTROS_INICIALES)}
@@ -134,7 +134,7 @@ export function FlashInformativo() {
         extra={
           gestiona && (
             <Boton pildora onClick={() => setFormulario({})}>
-              Crear Flash
+              Crear Flash Informativo
             </Boton>
           )
         }

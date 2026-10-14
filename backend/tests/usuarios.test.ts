@@ -54,10 +54,10 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
 
     const creado = await admin.post('/api/usuarios').send({
       nombre_usuario: 'Gestora', apellido_usuario: 'Faro', correo: 'gestora.faro@test.co', contrasena: 'Clave-segura-1',
-      id_rol: idRol('Gestor Faro Empresarial'), acepta_tratamiento_datos: true,
+      id_rol: idRol('Gestor Faro'), acepta_tratamiento_datos: true,
     });
     expect(creado.status).toBe(201);
-    expect(creado.body.nombre_rol).toBe('Gestor Faro Empresarial');
+    expect(creado.body.nombre_rol).toBe('Gestor Faro');
 
     const gestora = request.agent(app);
     await gestora.post('/api/auth/login').send({ correo: 'gestora.faro@test.co', contrasena: 'Clave-segura-1' });

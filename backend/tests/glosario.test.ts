@@ -26,7 +26,7 @@ describe('Glosario', () => {
   });
 
   it('solo administran el glosario su gestor y la administración', async () => {
-    for (const rol of ['Usuario', 'Gestor Flash', 'Empresa Coformadora'] as const) {
+    for (const rol of ['Usuario', 'Gestor Flash Informativo', 'Empresa Coformadora'] as const) {
       const { agente } = await sesion(rol);
       expect((await agente.post('/api/glosario').send({ termino: `x ${unico()}`, definicion: 'y' })).status).toBe(403);
     }

@@ -8,13 +8,13 @@ test.describe('Usuario registrado', () => {
 
   test('no ve las opciones de administración', async ({ page }) => {
     const menu = page.getByRole('complementary', { name: 'Menú principal' });
-    await expect(menu.getByRole('link', { name: 'Flash', exact: true })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Flash Informativo', exact: true })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Usuarios' })).toHaveCount(0);
     await expect(menu.getByRole('link', { name: 'Estadísticas' })).toHaveCount(0);
     await page.goto('/estadisticas');
     await expect(page.getByRole('heading', { name: 'No tienes permiso para ver esta página' })).toBeVisible();
     await page.goto('/faro-empresarial');
-    await expect(page.getByRole('heading', { name: 'Faro Empresarial' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Faro', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Crear registro' })).toHaveCount(0);
   });
 
@@ -79,7 +79,7 @@ test.describe('Favoritos', () => {
     await page.goto('/mi-perfil');
     const panel = page.getByRole('region', { name: 'Mis favoritos' });
     await expect(panel.getByRole('link', { name: titulo })).toBeVisible();
-    await expect(panel.getByRole('button', { name: 'Flash (1)' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Flash Informativo (1)' })).toBeVisible();
 
     await panel.getByRole('button', { name: `Quitar de favoritos: ${titulo}` }).click();
     await expect(panel.getByText('Aún no tienes favoritos')).toBeVisible();

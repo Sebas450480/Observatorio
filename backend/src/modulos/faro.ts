@@ -5,7 +5,7 @@ import {
   textoObligatorio, textoOpcional,
 } from '../utilidades/esquemas.js';
 
-/** Faro Empresarial: becas, convocatorias, cursos y talleres. */
+/** Faro: becas, convocatorias, cursos y talleres. */
 const esquema = z.object({
   titulo: textoObligatorio(150),
   descripcion: textoOpcional(),
@@ -34,7 +34,7 @@ const esquemaFiltros = z.object({
 
 export const rutasFaro = crearRecurso({
   nombre: 'faro',
-  titulo: 'Faro Empresarial',
+  titulo: 'Faro',
   tabla: 'faro_empresarial',
   id: 'id_fe',
   rolGestor: 'obs_gestor_faro',

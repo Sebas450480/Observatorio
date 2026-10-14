@@ -29,7 +29,7 @@ export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar:
       ancho={700}
       destacado
       claseCuerpo={CUERPO_DETALLE}
-      titulo={<span className="uppercase">{flash?.titulo ?? 'Flash'}</span>}
+      titulo={<span className="uppercase">{flash?.titulo ?? 'Flash Informativo'}</span>}
       accion={
         flash && (
           <div className="flex gap-2">

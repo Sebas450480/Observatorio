@@ -26,25 +26,25 @@ describe('Varios roles por cuenta', () => {
   it('el administrador asigna varios roles y la cuenta entra con uno y puede cambiar a otro', async () => {
     const { agente: admin } = await sesion('Gestor Observatorio');
     const cuenta = await crearUsuario('Usuario');
-    const roles = [await idRol('Gestor Flash'), await idRol('Gestor Faro Empresarial'), await idRol('Usuario')];
+    const roles = [await idRol('Gestor Flash Informativo'), await idRol('Gestor Faro'), await idRol('Usuario')];
     const editado = await admin.patch(`/api/usuarios/${cuenta.id}`).send({ roles });
     expect(editado.status).toBe(200);
-    expect(editado.body.roles.map((r: { nombre_rol: string }) => r.nombre_rol).sort()).toEqual(['Gestor Faro Empresarial', 'Gestor Flash', 'Usuario']);
+    expect(editado.body.roles.map((r: { nombre_rol: string }) => r.nombre_rol).sort()).toEqual(['Gestor Faro', 'Gestor Flash Informativo', 'Usuario']);
     // El principal es el de más alcance.
-    expect(editado.body.nombre_rol).toBe('Gestor Faro Empresarial');
+    expect(editado.body.nombre_rol).toBe('Gestor Faro');
 
     const { agente, perfil } = await entrar(cuenta.correo);
     expect(perfil.roles).toHaveLength(3);
     // Entra con el rol principal y actúa solo con él.
-    expect(perfil.rol_activo).toBe('Gestor Faro Empresarial');
+    expect(perfil.rol_activo).toBe('Gestor Faro');
     expect((await agente.post('/api/faro').send({ titulo: 'Beca de gestor doble', tipo: 'Becas' })).status).toBe(201);
     expect((await agente.post('/api/flash').send(nuevoFlash('Sin el rol elegido'))).status).toBe(403);
 
     // Cambia al rol Gestor Flash: ahora gestiona Flash y ya no Faro.
-    const cambio = await agente.post('/api/auth/rol').send({ rol: 'Gestor Flash' });
+    const cambio = await agente.post('/api/auth/rol').send({ rol: 'Gestor Flash Informativo' });
     expect(cambio.status).toBe(200);
-    expect(cambio.body.rol_activo).toBe('Gestor Flash');
-    expect((await agente.get('/api/auth/yo')).body.rol_activo).toBe('Gestor Flash');
+    expect(cambio.body.rol_activo).toBe('Gestor Flash Informativo');
+    expect((await agente.get('/api/auth/yo')).body.rol_activo).toBe('Gestor Flash Informativo');
     expect((await agente.post('/api/flash').send(nuevoFlash('Flash de gestor doble'))).status).toBe(201);
     expect((await agente.post('/api/faro').send({ titulo: 'Ya no', tipo: 'Becas' })).status).toBe(403);
     // Solo lectura en los módulos que no gestiona.
@@ -124,7 +124,7 @@ describe('Varios roles por cuenta', () => {
     // Crear una cuenta con varios roles.
     const creada = await admin.post('/api/usuarios').send({
       nombre_usuario: 'Varios', apellido_usuario: 'Roles', correo: `varios.${Date.now()}@test.co`, contrasena: 'Clave-segura-123',
-      roles: [await idRol('Gestor Flash'), await idRol('Gestor Calendario')], acepta_tratamiento_datos: true,
+      roles: [await idRol('Gestor Flash Informativo'), await idRol('Gestor Calendario')], acepta_tratamiento_datos: true,
     });
     expect(creada.status).toBe(201);
     expect(creada.body.roles).toHaveLength(2);

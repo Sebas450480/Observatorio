@@ -30,7 +30,7 @@ export function DetalleFaro({ id, onCerrar, onEditar }: { id: number; onCerrar: 
       ancho={700}
       destacado
       claseCuerpo={CUERPO_DETALLE}
-      titulo={faro?.titulo ?? 'Faro Empresarial'}
+      titulo={faro?.titulo ?? 'Faro'}
       accion={
         faro && (
           <div className="flex gap-2">

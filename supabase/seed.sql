@@ -19,8 +19,8 @@
 insert into public.rol (nombre_rol, descripcion_rol, permisos) values
     ('Gestor Observatorio',          'Rol transversal: administra todos los módulos, los usuarios, las categorías y las estadísticas.', 'Crear, modificar, eliminar y visualizar todas las tablas'),
     ('Usuario',                      'Usuario registrado. Consulta los registros activos de todos los módulos y administra su perfil e intereses.', 'Visualizar registros activos; editar su perfil'),
-    ('Gestor Faro Empresarial',      'Administra becas, convocatorias, cursos y talleres del Faro Empresarial.', 'CRUD Faro Empresarial; visualizar los demás módulos'),
-    ('Gestor Flash',                 'Administra los eventos del Flash.',             'CRUD Flash; visualizar los demás módulos'),
+    ('Gestor Faro',                  'Administra becas, convocatorias, cursos y talleres del Faro.', 'CRUD Faro'),
+    ('Gestor Flash Informativo',     'Administra los eventos del Flash Informativo.', 'CRUD Flash Informativo'),
     ('Gestor Empresas Coformadoras', 'Administra el catálogo de empresas coformadoras y sus contactos.', 'CRUD Empresas Coformadoras; visualizar los demás módulos'),
     ('Gestor Tendencias',            'Administra las tendencias, sus fuentes y menciones.', 'CRUD Tendencias; visualizar los demás módulos'),
     ('Gestor Calendario',            'Administra los eventos institucionales del calendario.', 'CRUD Calendario; visualizar los demás módulos'),
@@ -98,7 +98,7 @@ join public.flash_informativo f on f.titulo = v.titulo
 join public.categoria c         on c.nombre_categoria = v.categoria;
 
 -- -----------------------------------------------------------------------------
--- Faro Empresarial (ejemplos del Figma)
+-- Faro (ejemplos del Figma)
 -- -----------------------------------------------------------------------------
 insert into public.faro_empresarial
     (titulo, descripcion, tipo, fecha_publicacion, fecha_inicio, fecha_cierre, entidad, link, modalidad, lugar, costo, es_gratuito, duracion)
