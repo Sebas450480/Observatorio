@@ -8,7 +8,7 @@ test.describe('Usuario registrado', () => {
 
   test('no ve las opciones de administración', async ({ page }) => {
     const menu = page.getByRole('complementary', { name: 'Menú principal' });
-    await expect(menu.getByRole('link', { name: 'Flash informativo' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Flash', exact: true })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Usuarios' })).toHaveCount(0);
     await expect(menu.getByRole('link', { name: 'Estadísticas' })).toHaveCount(0);
     await page.goto('/estadisticas');

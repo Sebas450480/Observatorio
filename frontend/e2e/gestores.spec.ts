@@ -52,7 +52,7 @@ test.describe('Gestor Flash Informativo', () => {
     await iniciarSesion(page, 'gestorFlash');
     await expect(page).toHaveURL(/\/flash-informativo$/);
     const menu = page.getByRole('complementary', { name: 'Menú principal' });
-    await expect(menu.getByRole('link', { name: 'Flash informativo' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Flash', exact: true })).toBeVisible();
     for (const otro of ['Inicio', 'Faro Empresarial', 'Empresas coformadoras', 'Tendencias', 'Eventos institucionales']) {
       await expect(menu.getByRole('link', { name: otro, exact: true })).toHaveCount(0);
     }
