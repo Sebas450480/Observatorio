@@ -12,11 +12,12 @@ import maletin from '../../assets/figma/tarjetas/maletin.svg';
 import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import type { Flash, Modalidad } from '../../api/tipos';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
 import { DEPARTAMENTOS, opcionesAnios } from '../../utilidades/colombia';
 import { costo, fechaLarga, modalidadTexto } from '../../utilidades/formato';
@@ -63,7 +64,10 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
         <Insignia tono={tonoModalidad(flash.modalidad)} className="absolute left-3 top-3">
           {modalidadTexto(flash.modalidad)}
         </Insignia>
-        <BotonFavorito tipo="Flash" id={flash.id_fi} titulo={flash.titulo} variante="imagen" className="absolute right-2.5 top-2.5" />
+        <div className="absolute right-2.5 top-2.5 flex gap-2">
+          <BotonDescargar ruta="/flash" id={flash.id_fi} titulo={flash.titulo} variante="imagen" />
+          <BotonFavorito tipo="Flash" id={flash.id_fi} titulo={flash.titulo} variante="imagen" />
+        </div>
         {flash.estado_fi === 'Inactivo' && (
           <span className="absolute bottom-3 right-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVO</span>
         )}
@@ -122,8 +126,7 @@ export function FlashInformativo() {
       <EncabezadoPagina
         modulo="flash"
         titulo="Flash"
-        subtitulo="Mantente informado sobre los últimos acontecimientos empresariales, innovaciones y tendencias del mundo corporativo."
-      acciones={<MenuExportar ruta="/flash" consulta={consulta} />} />
+        subtitulo="Mantente informado sobre los últimos acontecimientos empresariales, innovaciones y tendencias del mundo corporativo." />
       <BarraFiltros
         activos={contarActivos(filtros, FILTROS_INICIALES)}
         onBuscar={() => { setFiltros(borrador); setPagina(1); }}

@@ -8,10 +8,11 @@ import iconoNit from '../../assets/figma/iconos/nit.svg';
 import iconoSector from '../../assets/figma/iconos/sector.svg';
 import { useListado } from '../../api/consultas';
 import type { Empresa } from '../../api/tipos';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
 import { DEPARTAMENTOS } from '../../utilidades/colombia';
 
@@ -75,7 +76,10 @@ function TarjetaEmpresa({ empresa }: { empresa: Empresa }) {
           </div>
         </div>
       </Link>
-      <BotonFavorito tipo="Empresa" id={empresa.id_ec} titulo={nombreEmpresa(empresa)} variante="imagen" className="absolute right-2.5 top-2.5" />
+      <div className="absolute right-2.5 top-2.5 flex gap-2">
+        <BotonDescargar ruta="/empresas" id={empresa.id_ec} titulo={nombreEmpresa(empresa)} variante="imagen" />
+        <BotonFavorito tipo="Empresa" id={empresa.id_ec} titulo={nombreEmpresa(empresa)} variante="imagen" />
+      </div>
     </div>
   );
 }
@@ -106,7 +110,6 @@ export function DirectorioEmpresas() {
         icono={iconoEncabezado}
         titulo="Empresas Coformadoras"
         subtitulo="Directorio de empresas aliadas y coformadoras comprometidas con la excelencia académica y el crecimiento empresarial."
-        acciones={<MenuExportar ruta="/empresas" consulta={consulta} />}
         className="mb-6 xl:mb-[46px]"
       />
       <BarraFiltros

@@ -114,3 +114,66 @@ export function generarPdf(titulo: string, columnas: ColumnaExportar[], filas: R
     doc.end();
   });
 }
+
+/** Ficha de un solo registro en Excel: una fila por dato (Dato | Valor). */
+export async function generarFichaExcel(
+  titulo: string,
+  nombre: string,
+  columnas: ColumnaExportar[],
+  fila: Record<string, unknown>,
+): Promise<Buffer> {
+  const libro = new ExcelJS.Workbook();
+  libro.creator = 'Observatorio Empresarial - Uniempresarial';
+  libro.created = new Date();
+  const hoja = libro.addWorksheet(titulo.slice(0, 31));
+  hoja.columns = [
+    { header: 'Dato', key: 'dato', width: 26 },
+    { header: 'Valor', key: 'valor', width: 80 },
+  ];
+  const encabezado = hoja.getRow(1);
+  encabezado.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  encabezado.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F3A68' } };
+  hoja.addRow({ dato: titulo, valor: nombre }).font = { bold: true };
+  for (const c of columnas) {
+    const fila2 = hoja.addRow({ dato: c.titulo, valor: valorTexto(fila[c.campo]) });
+    fila2.getCell('valor').alignment = { wrapText: true, vertical: 'top' };
+  }
+  return Buffer.from(await libro.xlsx.writeBuffer());
+}
+
+/** Ficha de un solo registro en PDF: encabezado institucional y cada dato con su valor. */
+export function generarFichaPdf(
+  titulo: string,
+  nombre: string,
+  columnas: ColumnaExportar[],
+  fila: Record<string, unknown>,
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: 'LETTER', margin: 50 });
+    const partes: Buffer[] = [];
+    doc.on('data', (p: Buffer) => partes.push(p));
+    doc.on('end', () => resolve(Buffer.concat(partes)));
+    doc.on('error', reject);
+
+    const izquierda = doc.page.margins.left;
+    const anchoUtil = doc.page.width - izquierda - doc.page.margins.right;
+    doc.rect(0, 0, doc.page.width, 64).fill(COLOR_PRINCIPAL);
+    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(16).text('OBSERVATORIO EMPRESARIAL', izquierda, 18);
+    doc.font('Helvetica').fontSize(10).text(`Uniempresarial · ${titulo}`, izquierda, 40);
+
+    doc.fillColor(COLOR_TEXTO).font('Helvetica-Bold').fontSize(16).text(nombre, izquierda, 88, { width: anchoUtil });
+    doc.moveDown(0.3).font('Helvetica').fontSize(8).fillColor('#666666')
+      .text(`Generado el ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })}`);
+    doc.moveDown(1);
+
+    for (const c of columnas) {
+      const valor = valorTexto(fila[c.campo]);
+      if (!valor) continue;
+      if (doc.y > doc.page.height - doc.page.margins.bottom - 40) doc.addPage();
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(COLOR_PRINCIPAL).text(c.titulo.toUpperCase(), izquierda, doc.y, { width: anchoUtil });
+      doc.font('Helvetica').fontSize(10.5).fillColor(COLOR_TEXTO).text(valor, { width: anchoUtil });
+      doc.moveDown(0.7);
+    }
+    doc.end();
+  });
+}
