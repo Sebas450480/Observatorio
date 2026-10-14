@@ -22,6 +22,9 @@ describe('Salud', () => {
     expect(pagina.text).toContain('/api/docs.json');
     expect((await invitado().get('/api/docs/archivos/swagger-ui-bundle.js')).status).toBe(200);
     expect((await invitado().get('/api/docs/archivos/swagger-ui.css')).status).toBe(200);
+    // La página no usa scripts dentro del HTML (la política de seguridad los bloquea).
+    expect(pagina.text).not.toMatch(/<script>/);
+    expect((await invitado().get('/api/docs/inicio.js')).text).toContain('SwaggerUIBundle');
   });
 
   it('responde 404 en rutas que no existen', async () => {
