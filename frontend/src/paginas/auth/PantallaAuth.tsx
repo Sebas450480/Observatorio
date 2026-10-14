@@ -16,10 +16,12 @@ const BENEFICIOS = [
 export function PantallaAuth({
   children,
   tituloBeneficios = 'Regístrate y podrás:',
+  beneficios = BENEFICIOS,
   ancha = false,
 }: {
   children: ReactNode;
   tituloBeneficios?: string;
+  beneficios?: string[];
   ancha?: boolean;
 }) {
   return (
@@ -39,7 +41,7 @@ export function PantallaAuth({
           <div className={`hidden pl-10 xl:block ${ancha ? 'mt-[41px]' : 'mt-10'}`}>
             <h2 className="text-subtitle font-bold">{tituloBeneficios}</h2>
             <ul className="mt-[18px] flex max-w-[490px] flex-col gap-[18px]">
-              {BENEFICIOS.map((b) => (
+              {beneficios.map((b) => (
                 <li key={b} className="flex items-center gap-3.5 text-body text-white">
                   <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-body font-bold text-rojo-vivo">
                     ✓

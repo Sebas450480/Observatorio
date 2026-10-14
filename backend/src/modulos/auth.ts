@@ -15,7 +15,7 @@ import type { Sesion } from '../auth/roles.js';
 export const rutasAuth = Router();
 
 /** Limita los intentos para frenar ataques de fuerza bruta. */
-const limiteIntentos = rateLimit({
+export const limiteIntentos = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: config.esPrueba ? 1000 : config.limiteIntentosAuth,
   standardHeaders: 'draft-8',
@@ -129,7 +129,7 @@ rutasAuth.post('/login', limiteIntentos, async (req, res) => {
   res.json(await perfilPorId(usuario.id_usuario));
 });
 
-async function perfilPorId(idUsuario: number) {
+export async function perfilPorId(idUsuario: number) {
   return conAutenticacion(async (c) => {
     const { rows } = await c.query(
       `select ${COLUMNAS_PERFIL} from usuario u join rol r on r.id_rol = u.id_rol where u.id_usuario = $1`,

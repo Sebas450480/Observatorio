@@ -95,6 +95,8 @@ export function crearRecurso(op: OpcionesRecurso): Router {
     if (!puedeGestionar(sesion)) {
       if (op.columnaEstado) delete fila[op.columnaEstado];
       delete fila.creado_por;
+      // Cuenta que representa a la empresa (Empresas Coformadoras).
+      delete fila.id_usuario;
     }
     return fila;
   };
