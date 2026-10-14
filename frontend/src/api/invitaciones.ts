@@ -70,6 +70,20 @@ export function useAccionInvitacion() {
   });
 }
 
+export interface ResultadoLote {
+  enviadas: number;
+  resultados: ({ correo: string; ok: true; invitacion: Invitacion } | { correo: string; ok: false; error: string })[];
+}
+
+/** Varias invitaciones a la vez (una por empresa); las que fallan no detienen las demás. */
+export function useInvitarVarias() {
+  const cliente = useQueryClient();
+  return useMutation({
+    mutationFn: (invitaciones: NuevaInvitacion[]) => api<ResultadoLote>('/invitaciones/lote', { metodo: 'POST', cuerpo: { invitaciones } }),
+    onSettled: () => cliente.invalidateQueries({ queryKey: CLAVE }),
+  });
+}
+
 export function useDatosInvitacion(codigo: string) {
   return useQuery({
     queryKey: ['invitacion', codigo],
