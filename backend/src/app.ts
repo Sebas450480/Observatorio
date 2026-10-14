@@ -35,9 +35,11 @@ const PAGINA_DOCS = `<!doctype html>
 <body>
   <div id="swagger-ui"></div>
   <script src="/api/docs/archivos/swagger-ui-bundle.js"></script>
-  <script>SwaggerUIBundle({ url: '/api/docs.json', dom_id: '#swagger-ui', deepLinking: true });</script>
+  <script src="/api/docs/inicio.js"></script>
 </body>
 </html>`;
+
+const INICIO_DOCS = "SwaggerUIBundle({ url: '/api/docs.json', dom_id: '#swagger-ui', deepLinking: true });\n";
 
 export function crearApp() {
   const app = express();
@@ -60,7 +62,9 @@ export function crearApp() {
   // La página se sirve en /api/docs sin redirigir a /api/docs/ (en Vercel esa ruta con barra da 404),
   // por eso los archivos de Swagger UI se piden con rutas absolutas.
   app.use('/api/docs/archivos', express.static(getAbsoluteFSPath(), { index: false, maxAge: '7d' }));
-  app.get('/api/docs', helmet({ contentSecurityPolicy: false }), (_req, res) => res.type('html').send(PAGINA_DOCS));
+  app.get('/api/docs', (_req, res) => res.type('html').send(PAGINA_DOCS));
+  // Archivo aparte: la política de seguridad (CSP) no deja ejecutar scripts escritos dentro del HTML.
+  app.get('/api/docs/inicio.js', (_req, res) => res.type('js').send(INICIO_DOCS));
 
   app.get('/api/salud', async (_req, res) => {
     await pool.query('select 1');
