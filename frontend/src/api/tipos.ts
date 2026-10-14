@@ -189,6 +189,19 @@ export interface TendenciaCrecimiento {
   crecimiento_pct: number | null;
 }
 
+export interface Favorito {
+  tipo_contenido: TipoContenido;
+  id_contenido: number;
+  fecha_guardado: string;
+  titulo: string;
+  detalle: string | null;
+  fecha: string | null;
+  imagen: string | null;
+  categorias: CategoriaRef[];
+  /** Alguna de sus categorías está entre los intereses del perfil. */
+  en_intereses: boolean;
+}
+
 export interface ResultadoBusqueda {
   tipo: TipoContenido;
   id: number;

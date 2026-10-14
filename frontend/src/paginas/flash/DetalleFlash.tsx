@@ -9,6 +9,7 @@ import {
 import { Cargando, InsigniaEstado, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
 import { costo, fechaLarga, modalidadTexto, nombreTipoEvento, rangoHoras, vinetas } from '../../utilidades/formato';
+import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 
 /** Modal de detalle de un Flash (Figma: "Modal — Detalle Congreso"). */
 export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar: () => void; onEditar?: (f: Flash) => void }) {
@@ -28,6 +29,7 @@ export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar:
       destacado
       claseCuerpo={CUERPO_DETALLE}
       titulo={<span className="uppercase">{flash?.titulo ?? 'Flash'}</span>}
+      accion={flash && <BotonFavorito tipo="Flash" id={flash.id_fi} titulo={flash.titulo} variante="encabezado" />}
       sobreTitulo={
         flash && (
           <>

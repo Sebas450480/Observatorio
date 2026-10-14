@@ -19,6 +19,8 @@ servers:
 tags:
   - name: Autenticación
   - name: Mi perfil
+  - name: Favoritos
+    description: Usuarios registrados; cada uno ve solo los suyos.
   - name: Usuarios
     description: Solo SuperAdmin.
   - name: Catálogos
@@ -378,6 +380,32 @@ paths:
           application/json:
             schema: { type: object, required: [actual, nueva], properties: { actual: { type: string }, nueva: { type: string } } }
       responses: { '200': { description: Contraseña actualizada }, '400': { $ref: '#/components/responses/Error' } }
+
+  # ------------------------------------------------------------------ Favoritos
+  /api/favoritos:
+    get:
+      tags: [Favoritos]
+      summary: Mis favoritos con sus datos y categorías
+      responses:
+        '200': { description: '[{ tipo_contenido, id_contenido, fecha_guardado, titulo, detalle, fecha, imagen, categorias, en_intereses }]' }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/favoritos/claves:
+    get:
+      tags: [Favoritos]
+      summary: 'Claves "Tipo:id" de mis favoritos'
+      responses: { '200': { description: 'Ejemplo: ["Flash:3", "Empresa:7"]' } }
+  /api/favoritos/{tipo}/{id}:
+    parameters:
+      - { name: tipo, in: path, required: true, schema: { type: string, enum: [Flash, Faro, Empresa, Tendencia, Evento] } }
+      - $ref: '#/components/parameters/id'
+    put:
+      tags: [Favoritos]
+      summary: Guardar en favoritos
+      responses: { '200': { description: Guardado }, '404': { $ref: '#/components/responses/Error' } }
+    delete:
+      tags: [Favoritos]
+      summary: Quitar de favoritos
+      responses: { '200': { description: Quitado } }
 
   # ------------------------------------------------------------------ Usuarios
   /api/usuarios:

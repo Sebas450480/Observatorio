@@ -10,6 +10,7 @@ import maletin from '../../assets/figma/tarjetas/maletin.svg';
 import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import { MODALIDADES, TIPOS_FARO, type Faro, type TipoFaro } from '../../api/tipos';
+import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
@@ -50,8 +51,9 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
         <Insignia tono={estilo.tono} className="absolute left-3 top-3">
           {estilo.singular}
         </Insignia>
+        <BotonFavorito tipo="Faro" id={faro.id_fe} titulo={faro.titulo} variante="imagen" className="absolute right-2.5 top-2.5" />
         {faro.estado_fe === 'Inactivo' && (
-          <span className="absolute right-3 top-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVO</span>
+          <span className="absolute bottom-3 right-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVO</span>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-[18px]">

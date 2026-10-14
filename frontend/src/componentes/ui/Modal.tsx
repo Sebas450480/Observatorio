@@ -26,6 +26,8 @@ interface PropsModal {
   claseCuerpo?: string;
   /** Panel que sube desde abajo, pegado al borde de la pantalla (filtros en celular). */
   hoja?: boolean;
+  /** Botón junto a la X del encabezado (p. ej. la banderita de favorito). */
+  accion?: ReactNode;
 }
 
 const INSIGNIAS = { advertencia: insigniaAdvertencia, editar: insigniaEditar, exito: insigniaExito };
@@ -88,6 +90,7 @@ export function Modal({
   destacado = false,
   claseCuerpo = 'p-6 sm:p-7',
   hoja = false,
+  accion,
 }: PropsModal) {
   const idTitulo = useId();
   const panel = useRef<HTMLDivElement>(null);
@@ -131,8 +134,8 @@ export function Modal({
         className={`${hoja ? 'entrada-hoja max-h-[85dvh] rounded-t-[24px]' : `${insignia === 'exito' ? 'rebote-aviso' : 'entrada-modal'} max-h-[min(900px,calc(100vh-24px))] ${destacado ? 'rounded-2xl' : 'rounded-[20px]'}`} flex w-full flex-col overflow-hidden bg-white focus:outline-none ${destacado ? 'shadow-[0_0_40px_0_rgba(0,0,0,0.15)]' : 'shadow-[0_12px_32px_0_rgba(7,31,93,0.13)]'}`}
       >
         <header className={`relative shrink-0 bg-azul-oscuro text-white ${destacado ? 'p-6 sm:p-7' : 'px-6 py-5'}`}>
-          {sobreTitulo && <div className={`flex flex-wrap items-center gap-2 pr-10 ${destacado ? 'mb-3' : 'mb-2'}`}>{sobreTitulo}</div>}
-          <div className="flex items-center gap-3 pr-10">
+          {sobreTitulo && <div className={`flex flex-wrap items-center gap-2 ${accion ? 'pr-20' : 'pr-10'} ${destacado ? 'mb-3' : 'mb-2'}`}>{sobreTitulo}</div>}
+          <div className={`flex items-center gap-3 ${accion ? 'pr-20' : 'pr-10'}`}>
             {insignia === 'exito' ? (
               // Insignia de éxito dibujada en línea para animar el visto.
               <svg aria-hidden width={28} height={28} viewBox="0 0 28 28" fill="none" className="rebote-insignia shrink-0">
@@ -148,6 +151,7 @@ export function Modal({
           </div>
           {subtitulo && <p className="mt-1 pr-10 text-small text-[#9eb1e0]">{subtitulo}</p>}
           {destacado && <span className="mt-3 block h-1 w-20 rounded-xs bg-rojo" />}
+          {accion && <div className="absolute right-16 top-6">{accion}</div>}
           {destacado ? (
             <button
               type="button"

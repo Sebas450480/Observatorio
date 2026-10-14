@@ -13,6 +13,7 @@ import vistaGrande from '../../assets/figma/tendencias/vista-grande.svg';
 import vistaLista from '../../assets/figma/tendencias/vista-lista.svg';
 import { useListado } from '../../api/consultas';
 import type { Tendencia } from '../../api/tipos';
+import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
@@ -48,29 +49,33 @@ function EtiquetaMega({ children }: { children: string }) {
 }
 
 function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void }) {
+  // La banderita va fuera del botón de la tarjeta (un botón no puede ir dentro de otro).
   return (
-    <button
-      type="button"
-      onClick={onAbrir}
-      className="flex min-w-0 cursor-pointer flex-col gap-3 rounded-[20px] border-2 border-black/10 bg-white pb-[21px] pl-[23px] pr-[31px] pt-[26px] text-left transition-shadow hover:shadow-menu"
-    >
-      <span className="flex items-center justify-between gap-2">
-        <EtiquetaMega>{t.megatendencia}</EtiquetaMega>
-        {t.estado_te === 'Inactivo' && <span className="text-[12px] font-bold text-texto-suave">INACTIVA</span>}
-      </span>
-      <span className="flex flex-col gap-1.5 tracking-[-0.5px] text-[#232734]">
-        <span className="text-subtitle font-bold">{t.tendencia}</span>
-        <span className="line-clamp-2 min-h-[44px] text-body font-light">{t.descripcion}</span>
-      </span>
-      <span className="mt-auto flex items-center justify-between gap-3 border-t border-[#e2e8f0] pt-3.5">
-        <span className="flex items-center gap-2 text-small font-bold tracking-[-0.5px] text-[#232734]">
-          <img src={iconoGlobo} alt="" aria-hidden className="size-3.5" /> Global &amp; Colombia
+    <div className="relative flex min-w-0">
+      <button
+        type="button"
+        onClick={onAbrir}
+        className="flex w-full min-w-0 cursor-pointer flex-col gap-3 rounded-[20px] border-2 border-black/10 bg-white pb-[21px] pl-[23px] pr-[31px] pt-[26px] text-left transition-shadow hover:shadow-menu"
+      >
+        <span className="flex items-center justify-between gap-2 pr-8">
+          <EtiquetaMega>{t.megatendencia}</EtiquetaMega>
+          {t.estado_te === 'Inactivo' && <span className="text-[12px] font-bold text-texto-suave">INACTIVA</span>}
         </span>
-        <span className="flex items-center gap-2 text-small text-[#4d525c]">
-          <img src={iconoCalendario} alt="" aria-hidden className="size-3.5" /> {fechaCorta(t.fecha_publicacion)}
+        <span className="flex flex-col gap-1.5 tracking-[-0.5px] text-[#232734]">
+          <span className="text-subtitle font-bold">{t.tendencia}</span>
+          <span className="line-clamp-2 min-h-[44px] text-body font-light">{t.descripcion}</span>
         </span>
-      </span>
-    </button>
+        <span className="mt-auto flex items-center justify-between gap-3 border-t border-[#e2e8f0] pt-3.5">
+          <span className="flex items-center gap-2 text-small font-bold tracking-[-0.5px] text-[#232734]">
+            <img src={iconoGlobo} alt="" aria-hidden className="size-3.5" /> Global &amp; Colombia
+          </span>
+          <span className="flex items-center gap-2 text-small text-[#4d525c]">
+            <img src={iconoCalendario} alt="" aria-hidden className="size-3.5" /> {fechaCorta(t.fecha_publicacion)}
+          </span>
+        </span>
+      </button>
+      <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} className="absolute right-3 top-4" />
+    </div>
   );
 }
 
@@ -86,7 +91,12 @@ const COLUMNAS_TABLA = [
 ];
 
 function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onAbrir: (id: number) => void; onEditar?: (t: Tendencia) => void }) {
-  const columnas = onEditar ? [...COLUMNAS_TABLA, { titulo: 'Acciones', ancho: 141 }] : COLUMNAS_TABLA;
+  const { usuario } = useSesion();
+  const columnas = [
+    ...COLUMNAS_TABLA,
+    ...(usuario ? [{ titulo: 'Favorito', ancho: 90 }] : []),
+    ...(onEditar ? [{ titulo: 'Acciones', ancho: 141 }] : []),
+  ];
   const celda = 'h-10 truncate px-1 text-center';
   const tenue = `${celda} font-semibold text-black/40`;
   return (
@@ -105,6 +115,7 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
               </span>
             </button>
             <div className="flex shrink-0 flex-col items-center gap-1">
+              <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} />
               {t.fuentes[0]?.link && (
                 <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" aria-label={`Fuente de ${t.tendencia}`} className="grid size-10 place-items-center rounded-lg hover:bg-black/5">
                   <img src={iconoEnlace} alt="" aria-hidden className="size-5" />
@@ -162,6 +173,11 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
                     <span className="text-black/40">—</span>
                   )}
                 </td>
+                {usuario && (
+                  <td className={celda}>
+                    <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} className="mx-auto" />
+                  </td>
+                )}
                 {onEditar && (
                   <td className={celda}>
                     <button type="button" aria-label={`Editar ${t.tendencia}`} onClick={() => onEditar(t)} className="inline-grid cursor-pointer place-items-center rounded p-0.5 hover:bg-black/5">
