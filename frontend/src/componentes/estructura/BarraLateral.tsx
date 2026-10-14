@@ -20,6 +20,7 @@ const OPCIONES: Opcion[] = [
   { ruta: '/empresas', texto: 'Empresas coformadoras', icono: 'empresas' },
   { ruta: '/tendencias', texto: 'Tendencias', icono: 'tendencias' },
   { ruta: '/eventos', texto: 'Eventos institucionales', icono: 'eventos' },
+  { ruta: '/glosario', texto: 'Glosario', icono: 'glosario' },
   { ruta: '/usuarios', texto: 'Usuarios', icono: 'usuarios', soloSuperAdmin: true },
   { ruta: '/estadisticas', texto: 'Estadísticas', icono: 'estadisticas', soloSuperAdmin: true },
 ];
@@ -69,6 +70,9 @@ export function BarraLateral({ abierto, onCerrar }: { abierto: boolean; onCerrar
               </li>
             ))}
           </ul>
+          <NavLink to="/politica-de-datos" className="relative mt-6 block px-[22px] text-caption font-semibold text-menu-tenue underline-offset-2 hover:underline">
+            Política de tratamiento de datos
+          </NavLink>
         </nav>
       </aside>
     </>
