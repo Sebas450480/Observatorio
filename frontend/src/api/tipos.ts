@@ -56,6 +56,8 @@ export interface Perfil {
   nombre_rol: string;
   /** Todos los roles de la cuenta (una cuenta puede tener varios). */
   roles: RolRef[];
+  /** Cuentas con varios roles: rol con el que entró y actúa (null si tiene un solo rol). */
+  rol_activo?: string | null;
   intereses: CategoriaRef[];
 }
 

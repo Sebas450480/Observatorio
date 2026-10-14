@@ -6,7 +6,8 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { mensajeDeError } from '../../api/cliente';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
-import { useSesion } from '../../sesion/sesion';
+import { ModalElegirRol } from '../../componentes/ModalElegirRol';
+import { rolesDe, useSesion } from '../../sesion/sesion';
 import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
 
 const esquema = z.object({
@@ -21,6 +22,9 @@ export function IniciarSesion() {
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const [error, setError] = useState<string | null>(null);
+  /** Cuentas con varios roles: antes de entrar eligen con cuál. */
+  const [elegirRol, setElegirRol] = useState(false);
+  const destino = (ubicacion.state as { desde?: string } | null)?.desde ?? '/inicio';
   const { register, handleSubmit, formState } = useForm<Datos>({
     resolver: zodResolver(esquema),
     defaultValues: { correo: '', contrasena: '', recordar: true },
@@ -29,9 +33,9 @@ export function IniciarSesion() {
   const enviar = handleSubmit(async (datos) => {
     setError(null);
     try {
-      await iniciarSesion(datos.correo, datos.contrasena, datos.recordar);
-      const destino = (ubicacion.state as { desde?: string } | null)?.desde ?? '/inicio';
-      navegar(destino, { replace: true });
+      const perfil = await iniciarSesion(datos.correo, datos.contrasena, datos.recordar);
+      if (rolesDe(perfil).length > 1) setElegirRol(true);
+      else navegar(destino, { replace: true });
     } catch (e) {
       setError(mensajeDeError(e));
     }
@@ -83,6 +87,7 @@ export function IniciarSesion() {
       <Link to="/inicio" className={`${BOTON_AUTH.secundario} h-[52px]`}>
         Explorar como invitado
       </Link>
+      {elegirRol && <ModalElegirRol onCerrar={() => navegar(destino, { replace: true })} />}
     </PantallaAuth>
   );
 }

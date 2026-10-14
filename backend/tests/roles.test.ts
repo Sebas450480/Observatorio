@@ -23,7 +23,7 @@ async function entrar(correo: string) {
 }
 
 describe('Varios roles por cuenta', () => {
-  it('el administrador asigna varios roles y la cuenta gestiona cada módulo con el suyo', async () => {
+  it('el administrador asigna varios roles y la cuenta entra con uno y puede cambiar a otro', async () => {
     const { agente: admin } = await sesion('Gestor Observatorio');
     const cuenta = await crearUsuario('Usuario');
     const roles = [await idRol('Gestor Flash'), await idRol('Gestor Faro Empresarial'), await idRol('Usuario')];
@@ -35,8 +35,18 @@ describe('Varios roles por cuenta', () => {
 
     const { agente, perfil } = await entrar(cuenta.correo);
     expect(perfil.roles).toHaveLength(3);
-    expect((await agente.post('/api/flash').send(nuevoFlash('Flash de gestor doble'))).status).toBe(201);
+    // Entra con el rol principal y actúa solo con él.
+    expect(perfil.rol_activo).toBe('Gestor Faro Empresarial');
     expect((await agente.post('/api/faro').send({ titulo: 'Beca de gestor doble', tipo: 'Becas' })).status).toBe(201);
+    expect((await agente.post('/api/flash').send(nuevoFlash('Sin el rol elegido'))).status).toBe(403);
+
+    // Cambia al rol Gestor Flash: ahora gestiona Flash y ya no Faro.
+    const cambio = await agente.post('/api/auth/rol').send({ rol: 'Gestor Flash' });
+    expect(cambio.status).toBe(200);
+    expect(cambio.body.rol_activo).toBe('Gestor Flash');
+    expect((await agente.get('/api/auth/yo')).body.rol_activo).toBe('Gestor Flash');
+    expect((await agente.post('/api/flash').send(nuevoFlash('Flash de gestor doble'))).status).toBe(201);
+    expect((await agente.post('/api/faro').send({ titulo: 'Ya no', tipo: 'Becas' })).status).toBe(403);
     // Solo lectura en los módulos que no gestiona.
     expect((await agente.get('/api/tendencias')).status).toBe(200);
     expect((await agente.post('/api/calendario').send({ titulo: 'x' })).status).toBe(403);
@@ -45,12 +55,25 @@ describe('Varios roles por cuenta', () => {
     const lista = await agente.get('/api/flash?estado=Inactivo&limite=100');
     expect(lista.body.datos.some((f: { titulo: string }) => f.titulo === 'Flash oculto')).toBe(true);
 
+    // Solo puede elegir roles que tiene.
+    expect((await agente.post('/api/auth/rol').send({ rol: 'Gestor Tendencias' })).status).toBe(400);
+    expect((await agente.post('/api/auth/rol').send({ rol: 'Super Admin' })).status).toBe(400);
+
     // Quitar roles aplica de inmediato.
     expect((await admin.patch(`/api/usuarios/${cuenta.id}`).send({ roles: [await idRol('Usuario')] })).status).toBe(200);
     expect((await agente.post('/api/flash').send(nuevoFlash('Ya no'))).status).toBe(403);
+    expect((await agente.get('/api/auth/yo')).body.rol_activo).toBeNull();
   });
 
-  it('una empresa coformadora que además es gestora usa cada rol donde corresponde', async () => {
+  it('una cuenta con un solo rol no elige rol al entrar', async () => {
+    const cuenta = await crearUsuario('Usuario');
+    const { agente, perfil } = await entrar(cuenta.correo);
+    expect(perfil.rol_activo).toBeNull();
+    expect((await agente.post('/api/auth/rol').send({ rol: 'Usuario' })).status).toBe(200);
+    expect((await invitado().post('/api/auth/rol').send({ rol: 'Usuario' })).status).toBe(401);
+  });
+
+  it('una empresa coformadora que además es gestora cambia de rol para usar cada uno', async () => {
     const { agente: admin } = await sesion('Gestor Observatorio');
     const cuenta = await crearUsuario('Empresa Coformadora');
     await db().query(
@@ -60,15 +83,20 @@ describe('Varios roles por cuenta', () => {
     );
     await admin.patch(`/api/usuarios/${cuenta.id}`).send({ roles: [await idRol('Empresa Coformadora'), await idRol('Gestor Calendario')] });
 
-    const { agente } = await entrar(cuenta.correo);
+    const { agente, perfil } = await entrar(cuenta.correo);
+    expect(perfil.rol_activo).toBe('Gestor Calendario');
+    // Con el rol Gestor Calendario no edita la empresa.
+    expect((await agente.get('/api/mi-empresa')).status).toBe(403);
+    await agente.post('/api/auth/rol').send({ rol: 'Empresa Coformadora' });
     expect((await agente.get('/api/mi-empresa')).body.razon_social).toBe('Empresa gestora');
     expect((await agente.patch('/api/mi-empresa').send({ descripcion: 'Editada por la gestora' })).status).toBe(200);
+    // Conserva lo de un usuario: favoritos.
+    expect((await agente.get('/api/favoritos')).status).toBe(200);
+    await agente.post('/api/auth/rol').send({ rol: 'Gestor Calendario' });
     const evento = await agente.post('/api/calendario').send({
       titulo: 'Evento de gestora', fecha_inicio: '2026-11-20T08:00:00-05:00', modalidad: 'Virtual', tipo_evento: 'Foro',
     });
     expect(evento.status).toBe(201);
-    // Conserva lo de un usuario: favoritos.
-    expect((await agente.get('/api/favoritos')).status).toBe(200);
   });
 
   it('solo un Super Admin asigna ese rol, aunque venga junto con otros', async () => {
