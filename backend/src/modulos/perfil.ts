@@ -76,6 +76,6 @@ rutasPerfil.put('/contrasena', async (req, res) => {
   });
 
   // Las demás sesiones abiertas quedan cerradas; esta recibe un token nuevo.
-  res.cookie(NOMBRE_COOKIE, firmarToken(req.sesion.idUsuario!), opcionesCookie());
+  res.cookie(NOMBRE_COOKIE, firmarToken(req.sesion.idUsuario!, { rol: req.sesion.rolActivo, recordar: req.sesion.recordar }), opcionesCookie());
   res.json({ mensaje: 'Contraseña actualizada' });
 });

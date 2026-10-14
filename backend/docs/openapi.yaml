@@ -127,6 +127,10 @@ components:
           type: array
           description: Todos los roles de la cuenta (una cuenta puede tener varios)
           items: { type: object, properties: { id_rol: { type: integer }, nombre_rol: { type: string } } }
+        rol_activo:
+          type: string
+          nullable: true
+          description: "Cuentas con varios roles: rol con el que entró y actúa (null si la cuenta tiene un solo rol)"
         intereses: { type: array, items: { $ref: '#/components/schemas/Categoria' } }
     Flash:
       type: object
@@ -322,6 +326,18 @@ paths:
       summary: Usuario de la sesión actual
       responses:
         '200': { description: Perfil, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/auth/rol:
+    post:
+      tags: [Autenticación]
+      summary: Elegir o cambiar el rol con el que se usa la plataforma (cuentas con varios roles)
+      description: "Al iniciar sesión, una cuenta con varios roles entra con el principal; con este servicio elige con cuál seguir. La sesión actúa solo con ese rol hasta que lo cambie o cierre sesión."
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [rol], properties: { rol: { type: string, example: Gestor Flash } } } } }
+      responses:
+        '200': { description: Perfil con el rol elegido, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
+        '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
   /api/auth/recuperar:
     post:

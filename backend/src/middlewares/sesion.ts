@@ -2,7 +2,7 @@ import type { RequestHandler } from 'express';
 import { conAutenticacion } from '../db/contexto.js';
 import { NOMBRE_COOKIE, verificarToken } from '../auth/tokens.js';
 import {
-  ROL_POR_NOMBRE, SESION_INVITADO, nombreRolCanonico, nombreRolPrincipal, rolPrincipal, type RolBD, type Sesion,
+  ROL_POR_NOMBRE, SESION_INVITADO, nombreRolCanonico, nombreRolPrincipal, rolPrincipal, rolesDeSesion, type RolBD, type Sesion,
 } from '../auth/roles.js';
 import { noAutenticado, prohibido } from '../errores.js';
 
@@ -17,6 +17,11 @@ function leerToken(cookies: Record<string, string> | undefined, autorizacion: st
   if (deCookie) return deCookie;
   if (autorizacion?.startsWith('Bearer ')) return autorizacion.slice(7).trim();
   return null;
+}
+
+/** Nombres oficiales de los roles de la cuenta que tienen un rol de PostgreSQL. */
+export function nombresDeRolesValidos(nombres: string[]): string[] {
+  return [...new Set(nombres.map(nombreRolCanonico).filter((n) => ROL_POR_NOMBRE[n]))];
 }
 
 /**
@@ -55,11 +60,21 @@ export const identificarSesion: RequestHandler = async (req, _res, next) => {
     return next();
   }
 
-  const nombresRoles = [...new Set(usuario.roles.map(nombreRolCanonico).filter((n) => ROL_POR_NOMBRE[n]))];
-  if (!nombresRoles.length) return next();
+  const nombresCuenta = nombresDeRolesValidos(usuario.roles);
+  if (!nombresCuenta.length) return next();
+  // Con varios roles se actúa solo con el que eligió al entrar.
+  const { nombres: nombresRoles, rolActivo } = rolesDeSesion(nombresCuenta, datos.rolActivo);
   const roles = [...new Set(nombresRoles.map((n) => ROL_POR_NOMBRE[n]!))];
 
-  req.sesion = { idUsuario: datos.idUsuario, rol: rolPrincipal(roles), nombreRol: nombreRolPrincipal(nombresRoles), roles, nombresRoles };
+  req.sesion = {
+    idUsuario: datos.idUsuario,
+    rol: rolPrincipal(roles),
+    nombreRol: nombreRolPrincipal(nombresRoles),
+    roles,
+    nombresRoles,
+    rolActivo,
+    recordar: datos.recordar,
+  };
   next();
 };
 

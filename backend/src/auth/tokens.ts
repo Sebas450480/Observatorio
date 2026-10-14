@@ -7,24 +7,41 @@ export const NOMBRE_COOKIE = 'obs_sesion';
 interface ContenidoToken {
   sub: string;
   iat: number;
+  /** Rol con el que entró (cuentas con varios roles). */
+  rol?: string;
+  /** "Recordar sesión" (para conservarlo al cambiar de rol). */
+  rec?: boolean;
+}
+
+/** Datos opcionales del token: rol elegido al entrar y "Recordar sesión". */
+export interface OpcionesToken {
+  rol?: string | null;
+  recordar?: boolean;
 }
 
 /** Crea el token de sesión de un usuario. */
-export function firmarToken(idUsuario: number): string {
-  return jwt.sign({}, config.jwt.secreto, {
+export function firmarToken(idUsuario: number, { rol, recordar = true }: OpcionesToken = {}): string {
+  return jwt.sign({ ...(rol ? { rol } : {}), rec: recordar }, config.jwt.secreto, {
     subject: String(idUsuario),
     expiresIn: Math.round(config.jwt.expiracionHoras * 3600),
     algorithm: 'HS256',
   });
 }
 
-/** Devuelve el id del usuario y la fecha de emisión, o null si el token no es válido o venció. */
-export function verificarToken(token: string): { idUsuario: number; emitidoEn: Date } | null {
+/** Devuelve el id del usuario, la fecha de emisión y el rol elegido, o null si el token no es válido o venció. */
+export function verificarToken(
+  token: string,
+): { idUsuario: number; emitidoEn: Date; rolActivo: string | null; recordar: boolean } | null {
   try {
     const datos = jwt.verify(token, config.jwt.secreto, { algorithms: ['HS256'] }) as ContenidoToken;
     const idUsuario = Number(datos.sub);
     if (!Number.isInteger(idUsuario) || idUsuario <= 0) return null;
-    return { idUsuario, emitidoEn: new Date(datos.iat * 1000) };
+    return {
+      idUsuario,
+      emitidoEn: new Date(datos.iat * 1000),
+      rolActivo: typeof datos.rol === 'string' ? datos.rol : null,
+      recordar: datos.rec !== false,
+    };
   } catch {
     return null;
   }
