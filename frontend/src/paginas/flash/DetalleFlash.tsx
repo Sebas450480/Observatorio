@@ -10,7 +10,7 @@ import { Cargando, InsigniaEstado, MensajeError } from '../../componentes/ui/Ele
 import { Modal } from '../../componentes/ui/Modal';
 import { costo, fechaLarga, modalidadTexto, nombreTipoEvento, rangoHoras, vinetas } from '../../utilidades/formato';
 
-/** Modal de detalle de un Flash Informativo (Figma: "Modal — Detalle Congreso"). */
+/** Modal de detalle de un Flash (Figma: "Modal — Detalle Congreso"). */
 export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar: () => void; onEditar?: (f: Flash) => void }) {
   const { data: flash, isLoading, error } = useDetalle<Flash>('/flash', id);
 
@@ -27,7 +27,7 @@ export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar:
       ancho={700}
       destacado
       claseCuerpo={CUERPO_DETALLE}
-      titulo={<span className="uppercase">{flash?.titulo ?? 'Flash informativo'}</span>}
+      titulo={<span className="uppercase">{flash?.titulo ?? 'Flash'}</span>}
       sobreTitulo={
         flash && (
           <>

@@ -6,12 +6,13 @@ import type { Perfil } from '../api/tipos';
 /** Módulos de contenido; cada uno tiene su gestor. */
 export type Modulo = 'flash' | 'faro' | 'empresas' | 'tendencias' | 'calendario';
 
-const GESTOR_DE: Record<Modulo, string> = {
-  flash: 'Gestor Flash Informativo',
-  faro: 'Gestor Faro Empresarial',
-  empresas: 'Gestor Empresas Coformadoras',
-  tendencias: 'Gestor Tendencias',
-  calendario: 'Gestor Calendario',
+/** Nombres del rol gestor de cada módulo ("Gestor Flash Informativo" es el nombre anterior de "Gestor Flash"). */
+const GESTOR_DE: Record<Modulo, string[]> = {
+  flash: ['Gestor Flash', 'Gestor Flash Informativo'],
+  faro: ['Gestor Faro Empresarial'],
+  empresas: ['Gestor Empresas Coformadoras'],
+  tendencias: ['Gestor Tendencias'],
+  calendario: ['Gestor Calendario'],
 };
 
 /** Página de cada módulo; un gestor solo puede entrar a la de su módulo. */
@@ -103,8 +104,8 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       cargando: isLoading,
       esSuperAdmin: esRolSuperAdmin(rol),
       esGestor: !!rol?.startsWith('Gestor'),
-      moduloGestor: (Object.keys(GESTOR_DE) as Modulo[]).find((m) => GESTOR_DE[m] === rol) ?? null,
-      puedeGestionar: (modulo) => esRolSuperAdmin(rol) || rol === GESTOR_DE[modulo],
+      moduloGestor: (Object.keys(GESTOR_DE) as Modulo[]).find((m) => !!rol && GESTOR_DE[m].includes(rol)) ?? null,
+      puedeGestionar: (modulo) => esRolSuperAdmin(rol) || (!!rol && GESTOR_DE[modulo].includes(rol)),
       iniciarSesion,
       cerrarSesion,
       establecerUsuario,
