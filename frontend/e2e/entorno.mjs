@@ -14,6 +14,7 @@ export const CODIGO_INVITACION = 'codigo-e2e-invitacion-empresa-0001';
 export const CUENTAS = {
   superadmin: { correo: 'superadmin.e2e@uniempresarial.edu.co', rol: 'Gestor Observatorio', nombre: 'Andrés', apellido: 'Martínez' },
   gestorFlash: { correo: 'gestor.flash.e2e@uniempresarial.edu.co', rol: 'Gestor Flash', nombre: 'Carolina', apellido: 'Ruiz' },
+  gestorTendencias: { correo: 'gestor.tendencias.e2e@uniempresarial.edu.co', rol: 'Gestor Tendencias', nombre: 'Diego', apellido: 'Pardo' },
   gestorEmpresas: { correo: 'gestor.empresas.e2e@uniempresarial.edu.co', rol: 'Gestor Empresas Coformadoras', nombre: 'Camila', apellido: 'Torres' },
   usuario: { correo: 'usuario.e2e@gmail.com', rol: 'Usuario', nombre: 'Laura', apellido: 'Gómez' },
   /** Cuenta con dos roles: al entrar elige con cuál. */

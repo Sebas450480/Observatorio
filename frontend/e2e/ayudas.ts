@@ -3,7 +3,7 @@ import { CONTRASENA, CUENTAS } from './entorno.mjs';
 
 export type Perfil = keyof typeof CUENTAS;
 
-/** Inicia sesión desde la pantalla de acceso y espera a llegar al Inicio. */
+/** Inicia sesión desde la pantalla de acceso y espera a llegar al Inicio (el gestor de un módulo llega a su módulo). */
 export async function iniciarSesion(page: Page, perfil: Perfil) {
   await page.goto('/iniciar-sesion');
   await page.getByLabel('Correo electrónico').fill(CUENTAS[perfil].correo);
@@ -11,7 +11,11 @@ export async function iniciarSesion(page: Page, perfil: Perfil) {
   await page.getByRole('button', { name: 'Ingresar al portal' }).click();
 
   await expect(page).not.toHaveURL(/iniciar-sesion/);
-  await expect(page.getByRole('heading', { name: 'Bienvenido al Observatorio Empresarial' })).toBeVisible();
+  if (CUENTAS[perfil].rol.startsWith('Gestor ') && CUENTAS[perfil].rol !== 'Gestor Observatorio') {
+    await expect(page.getByRole('complementary', { name: 'Menú principal' })).toBeVisible();
+  } else {
+    await expect(page.getByRole('heading', { name: 'Bienvenido al Observatorio Empresarial' })).toBeVisible();
+  }
 }
 
 /** Ir a un módulo desde el menú lateral. */

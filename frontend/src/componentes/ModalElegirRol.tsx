@@ -1,7 +1,7 @@
 import { Building2, Check, ShieldCheck, SquarePen, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { mensajeDeError } from '../api/cliente';
-import { esRolEmpresa, esRolSuperAdmin, funcionesRol, mismoRol, nombreRol, useSesion } from '../sesion/sesion';
+import { esRolEmpresa, esRolSuperAdmin, mismoRol, nombreRol, useSesion } from '../sesion/sesion';
 import { BotonModal, Modal } from './ui/Modal';
 
 function IconoRol({ rol }: { rol: string }) {
@@ -72,12 +72,11 @@ export function ModalElegirRol({ onCerrar }: { onCerrar: (rolElegido?: string) =
               >
                 <IconoRol rol={rol} />
               </span>
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="min-w-0 flex-1">
                 <span className="text-body font-bold text-azul-marino">
                   {nombreRol(rol)}
                   {mismoRol(actual, rol) && rolActivo && <span className="ml-2 text-caption font-semibold text-texto-suave">(actual)</span>}
                 </span>
-                <span className="text-small text-gris-azulado">{funcionesRol(rol)}</span>
               </span>
               <span
                 className={`grid size-6 shrink-0 place-items-center rounded-full border-2 ${marcado ? 'border-rojo bg-rojo text-white' : 'border-[#c5d0de]'}`}

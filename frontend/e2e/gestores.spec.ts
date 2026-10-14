@@ -48,24 +48,21 @@ test.describe('Gestor Flash', () => {
     await expect(page.getByRole('dialog', { name: 'Registro eliminado' })).toBeVisible();
   });
 
-  test('gestiona su módulo y consulta los demás en solo lectura', async ({ page }) => {
+  test('solo ve y entra a su módulo', async ({ page }) => {
     await iniciarSesion(page, 'gestorFlash');
+    await expect(page).toHaveURL(/\/flash-informativo$/);
     const menu = page.getByRole('complementary', { name: 'Menú principal' });
-    for (const modulo of ['Inicio', 'Flash', 'Faro Empresarial', 'Empresas coformadoras', 'Tendencias', 'Eventos institucionales']) {
-      await expect(menu.getByRole('link', { name: modulo, exact: true })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Flash', exact: true })).toBeVisible();
+    for (const otro of ['Inicio', 'Faro Empresarial', 'Empresas coformadoras', 'Tendencias', 'Eventos institucionales', 'Glosario', 'Usuarios']) {
+      await expect(menu.getByRole('link', { name: otro, exact: true })).toHaveCount(0);
     }
-    await expect(menu.getByRole('link', { name: 'Usuarios', exact: true })).toHaveCount(0);
-
-    await page.goto('/flash-informativo');
     await expect(page.getByRole('button', { name: 'Crear Flash' })).toBeVisible();
-    await page.goto('/empresas');
-    await expect(page.getByRole('heading', { name: 'Empresas Coformadoras' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Crear empresa coformadora' })).toHaveCount(0);
-    // Las pantallas de gestión de otros módulos y de usuarios siguen cerradas.
-    for (const ruta of ['/empresas/nueva', '/usuarios']) {
+    for (const ruta of ['/inicio', '/empresas', '/empresas/nueva', '/tendencias', '/usuarios']) {
       await page.goto(ruta);
-      await expect(page.getByRole('heading', { name: 'No tienes permiso para ver esta página' })).toBeVisible();
+      await expect(page).toHaveURL(/\/flash-informativo$/);
     }
+    await page.goto('/mi-perfil');
+    await expect(page).toHaveURL(/\/mi-perfil$/);
   });
 });
 
