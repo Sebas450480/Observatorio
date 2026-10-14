@@ -270,7 +270,15 @@ export const rutasTendencias = crearRecurso({
     if (v.megatendencia) f.y(`t.megatendencia ilike ${f.param(v.megatendencia)}`);
     if (v.desde) f.y(`t.fecha_publicacion >= ${f.param(v.desde)}::date`);
   },
-  ordenes: { publicacion: 't.fecha_publicacion', tendencia: 't.tendencia', megatendencia: 't.megatendencia' },
+  ordenes: {
+    publicacion: 't.fecha_publicacion',
+    id: 't.id_te',
+    tendencia: 'lower(t.tendencia)',
+    megatendencia: 'lower(t.megatendencia)',
+    descripcion: 'lower(t.descripcion)',
+    mundo: 'lower(t.comportamiento_mundo)',
+    colombia: 'lower(t.comportamiento_colombia)',
+  },
   ordenDefecto: 'publicacion',
   direccionDefecto: 'desc',
   columnasExportar: [

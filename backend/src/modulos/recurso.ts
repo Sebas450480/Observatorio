@@ -122,7 +122,7 @@ export function crearRecurso(op: OpcionesRecurso): Router {
   const ordenSql = (valores: Record<string, unknown>) => {
     const expresion = op.ordenes[(valores.orden as string | undefined) ?? op.ordenDefecto] ?? op.ordenes[op.ordenDefecto];
     const direccion = (valores.direccion as string | undefined) ?? op.direccionDefecto ?? 'asc';
-    return `order by ${expresion} ${direccion}, t.${op.id} ${direccion}`;
+    return `order by ${expresion} ${direccion} nulls last, t.${op.id} ${direccion}`;
   };
 
   async function obtener(cliente: Cliente, id: number): Promise<Record<string, unknown> | undefined> {

@@ -137,3 +137,24 @@ describe('Catálogos', () => {
     expect((await admin.delete(`/api/categorias/${creada.body.id_categoria}`)).status).toBe(204);
   });
 });
+
+describe('Orden de las tablas', () => {
+  it('la tabla de usuarios se ordena por cualquier columna, ascendente y descendente', async () => {
+    const { agente } = await sesion('Gestor Observatorio');
+    const asc = (await agente.get('/api/usuarios?orden=id&direccion=asc&limite=100')).body.datos as { id_usuario: number }[];
+    const ids = asc.map((u) => u.id_usuario);
+    expect(ids).toEqual([...ids].sort((a, b) => a - b));
+    const desc = (await agente.get('/api/usuarios?orden=nombre&direccion=desc&limite=100')).body.datos as { nombre_usuario: string }[];
+    const nombres = desc.map((u) => u.nombre_usuario.toLowerCase());
+    expect(nombres).toEqual([...nombres].sort((a, b) => b.localeCompare(a, 'es')));
+    expect((await agente.get('/api/usuarios?orden=contrasena_hash')).status).toBe(400);
+  });
+
+  it('la tabla de tendencias se ordena por ID, tendencia y megatendencia', async () => {
+    const asc = (await invitado().get('/api/tendencias?orden=id&direccion=asc&limite=100')).body.datos as { id_te: number }[];
+    expect(asc.map((t) => t.id_te)).toEqual(asc.map((t) => t.id_te).sort((a, b) => a - b));
+    const megas = ((await invitado().get('/api/tendencias?orden=megatendencia&direccion=desc&limite=100')).body.datos as { megatendencia: string }[])
+      .map((t) => t.megatendencia.toLowerCase());
+    expect(megas).toEqual([...megas].sort((a, b) => b.localeCompare(a, 'es')));
+  });
+});

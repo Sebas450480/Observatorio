@@ -423,6 +423,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/q'
         - { name: id_rol, in: query, description: Cuentas que tienen este rol (entre todos sus roles), schema: { type: integer } }
+        - { name: orden, in: query, description: Columna por la que se ordena (por defecto, los más recientes), schema: { type: string, enum: [id, apodo, nombre, apellido, correo, ciudad, rol, estado, registro] } }
+        - $ref: '#/components/parameters/direccion'
         - $ref: '#/components/parameters/estado'
         - { name: ciudad, in: query, schema: { type: string } }
         - $ref: '#/components/parameters/pagina'
@@ -850,7 +852,7 @@ paths:
         - { name: desde, in: query, description: Publicadas desde esta fecha, schema: { type: string, format: date } }
         - $ref: '#/components/parameters/categoria'
         - $ref: '#/components/parameters/estado'
-        - { name: orden, in: query, schema: { type: string, enum: [publicacion, tendencia, megatendencia] } }
+        - { name: orden, in: query, schema: { type: string, enum: [publicacion, id, tendencia, megatendencia, descripcion, mundo, colombia] } }
         - $ref: '#/components/parameters/direccion'
         - $ref: '#/components/parameters/pagina'
         - $ref: '#/components/parameters/limite'
