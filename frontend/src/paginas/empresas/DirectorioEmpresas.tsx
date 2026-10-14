@@ -116,9 +116,14 @@ export function DirectorioEmpresas() {
         onLimpiar={() => { setBorrador(FILTROS_INICIALES); setFiltros(FILTROS_INICIALES); setPagina(1); }}
         extra={
           gestiona && (
-            <Link to="/empresas/nueva" className="inline-flex h-[42px] items-center justify-center rounded-full bg-rojo px-5 text-body font-semibold text-white shadow-boton hover:bg-[#c2002e]">
-              Crear empresa coformadora
-            </Link>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link to="/empresas/invitaciones" className="inline-flex h-[42px] items-center justify-center rounded-full border border-[#d1d9e3] bg-white px-5 text-body font-semibold text-azul-marino hover:bg-fondo">
+                Invitar empresa
+              </Link>
+              <Link to="/empresas/nueva" className="inline-flex h-[42px] items-center justify-center rounded-full bg-rojo px-5 text-body font-semibold text-white shadow-boton hover:bg-[#c2002e]">
+                Crear empresa coformadora
+              </Link>
+            </div>
           )
         }
       >
