@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { RolBD, Sesion } from '../auth/roles.js';
 import { conRol, type Cliente } from '../db/contexto.js';
 import { ErrorApi, noEncontrado } from '../errores.js';
-import { requiereRol } from '../middlewares/sesion.js';
+import { requiereRol, usarRol } from '../middlewares/sesion.js';
 import { borrarImagen, guardarImagen, recibirArchivo } from '../servicios/archivos.js';
 import { generarExcel, generarPdf, type ColumnaExportar } from '../servicios/exportar.js';
 import { Filtros, columnasYValores, construirPagina, esquemaPaginacion } from '../utilidades/consulta.js';
@@ -68,6 +68,11 @@ export function crearRecurso(op: OpcionesRecurso): Router {
   const camposImagen = op.camposImagen ?? [];
   const puedeGestionar = (sesion: Sesion) => sesion.rol === op.rolGestor || sesion.rol === 'obs_superadmin';
   const soloGestor = requiereRol(op.rolGestor);
+  // Una cuenta con varios roles consulta este módulo con el de su gestor, si lo tiene.
+  router.use((req, _res, next) => {
+    usarRol(req, op.rolGestor);
+    next();
+  });
 
   const nombresOrden = Object.keys(op.ordenes) as [string, ...string[]];
   const esquemaListado = esquemaPaginacion

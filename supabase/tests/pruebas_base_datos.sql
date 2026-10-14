@@ -449,6 +449,47 @@ $$;
 reset role;
 
 -- -----------------------------------------------------------------------------
+-- 4c. Varios roles por cuenta (usuario_rol)
+-- -----------------------------------------------------------------------------
+do $$
+declare
+    id_empresa integer := (select id_usuario from public.usuario where correo = 'prueba.empresa.rol@test.co');
+begin
+    if not exists (select 1 from public.usuario_rol ur join public.rol r using (id_rol)
+                    where ur.id_usuario = id_empresa and r.nombre_rol = 'Empresa Coformadora') then
+        raise exception 'FALLO 4c.1: el rol principal no quedó en usuario_rol';
+    end if;
+    -- La misma cuenta también es Gestor Faro Empresarial.
+    insert into public.usuario_rol (id_usuario, id_rol)
+    select id_empresa, id_rol from public.rol where nombre_rol = 'Gestor Faro Empresarial';
+    if (select count(*) from public.usuario_rol where id_usuario = id_empresa) <> 2 then
+        raise exception 'FALLO 4c.2: la cuenta no quedó con dos roles';
+    end if;
+    begin
+        insert into public.usuario_rol (id_usuario, id_rol) values (id_empresa, 999999);
+        raise exception 'FALLO 4c.3: se aceptó un rol que no existe';
+    exception when foreign_key_violation then null;
+    end;
+end;
+$$;
+select set_config('app.id_usuario', id_usuario::text, true) from public.usuario where correo = 'prueba.empresa.rol@test.co';
+set local role obs_empresa;
+do $$
+begin
+    if (select count(*) from public.usuario_rol) <> 2 then
+        raise exception 'FALLO 4c.4: la cuenta no ve (solo) sus propios roles';
+    end if;
+    begin
+        insert into public.usuario_rol (id_usuario, id_rol)
+        select public.fn_usuario_actual(), id_rol from public.rol where nombre_rol = 'Super Admin';
+        raise exception 'FALLO 4c.5: una cuenta se asignó un rol a sí misma';
+    exception when insufficient_privilege then null;
+    end;
+end;
+$$;
+reset role;
+
+-- -----------------------------------------------------------------------------
 -- 5. SuperAdmin
 -- -----------------------------------------------------------------------------
 set local role obs_superadmin;

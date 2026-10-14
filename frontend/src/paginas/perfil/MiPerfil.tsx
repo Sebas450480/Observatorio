@@ -10,7 +10,7 @@ import { SelectorIntereses } from '../../componentes/SelectorIntereses';
 import { Boton } from '../../componentes/ui/Boton';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso, Modal } from '../../componentes/ui/Modal';
-import { descripcionRol, esRolEmpresa, esRolSuperAdmin, useSesion } from '../../sesion/sesion';
+import { descripcionRoles, esRolEmpresa, esRolSuperAdmin, useSesion } from '../../sesion/sesion';
 import { MiEmpresa } from './MiEmpresa';
 import { iniciales } from '../../utilidades/formato';
 import { MisFavoritos } from './MisFavoritos';
@@ -129,12 +129,13 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
 
   const [frecuencia, recordatorios] = useWatch({ control, name: ['frecuencia_alertas', 'recordatorios_eventos'] });
   const silenciado = frecuencia === 'Ninguna' && !recordatorios;
-  const esAdmin = esRolSuperAdmin(usuario.nombre_rol);
-  const esGestor = usuario.nombre_rol.startsWith('Gestor');
-  const esEmpresa = esRolEmpresa(usuario.nombre_rol);
+  const { esSuperAdmin: esAdmin, esGestor, esEmpresa, roles } = useSesion();
   const institucional = esAdmin || esGestor || esEmpresa;
-  /** La empresa ve su ficha en lugar de intereses, alertas y favoritos. */
-  const panelUsuario = !esAdmin && !esEmpresa;
+  /**
+   * Intereses, alertas y favoritos: para el rol Usuario y los gestores de módulo.
+   * La empresa ve además (o en su lugar) la ficha de su empresa.
+   */
+  const panelUsuario = roles.some((r) => !esRolSuperAdmin(r) && !esRolEmpresa(r));
   const desde = new Date(usuario.fecha_registro).toLocaleDateString('es-CO', { month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
   const botonClaro = 'cursor-pointer rounded-control border border-[#d1d9e3] bg-white font-semibold text-azul-marino hover:bg-fondo';
 
@@ -195,7 +196,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
               </p>
             </div>
             {institucional && (
-              <span className="rounded-[14px] bg-azul-marino/10 px-3 py-1.5 text-caption font-semibold text-azul-marino">{descripcionRol(usuario.nombre_rol)}</span>
+              <span className="rounded-[14px] bg-azul-marino/10 px-3 py-1.5 text-caption font-semibold text-azul-marino">{descripcionRoles(usuario)}</span>
             )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -293,7 +294,16 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
       </div>
     </form>
 
-      <div className="mt-6">{esEmpresa ? <MiEmpresa /> : <MisFavoritos intereses={usuario.intereses} />}</div>
+      {esEmpresa && (
+        <div className="mt-6">
+          <MiEmpresa />
+        </div>
+      )}
+      {panelUsuario && (
+        <div className="mt-6">
+          <MisFavoritos intereses={usuario.intereses} />
+        </div>
+      )}
 
       {modal === 'contrasena' && <CambiarContrasena onCerrar={() => setModal(null)} onListo={() => setModal('contrasena-lista')} />}
       <Aviso abierto={modal === 'contrasena-lista'} titulo="Contraseña actualizada" mensaje="Tu contraseña se cambió correctamente." onCerrar={() => setModal(null)} />

@@ -1,5 +1,5 @@
 /**
- * Crea el primer SuperAdmin (o convierte en SuperAdmin una cuenta existente).
+ * Crea el primer Super Admin (o convierte en Super Admin una cuenta existente).
  *
  * Uso:
  *   npm run crear-superadmin -- --correo admin@uniempresarial.edu.co --nombre Ana --apellido Pérez
@@ -18,7 +18,7 @@ import { contrasena as reglaContrasena, correo as reglaCorreo } from '../utilida
 async function pedirContrasena(): Promise<string> {
   if (process.env.SUPERADMIN_CONTRASENA) return process.env.SUPERADMIN_CONTRASENA;
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const valor = await rl.question('Contraseña del SuperAdmin (mínimo 8 caracteres): ');
+  const valor = await rl.question('Contraseña del Super Admin (mínimo 8 caracteres): ');
   rl.close();
   return valor;
 }
@@ -38,8 +38,11 @@ async function principal() {
   const hash = await bcrypt.hash(contrasena, config.bcryptCosto);
 
   const accion = await comoSistema(async (c) => {
-    const rol = await c.query<{ id_rol: number }>("select id_rol from rol where nombre_rol = 'SuperAdmin'");
-    if (!rol.rows[0]) throw new Error('No existe el rol SuperAdmin. Carga primero supabase/seed.sql');
+    // "SuperAdmin Superior" es el nombre anterior de "Super Admin".
+    const rol = await c.query<{ id_rol: number }>(
+      "select id_rol from rol where nombre_rol in ('Super Admin', 'SuperAdmin Superior') order by nombre_rol = 'Super Admin' desc limit 1",
+    );
+    if (!rol.rows[0]) throw new Error('No existe el rol Super Admin. Carga primero supabase/seed.sql');
     const existente = await c.query('select 1 from usuario where correo = $1', [correo]);
     if (existente.rowCount) {
       await c.query(
@@ -57,7 +60,7 @@ async function principal() {
     );
     return 'creado';
   });
-  console.info(`SuperAdmin ${accion}: ${correo}`);
+  console.info(`Super Admin ${accion}: ${correo}`);
 }
 
 principal()

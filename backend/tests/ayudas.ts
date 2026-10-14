@@ -24,8 +24,8 @@ export async function cerrarAdmin() {
 export const CONTRASENA = 'Clave-segura-123';
 
 export type NombreRol =
-  | 'SuperAdmin'
-  | 'SuperAdmin Superior'
+  | 'Gestor Observatorio'
+  | 'Super Admin'
   | 'Usuario'
   | 'Empresa Coformadora'
   | 'Gestor Faro Empresarial'

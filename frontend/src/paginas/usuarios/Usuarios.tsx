@@ -12,19 +12,16 @@ import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { Boton } from '../../componentes/ui/Boton';
 import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
-import { descripcionRol, etiquetaRol, mismoRol, useSesion } from '../../sesion/sesion';
+import { SUPER_ADMIN, descripcionRol, descripcionRoles, mismoRol, rolesDe, useSesion } from '../../sesion/sesion';
 
-const SUPERIOR = 'SuperAdmin Superior';
-
-/** Rol abreviado para la tabla y las tarjetas del listado. */
-const nombreRolCorto = (rol: string) => (mismoRol(rol, SUPERIOR) ? 'Superadmin superior' : etiquetaRol(rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(rol));
+const esSuperAdminDe = (perfil?: Pick<Perfil, 'nombre_rol' | 'roles'> | null) => rolesDe(perfil).some((r) => mismoRol(r, SUPER_ADMIN));
 
 const base = {
   nombre_usuario: z.string().trim().min(1, 'Escribe el nombre').max(50),
   apellido_usuario: z.string().trim().min(1, 'Escribe el apellido').max(50),
   apodo_usuario: z.string().trim().max(20),
   ciudad: z.string().trim().max(60),
-  id_rol: z.string().min(1, 'Elige el rol'),
+  roles: z.array(z.string()).min(1, 'Elige al menos un rol'),
 };
 const esquemaCrear = z.object({
   ...base,
@@ -42,12 +39,12 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
   const guardarApi = useGuardar<Perfil>('/usuarios');
   const eliminarApi = useEliminar('/usuarios');
   const editar = !!registro;
-  // Un SuperAdmin no puede cambiarle el rol ni el estado a un SuperAdmin Superior, ni asignar ese rol.
-  const soySuperior = mismoRol(yo?.nombre_rol, SUPERIOR);
-  const protegido = !soySuperior && mismoRol(registro?.nombre_rol, SUPERIOR);
+  // Solo un Super Admin asigna ese rol o cambia los roles y el estado de quien lo tiene.
+  const soySuperior = esSuperAdminDe(yo);
+  const protegido = !soySuperior && esSuperAdminDe(registro);
   const propio = registro?.id_usuario === yo?.id_usuario;
   const bloqueado = propio || protegido;
-  const rolesVisibles = roles.filter((r) => soySuperior || !mismoRol(r.nombre_rol, SUPERIOR) || r.id_rol === registro?.id_rol);
+  const rolesVisibles = roles.filter((r) => soySuperior || !mismoRol(r.nombre_rol, SUPER_ADMIN) || registro?.roles?.some((x) => x.id_rol === r.id_rol));
   const { register, trigger, getValues, formState } = useForm<DatosCrear & DatosEditar>({
     resolver: zodResolver(editar ? esquemaEditar : esquemaCrear) as never,
     defaultValues: {
@@ -55,7 +52,7 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
       apellido_usuario: registro?.apellido_usuario ?? '',
       apodo_usuario: registro?.apodo_usuario ?? '',
       ciudad: registro?.ciudad ?? '',
-      id_rol: registro ? String(registro.id_rol) : '',
+      roles: registro ? (registro.roles?.length ? registro.roles.map((r) => String(r.id_rol)) : [String(registro.id_rol)]) : [],
       estado_usuario: registro?.estado_usuario ?? 'Activo',
       correo: '',
       contrasena: '',
@@ -74,11 +71,11 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
     if (editar) {
       await guardarApi.mutateAsync({
         id: registro.id_usuario,
-        datos: bloqueado ? comunes : { ...comunes, id_rol: Number(d.id_rol), estado_usuario: d.estado_usuario },
+        datos: bloqueado ? comunes : { ...comunes, roles: d.roles.map(Number), estado_usuario: d.estado_usuario },
       });
     } else {
       await guardarApi.mutateAsync({
-        datos: { ...comunes, id_rol: Number(d.id_rol), correo: d.correo, contrasena: d.contrasena, acepta_tratamiento_datos: true },
+        datos: { ...comunes, roles: d.roles.map(Number), correo: d.correo, contrasena: d.contrasena, acepta_tratamiento_datos: true },
       });
     }
   };
@@ -103,15 +100,6 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
         ) : (
           <Entrada etiqueta="Correo" type="email" placeholder="correo@ejemplo.com" obligatorio autoComplete="off" error={e.correo?.message} {...register('correo')} />
         )}
-        <Selector
-          etiqueta="Rol"
-          obligatorio
-          vacio="Selecciona el rol"
-          disabled={bloqueado}
-          opciones={rolesVisibles.map((r) => ({ valor: String(r.id_rol), texto: descripcionRol(r.nombre_rol) }))}
-          error={e.id_rol?.message}
-          {...register('id_rol')}
-        />
         {editar ? (
           <Selector etiqueta="Estado" disabled={bloqueado} opciones={[{ valor: 'Activo', texto: 'Activo' }, { valor: 'Inactivo', texto: 'Inactivo (bloqueado)' }]} {...register('estado_usuario')} />
         ) : (
@@ -122,8 +110,24 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
           <Entrada etiqueta="Contraseña inicial" type="password" placeholder="Mínimo 8 caracteres" obligatorio autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
         )}
       </div>
-      {propio && <p className="text-[13px] text-texto-suave">No puedes cambiar tu propio rol ni tu estado.</p>}
-      {protegido && <p className="text-[13px] text-texto-suave">Es un SuperAdmin Superior: solo otro SuperAdmin Superior puede cambiarle el rol o el estado.</p>}
+      <fieldset className="flex flex-col gap-3" disabled={bloqueado}>
+        <legend className="mb-2 text-small font-semibold text-[#0a1c40]">
+          Roles <span aria-hidden>*</span>
+          <span className="block text-[13px] font-normal text-texto-suave">Una misma cuenta puede tener varios roles; cada uno suma sus permisos.</span>
+        </legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {rolesVisibles.map((r) => (
+            <Casilla key={r.id_rol} etiqueta={descripcionRol(r.nombre_rol)} value={String(r.id_rol)} {...register('roles')} />
+          ))}
+        </div>
+        {e.roles?.message && (
+          <p role="alert" className="text-[13px] text-rojo">
+            {e.roles.message}
+          </p>
+        )}
+      </fieldset>
+      {propio && <p className="text-[13px] text-texto-suave">No puedes cambiar tus propios roles ni tu estado.</p>}
+      {protegido && <p className="text-[13px] text-texto-suave">Es un Super Admin: solo otro Super Admin puede cambiarle los roles o el estado.</p>}
       {!editar && (
         <Casilla
           etiqueta="La persona autorizó el tratamiento de sus datos personales (Ley 1581 de 2012)."
@@ -135,7 +139,7 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
   );
 }
 
-/** Gestión de usuarios (solo SuperAdmin). */
+/** Gestión de usuarios (Super Admin y Gestor Observatorio). */
 const FILTROS_INICIALES = { q: '', id_rol: '', estado: '' };
 
 export function Usuarios() {
@@ -248,8 +252,8 @@ export function Usuarios() {
                     <span className={`rounded-full px-2.5 leading-5 ${u.estado_usuario === 'Activo' ? 'bg-[#ddf7ea] text-[#159b65]' : 'bg-[#eef0f3] text-[#8c94a1]'}`}>
                       {u.estado_usuario}
                     </span>
-                    <span className="text-[#172033]" title={descripcionRol(u.nombre_rol)}>
-                      {nombreRolCorto(u.nombre_rol)}
+                    <span className="text-[#172033]" title={descripcionRoles(u)}>
+                      {descripcionRoles(u)}
                     </span>
                     <span className="font-semibold text-black/40">ID {u.id_usuario}</span>
                   </div>
@@ -304,8 +308,8 @@ export function Usuarios() {
                         {u.estado_usuario}
                       </span>
                     </td>
-                    <td className="truncate pl-14 font-bold text-[#172033]" title={descripcionRol(u.nombre_rol)}>
-                      {nombreRolCorto(u.nombre_rol)}
+                    <td className="truncate pl-14 font-bold text-[#172033]" title={descripcionRoles(u)}>
+                      {descripcionRoles(u)}
                     </td>
                     <td>
                       <button

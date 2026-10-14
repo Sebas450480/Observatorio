@@ -10,7 +10,7 @@ describe('Actividad y estadísticas', () => {
     await usuario.post('/api/actividad').send({ tipo_contenido: 'Flash', id_contenido: 1, accion: 'Vista' });
     await usuario.post('/api/actividad').send({ tipo_contenido: 'Faro', id_contenido: 1, accion: 'Clic_acceder' });
 
-    const { agente: admin } = await sesion('SuperAdmin');
+    const { agente: admin } = await sesion('Gestor Observatorio');
     const resumen = await admin.get('/api/estadisticas/resumen');
     expect(resumen.status).toBe(200);
     expect(resumen.body.visitas_mes).toBeGreaterThanOrEqual(2);
@@ -140,7 +140,7 @@ describe('Alertas por correo', () => {
   });
 
   it('el SuperAdmin puede ejecutar el envío manualmente', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const r = await agente.post('/api/alertas/ejecutar').send({ frecuencia: 'Semanal' });
     expect(r.status).toBe(200);
     expect(r.body).toHaveProperty('enviados');
@@ -158,14 +158,14 @@ describe('Alertas por correo', () => {
     expect(todo.body).toHaveProperty('Recordatorios');
     expect((await invitado().get(ruta)).status).toBe(404);
     expect((await invitado().get(ruta).set('Authorization', 'Bearer otro-secreto-de-prueba-00')).status).toBe(404);
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     expect((await agente.get(ruta)).status).toBe(404);
   });
 });
 
 describe('Panel de estadísticas', () => {
   it('entrega las tarjetas del resumen con contenidos por módulo', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const r = await agente.get('/api/estadisticas/panel');
     expect(r.status).toBe(200);
     expect(r.body.usuarios.total).toBeGreaterThan(0);

@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
 import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
-import { descripcionRol, esRolEmpresa, etiquetaRol, RUTA_MODULO, useSesion } from '../../sesion/sesion';
+import { descripcionRoles, etiquetaRol, useSesion } from '../../sesion/sesion';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 
@@ -46,7 +46,6 @@ function BuscadorGlobal() {
   const [abierto, setAbierto] = useState(false);
   const [activo, setActivo] = useState(-1);
   const navegar = useNavigate();
-  const { moduloGestor } = useSesion();
   const idLista = useId();
   const contenedor = useRef<HTMLDivElement>(null);
 
@@ -60,10 +59,7 @@ function BuscadorGlobal() {
     queryFn: ({ signal }) => api<{ resultados: ResultadoBusqueda[] }>('/buscar', { consulta: { q: consulta, limite: 4 }, senal: signal }),
     enabled: consulta.length >= 2,
   });
-  // El gestor solo busca en su módulo.
-  const resultados = (consulta.length >= 2 ? (data?.resultados ?? []) : []).filter(
-    (r) => !moduloGestor || RUTA_DE[r.tipo] === RUTA_MODULO[moduloGestor],
-  );
+  const resultados = consulta.length >= 2 ? (data?.resultados ?? []) : [];
 
   useEffect(() => {
     const cerrar = (e: MouseEvent) => {
@@ -146,7 +142,7 @@ function BuscadorGlobal() {
 
 /** Botón rojo con el rol y menú desplegable (Figma: "Menú de sesión"). */
 function MenuSesion() {
-  const { usuario, cerrarSesion } = useSesion();
+  const { usuario, cerrarSesion, esEmpresa } = useSesion();
   const [abierto, setAbierto] = useState(false);
   const navegar = useNavigate();
   const contenedor = useRef<HTMLDivElement>(null);
@@ -196,7 +192,7 @@ function MenuSesion() {
               <span className="truncate text-small font-semibold text-azul-marino">
                 {usuario.nombre_usuario} {usuario.apellido_usuario}
               </span>
-              <span className="truncate text-caption text-gris-azulado">{descripcionRol(usuario.nombre_rol)}</span>
+              <span className="truncate text-caption text-gris-azulado">{descripcionRoles(usuario)}</span>
             </span>
           </div>
           <div className="h-px bg-[#e8ebf2]" />
@@ -212,7 +208,7 @@ function MenuSesion() {
             <img src={iconoPerfil} alt="" aria-hidden className="size-[22px]" />
             <span className="flex flex-col gap-0.5">
               <span className="text-small font-semibold text-azul-marino">Mi perfil</span>
-              <span className="text-caption text-gris-azulado">{esRolEmpresa(usuario.nombre_rol) ? 'Ver y editar mi empresa' : 'Ver y editar mis datos'}</span>
+              <span className="text-caption text-gris-azulado">{esEmpresa ? 'Ver y editar mis datos y mi empresa' : 'Ver y editar mis datos'}</span>
             </span>
           </button>
           <div className="h-px bg-[#e8ebf2]" />
