@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { irA } from './ayudas';
 import { CONTRASENA, CUENTAS } from './entorno.mjs';
 
 test.describe('Cuenta con varios roles', () => {
@@ -16,14 +15,15 @@ test.describe('Cuenta con varios roles', () => {
     await expect(modal.getByRole('radio', { name: /Gestor Flash/ })).toHaveAttribute('aria-checked', 'true');
     await modal.getByRole('radio', { name: /Gestor Calendario/ }).click();
     await modal.getByRole('button', { name: 'Entrar como Gestor Calendario' }).click();
-    await expect(page.getByRole('heading', { name: 'Bienvenido al Observatorio Empresarial' })).toBeVisible();
 
-    // Con Gestor Calendario crea eventos, pero no publica en Flash.
-    await irA(page, 'Eventos institucionales');
+    // Como Gestor Calendario solo ve y trabaja en Eventos.
+    await expect(page).toHaveURL(/\/eventos$/);
     await expect(page.getByRole('button', { name: 'Crear evento' })).toBeVisible();
-    await irA(page, 'Flash');
-    await expect(page.getByRole('heading', { name: /Flash/ }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Crear Flash' })).toHaveCount(0);
+    const menu = page.getByRole('complementary', { name: 'Menú principal' });
+    await expect(menu.getByRole('link', { name: 'Eventos institucionales' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Flash', exact: true })).toHaveCount(0);
+    await page.goto('/flash-informativo');
+    await expect(page).toHaveURL(/\/eventos$/);
 
     // Cambia a Gestor Flash desde el menú de la sesión.
     await page.getByRole('button', { name: /Sesión de Julián/ }).click();
@@ -34,10 +34,10 @@ test.describe('Cuenta con varios roles', () => {
     await cambio.getByRole('button', { name: 'Entrar como Gestor Flash' }).click();
     await expect(cambio).toBeHidden();
 
-    await irA(page, 'Flash');
+    // Ahora solo ve Flash.
+    await expect(page).toHaveURL(/\/flash-informativo$/);
     await expect(page.getByRole('button', { name: 'Crear Flash' })).toBeVisible();
-    await irA(page, 'Eventos institucionales');
-    await expect(page.getByRole('heading', { name: /Eventos/ }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Crear evento' })).toHaveCount(0);
+    await expect(menu.getByRole('link', { name: 'Eventos institucionales' })).toHaveCount(0);
+    await expect(menu.getByRole('link', { name: 'Flash', exact: true })).toBeVisible();
   });
 });

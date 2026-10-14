@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
 import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
-import { descripcionRoles, etiquetaRol, useSesion } from '../../sesion/sesion';
+import { descripcionRoles, etiquetaRol, rutaPermitida, useSesion } from '../../sesion/sesion';
 import { ModalElegirRol } from '../ModalElegirRol';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
@@ -60,7 +60,9 @@ function BuscadorGlobal() {
     queryFn: ({ signal }) => api<{ resultados: ResultadoBusqueda[] }>('/buscar', { consulta: { q: consulta, limite: 4 }, senal: signal }),
     enabled: consulta.length >= 2,
   });
-  const resultados = consulta.length >= 2 ? (data?.resultados ?? []) : [];
+  const { soloModulos } = useSesion();
+  // Quien entra como gestor de un módulo solo busca en él.
+  const resultados = (consulta.length >= 2 ? (data?.resultados ?? []) : []).filter((r) => rutaPermitida(RUTA_DE[r.tipo], soloModulos));
 
   useEffect(() => {
     const cerrar = (e: MouseEvent) => {

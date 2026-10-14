@@ -54,6 +54,17 @@ const rolEnLista = (nombre: string | undefined, lista: string[]) => lista.some((
 
 export const esRolSuperAdmin = (nombre: string | undefined) => rolEnLista(nombre, ROLES_SUPERADMIN);
 export const esRolEmpresa = (nombre: string | undefined) => mismoRol(nombre, ROL_EMPRESA);
+/** ¿Es el gestor de un módulo (Flash, Faro, Empresas, Tendencias, Calendario o Glosario)? */
+export const esRolGestorModulo = (nombre: string) => (Object.values(GESTOR_DE) as string[][]).some((lista) => rolEnLista(nombre, lista));
+
+/** Páginas que un gestor de módulo puede abrir además de las de sus módulos. */
+const PAGINAS_COMUNES = ['/mi-perfil', '/politica-de-datos'];
+
+/** ¿Puede abrir esta ruta una sesión limitada a estos módulos? (vacío = todas) */
+export function rutaPermitida(ruta: string, soloModulos: Modulo[]): boolean {
+  if (!soloModulos.length || PAGINAS_COMUNES.includes(ruta)) return true;
+  return soloModulos.some((m) => ruta === RUTA_MODULO[m] || ruta.startsWith(`${RUTA_MODULO[m]}/`));
+}
 
 /** Nombres de todos los roles de la cuenta. */
 export function rolesDe(perfil: Pick<Perfil, 'nombre_rol' | 'roles'> | null | undefined): string[] {
@@ -66,26 +77,6 @@ export function rolesDe(perfil: Pick<Perfil, 'nombre_rol' | 'roles'> | null | un
 export function rolesActivosDe(perfil: Pick<Perfil, 'nombre_rol' | 'roles' | 'rol_activo'> | null | undefined): string[] {
   return perfil?.rol_activo ? [nombreRol(perfil.rol_activo)] : rolesDe(perfil);
 }
-
-/** Qué puede hacer cada rol (para elegir con cuál entrar). */
-export function funcionesRol(nombre: string): string {
-  const rol = nombreRol(nombre);
-  if (mismoRol(rol, SUPER_ADMIN)) return 'Control total del Observatorio, incluidos los demás administradores.';
-  if (mismoRol(rol, GESTOR_OBSERVATORIO)) return 'Administra todos los módulos, los usuarios y las estadísticas.';
-  if (esRolEmpresa(rol)) return 'Edita la información de tu empresa en el directorio.';
-  const modulo = (Object.keys(GESTOR_DE) as Modulo[]).find((m) => rolEnLista(rol, GESTOR_DE[m]));
-  if (modulo) return `Crea, edita y elimina contenidos de ${NOMBRE_MODULO[modulo]}.`;
-  return 'Consulta los contenidos, guarda favoritos y recibe alertas.';
-}
-
-const NOMBRE_MODULO: Record<Modulo, string> = {
-  flash: 'Flash Informativo',
-  faro: 'Faro Empresarial',
-  empresas: 'Empresas Coformadoras',
-  tendencias: 'Tendencias',
-  calendario: 'Eventos',
-  glosario: 'Glosario',
-};
 
 /** Texto del botón del menú de sesión según el rol principal. */
 export function etiquetaRol(nombre: string | undefined): string {
@@ -114,6 +105,11 @@ interface ContextoSesion {
   esGestor: boolean;
   /** Módulos que gestiona (de los demás ve lo mismo que un usuario: solo lectura). */
   modulosGestor: Modulo[];
+  /**
+   * Sesión solo de gestor de módulo (p. ej. entró como Gestor Tendencias): ve y
+   * navega únicamente sus módulos. Vacío si ve todo el Observatorio.
+   */
+  soloModulos: Modulo[];
   /** ¿Tiene el rol Empresa Coformadora? */
   esEmpresa: boolean;
   /** Roles con los que actúa ahora (el elegido al entrar, si la cuenta tiene varios). */
@@ -192,6 +188,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       esSuperAdmin,
       esGestor: modulosGestor.length > 0,
       modulosGestor,
+      soloModulos: !esSuperAdmin && roles.length > 0 && roles.every((r) => esRolGestorModulo(r)) ? modulosGestor : [],
       esEmpresa: roles.some((r) => esRolEmpresa(r)),
       roles,
       rolesCuenta: rolesDe(usuario),
