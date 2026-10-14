@@ -5,7 +5,7 @@ export type Modalidad = 'Virtual' | 'Presencial' | 'Hibrido';
 export type TipoEvento = 'Congreso' | 'Hackathon' | 'Foro' | 'Cumbre' | 'Seminario' | 'Taller' | 'Otro';
 export type TipoFaro = 'Becas' | 'Convocatorias' | 'Cursos' | 'Talleres';
 export type TamanoEmpresa = 'Micro' | 'Pequeña' | 'Mediana' | 'Grande';
-export type FrecuenciaAlertas = 'Inmediata' | 'Semanal' | 'Ninguna';
+export type FrecuenciaAlertas = 'Inmediata' | 'Diaria' | 'Semanal' | 'Ninguna';
 export type TipoContenido = 'Flash' | 'Faro' | 'Empresa' | 'Tendencia' | 'Evento';
 
 export const MODALIDADES: Modalidad[] = ['Virtual', 'Presencial', 'Hibrido'];
@@ -47,6 +47,8 @@ export interface Perfil {
   correo: string;
   ciudad: string | null;
   frecuencia_alertas: FrecuenciaAlertas;
+  /** Recordatorios de los eventos favoritos (una semana antes y el mismo día). */
+  recordatorios_eventos: boolean;
   fecha_registro: string;
   estado_usuario: Estado;
   id_rol: number;

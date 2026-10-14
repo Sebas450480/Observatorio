@@ -24,6 +24,8 @@ const esquemaPerfil = z.object({
   correo,
   ciudad: textoOpcional(60),
   frecuencia_alertas: z.enum(FRECUENCIAS_ALERTA),
+  /** Recordatorios de los eventos favoritos (una semana antes y el mismo día). */
+  recordatorios_eventos: z.boolean(),
 }).partial();
 
 rutasPerfil.patch('/', async (req, res) => {
