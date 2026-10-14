@@ -72,3 +72,5 @@ La carpeta [`despliegue/`](despliegue/) tiene todo para instalar la plataforma e
 Docker (PostgreSQL + una sola imagen con la API y la página web), y el script que exporta los datos de
 Supabase y las imágenes de Vercel Blob. Paso a paso, requisitos y preguntas para TI:
 [`docs/MIGRACION.md`](docs/MIGRACION.md).
+
+Repositorio oficial para la universidad: `github.com/fusoft6-pixel/Unie-TechObservatory` (copia completa de este).

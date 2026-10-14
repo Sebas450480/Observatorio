@@ -13,7 +13,7 @@ servidor oficial de la universidad, con todos los datos e imágenes.
 | Imágenes subidas | Vercel Blob | Carpeta del servidor (`UPLOADS_DIR`), servida en `/uploads/...` |
 | Alertas programadas | Vercel Cron | Integradas en el proceso Node (cada 15 min y lunes 8:00) |
 | Correo | Sin configurar | SMTP institucional (opcional) |
-| Código | GitHub `Sebas450480/Observatorio` | Mismo repositorio, o transferido a la organización de la universidad |
+| Código | GitHub `Sebas450480/Observatorio` (de aquí publica Vercel) | Repositorio oficial `fusoft6-pixel/Unie-TechObservatory` |
 | Dominio | `www.observatorioempresarial.com` → Vercel | El dominio que defina la universidad, con HTTPS |
 
 El código ya está listo para las dos formas de trabajo: en Vercel sigue funcionando igual, y en un
@@ -85,7 +85,7 @@ Trasládala al servidor por un canal seguro (`scp`, USB cifrada, carpeta institu
 ### 4.2 Preparar el servidor
 
 ```bash
-git clone https://github.com/Sebas450480/Observatorio.git observatorio
+git clone https://github.com/fusoft6-pixel/Unie-TechObservatory.git observatorio   # privado: pide usuario y token de GitHub
 cd observatorio/despliegue
 # Copiar aquí la carpeta datos/ exportada (datos/datos.sql y datos/uploads/)
 mkdir -p datos/uploads
@@ -222,12 +222,24 @@ Y el proxy HTTPS igual que en `despliegue/nginx.conf.ejemplo`.
 
 ## 7. GitHub
 
-El código vive en `github.com/Sebas450480/Observatorio`, con las ramas `pruebas` y `produccion` y
-pruebas automáticas (GitHub Actions) en cada cambio. Opciones:
+El repositorio oficial es **`github.com/fusoft6-pixel/Unie-TechObservatory`** (privado), con las ramas
+`main` y `produccion` (iguales, versión publicada) y `pruebas`, y pruebas automáticas (GitHub Actions) en cada
+cambio. Es una copia completa, con todo el historial, del repositorio de desarrollo `Sebas450480/Observatorio`.
 
-- **Transferir el repositorio** a la organización de la universidad: *Settings → General → Danger Zone →
-  Transfer ownership*. Conserva historial, ramas, PRs y Actions; GitHub redirige la dirección vieja.
-- **O** dejarlo donde está y dar acceso de lectura al equipo de TI (*Settings → Collaborators*).
+- **Acceso para TI:** el dueño de `fusoft6-pixel` lo agrega en *Settings → Collaborators* (permiso Write, o Admin
+  si TI administrará el repositorio).
+- **Pruebas automáticas:** confirmar en la pestaña *Actions* que estén habilitadas.
+- **Mientras Vercel siga activo** publica desde `Sebas450480/Observatorio`. Antes de la migración se copia lo
+  último al repositorio oficial (desde una copia local del repositorio de desarrollo):
+
+  ```bash
+  git clone --bare https://github.com/Sebas450480/Observatorio.git && cd Observatorio.git
+  git push --force --all  https://github.com/fusoft6-pixel/Unie-TechObservatory.git
+  git push --force --tags https://github.com/fusoft6-pixel/Unie-TechObservatory.git
+  ```
+
+- **Al cerrar** la migración, el repositorio de desarrollo se archiva (*Settings → Archive this repository*)
+  para que quede de solo lectura y no se confunda con el oficial.
 
 Después de la migración, la integración de Vercel ya no hace falta: `vercel.json` y `api/` se pueden
 dejar (no estorban) o borrar cuando Vercel se apague.
