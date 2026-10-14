@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { MenuExportar, Paginacion } from './Elementos';
+import { Paginacion } from './Elementos';
 
 describe('Paginacion', () => {
   it('marca la página actual y cambia de página', async () => {
@@ -19,11 +19,3 @@ describe('Paginacion', () => {
   });
 });
 
-describe('MenuExportar', () => {
-  it('ofrece PDF y Excel con los filtros actuales', async () => {
-    render(<MenuExportar ruta="/flash" consulta={{ departamento: 'Antioquia', estado: undefined }} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Exportar' }));
-    expect(screen.getByRole('link', { name: 'Descargar PDF' })).toHaveAttribute('href', '/api/flash/exportar?departamento=Antioquia&formato=pdf');
-    expect(screen.getByRole('link', { name: 'Descargar Excel' })).toHaveAttribute('href', '/api/flash/exportar?departamento=Antioquia&formato=xlsx');
-  });
-});

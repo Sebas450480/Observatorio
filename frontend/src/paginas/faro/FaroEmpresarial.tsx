@@ -10,11 +10,12 @@ import maletin from '../../assets/figma/tarjetas/maletin.svg';
 import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import { MODALIDADES, TIPOS_FARO, type Faro, type TipoFaro } from '../../api/tipos';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
 import { costo, fechaMedia, modalidadTexto } from '../../utilidades/formato';
 import { DatoTarjeta } from '../flash/FlashInformativo';
@@ -51,7 +52,10 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
         <Insignia tono={estilo.tono} className="absolute left-3 top-3">
           {estilo.singular}
         </Insignia>
-        <BotonFavorito tipo="Faro" id={faro.id_fe} titulo={faro.titulo} variante="imagen" className="absolute right-2.5 top-2.5" />
+        <div className="absolute right-2.5 top-2.5 flex gap-2">
+          <BotonDescargar ruta="/faro" id={faro.id_fe} titulo={faro.titulo} variante="imagen" />
+          <BotonFavorito tipo="Faro" id={faro.id_fe} titulo={faro.titulo} variante="imagen" />
+        </div>
         {faro.estado_fe === 'Inactivo' && (
           <span className="absolute bottom-3 right-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVO</span>
         )}
@@ -108,7 +112,7 @@ export function FaroEmpresarial() {
 
   return (
     <>
-      <EncabezadoPagina modulo="faro" titulo="Faro Empresarial" subtitulo="Becas, convocatorias, cursos y talleres para impulsar tu crecimiento empresarial." acciones={<MenuExportar ruta="/faro" consulta={consulta} />} />
+      <EncabezadoPagina modulo="faro" titulo="Faro Empresarial" subtitulo="Becas, convocatorias, cursos y talleres para impulsar tu crecimiento empresarial." />
       <BarraFiltros
         activos={contarActivos(filtros, FILTROS_INICIALES)}
         onBuscar={() => { setFiltros(borrador); setPagina(1); }}

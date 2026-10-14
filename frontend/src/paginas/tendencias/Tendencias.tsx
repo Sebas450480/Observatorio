@@ -13,11 +13,12 @@ import vistaGrande from '../../assets/figma/tendencias/vista-grande.svg';
 import vistaLista from '../../assets/figma/tendencias/vista-lista.svg';
 import { useListado } from '../../api/consultas';
 import type { Tendencia } from '../../api/tipos';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
 import { fechaCorta, numero } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
@@ -74,7 +75,10 @@ function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void })
           </span>
         </span>
       </button>
-      <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} className="absolute right-3 top-4" />
+      <div className="absolute right-3 top-4 flex gap-1">
+        <BotonDescargar ruta="/tendencias" id={t.id_te} titulo={t.tendencia} />
+        <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} />
+      </div>
     </div>
   );
 }
@@ -115,6 +119,7 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
               </span>
             </button>
             <div className="flex shrink-0 flex-col items-center gap-1">
+              <BotonDescargar ruta="/tendencias" id={t.id_te} titulo={t.tendencia} />
               <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} />
               {t.fuentes[0]?.link && (
                 <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" aria-label={`Fuente de ${t.tendencia}`} className="grid size-10 place-items-center rounded-lg hover:bg-black/5">
@@ -175,7 +180,10 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
                 </td>
                 {usuario && (
                   <td className={celda}>
-                    <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} className="mx-auto" />
+                    <div className="flex justify-center">
+                      <BotonDescargar ruta="/tendencias" id={t.id_te} titulo={t.tendencia} />
+                      <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} />
+                    </div>
                   </td>
                 )}
                 {onEditar && (
@@ -276,15 +284,10 @@ export function Tendencias() {
         subtitulo="Megatendencias globales y su impacto en Colombia"
         claseSubtitulo="text-body font-bold tracking-[-0.5px] text-[#0d2375] sm:text-subtitle"
         acciones={
-          pestana === 'lista' ? (
-            <>
-              {gestiona && (
-                <Boton variante="secundario" pildora icono={<FileUp className="size-4" />} onClick={() => setImportar(true)}>
-                  Importar Excel
-                </Boton>
-              )}
-              <MenuExportar ruta="/tendencias" consulta={consulta} />
-            </>
+          pestana === 'lista' && gestiona ? (
+            <Boton variante="secundario" pildora icono={<FileUp className="size-4" />} onClick={() => setImportar(true)}>
+              Importar Excel
+            </Boton>
           ) : undefined
         }
         className="mb-6"

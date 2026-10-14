@@ -537,9 +537,15 @@ paths:
   /api/flash/exportar:
     get:
       tags: [Flash]
-      summary: Exportar el listado (mismos filtros)
+      summary: Exportar el listado (mismos filtros; requiere sesión)
       parameters: [{ $ref: '#/components/parameters/formato' }]
-      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+      responses: { '200': { $ref: '#/components/responses/Archivo' }, '401': { description: Sin sesión } }
+  /api/flash/{id}/exportar:
+    get:
+      tags: [Flash]
+      summary: 'Descargar la ficha de un registro en PDF (por defecto) o Excel; requiere sesión. También existe en /api/faro, /api/empresas, /api/tendencias y /api/calendario'
+      parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/formato' }]
+      responses: { '200': { $ref: '#/components/responses/Archivo' }, '401': { description: Sin sesión }, '404': { description: No existe } }
   /api/flash/{id}:
     parameters: [{ $ref: '#/components/parameters/id' }]
     get:

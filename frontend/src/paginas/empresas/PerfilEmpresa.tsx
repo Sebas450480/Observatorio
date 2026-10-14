@@ -33,6 +33,7 @@ import { Cargando, MensajeError } from '../../componentes/ui/Elementos';
 import { Aviso, Confirmacion, Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
 import { nombreEmpresa, Portada } from './DirectorioEmpresas';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 
 /** Migas de pan: "← Empresas coformadoras / Ver perfil". */
@@ -134,6 +135,7 @@ export function PerfilEmpresa() {
             <div className="flex flex-col gap-2">
               <div className="flex items-start gap-2">
                 <h1 className="text-titulo font-extrabold text-[#0a1c40]">{nombre}</h1>
+                <BotonDescargar ruta="/empresas" id={empresa.id_ec} titulo={nombre} />
                 <BotonFavorito tipo="Empresa" id={empresa.id_ec} titulo={nombre} />
               </div>
               <p className="flex items-center gap-1.5 text-small text-[#64748b] sm:text-body">

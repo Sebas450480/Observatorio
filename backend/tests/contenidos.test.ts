@@ -126,8 +126,11 @@ describe('Flash', () => {
     expect((await invitado().get(subida.body.imagen)).status).toBe(404);
   });
 
-  it('exporta a Excel y PDF sin la columna de estado para el invitado', async () => {
-    const excel = await invitado().get('/api/flash/exportar?formato=xlsx').buffer(true).parse(binario);
+  it('las descargas son para cuentas registradas; el usuario no ve la columna de estado', async () => {
+    expect((await invitado().get('/api/flash/exportar?formato=xlsx')).status).toBe(401);
+
+    const { agente } = await sesion('Usuario');
+    const excel = await agente.get('/api/flash/exportar?formato=xlsx').buffer(true).parse(binario);
     expect(excel.status).toBe(200);
     expect(excel.headers['content-disposition']).toMatch(/flash-.*\.xlsx/);
     const libro = new ExcelJS.Workbook();
@@ -136,10 +139,37 @@ describe('Flash', () => {
     expect(encabezados).toContain('Título');
     expect(encabezados).not.toContain('Estado');
 
-    const pdf = await invitado().get('/api/flash/exportar?formato=pdf').buffer(true).parse(binario);
+    const pdf = await agente.get('/api/flash/exportar?formato=pdf').buffer(true).parse(binario);
     expect(pdf.status).toBe(200);
     expect(pdf.headers['content-type']).toBe('application/pdf');
     expect(Buffer.from(pdf.body).subarray(0, 4).toString()).toBe('%PDF');
+  });
+
+  it('descarga la ficha de un registro en PDF o Excel solo con sesión', async () => {
+    const { agente: gestor } = await sesion('Gestor Flash');
+    const { body: flash } = await gestor.post('/api/flash').send(nuevoFlash('Feria para descargar', { descripcion: 'Una feria con descripción larga.' }));
+    const ruta = `/api/flash/${flash.id_fi}/exportar`;
+
+    expect((await invitado().get(ruta)).status).toBe(401);
+
+    const { agente } = await sesion('Usuario');
+    const pdf = await agente.get(ruta).buffer(true).parse(binario);
+    expect(pdf.status).toBe(200);
+    expect(pdf.headers['content-type']).toBe('application/pdf');
+    expect(pdf.headers['content-disposition']).toMatch(new RegExp(`flash-${flash.id_fi}\\.pdf`));
+    expect(Buffer.from(pdf.body).subarray(0, 4).toString()).toBe('%PDF');
+
+    const excel = await agente.get(`${ruta}?formato=xlsx`).buffer(true).parse(binario);
+    expect(excel.status).toBe(200);
+    const libro = new ExcelJS.Workbook();
+    await libro.xlsx.load(excel.body as unknown as ArrayBuffer);
+    const hoja = libro.worksheets[0]!;
+    const filas = hoja.getSheetValues().filter(Boolean).map((f) => (f as unknown[]).filter(Boolean));
+    expect(filas).toContainEqual(['Flash', 'Feria para descargar']);
+    expect(filas).toContainEqual(['Descripción', 'Una feria con descripción larga.']);
+    expect(filas.some((f) => f[0] === 'Estado')).toBe(false);
+
+    expect((await agente.get('/api/flash/999999/exportar')).status).toBe(404);
   });
 });
 

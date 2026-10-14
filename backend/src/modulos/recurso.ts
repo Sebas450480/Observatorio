@@ -3,9 +3,9 @@ import { z } from 'zod';
 import type { RolBD, Sesion } from '../auth/roles.js';
 import { conRol, type Cliente } from '../db/contexto.js';
 import { ErrorApi, noEncontrado } from '../errores.js';
-import { requiereRol, usarRol } from '../middlewares/sesion.js';
+import { requiereRol, requiereSesion, usarRol } from '../middlewares/sesion.js';
 import { borrarImagen, guardarImagen, recibirArchivo } from '../servicios/archivos.js';
-import { generarExcel, generarPdf, type ColumnaExportar } from '../servicios/exportar.js';
+import { generarExcel, generarFichaExcel, generarFichaPdf, generarPdf, type ColumnaExportar } from '../servicios/exportar.js';
 import { Filtros, columnasYValores, construirPagina, esquemaPaginacion } from '../utilidades/consulta.js';
 import { ESTADOS, idPositivo, listaIdsConsulta } from '../utilidades/esquemas.js';
 
@@ -173,7 +173,7 @@ export function crearRecurso(op: OpcionesRecurso): Router {
   });
 
   // ---------------------------------------------------------------- Exportar
-  router.get('/exportar', async (req, res) => {
+  router.get('/exportar', requiereSesion, async (req, res) => {
     const formato = z.enum(['xlsx', 'pdf']).default('xlsx').parse(req.query.formato);
     const valores = esquemaListado.parse({ ...req.query, pagina: 1, limite: 1 }) as Record<string, unknown>;
     const filtros = construirFiltros(valores, req.sesion);
@@ -192,6 +192,35 @@ export function crearRecurso(op: OpcionesRecurso): Router {
     res
       .type(formato === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
       .attachment(nombreArchivo)
+      .send(contenido);
+  });
+
+  // ---------------------------------------------------------------- Descargar un registro
+  /** Datos largos que no caben en la tabla del listado pero sí en la ficha de un registro. */
+  const EXTRAS_FICHA: ColumnaExportar[] = [
+    { campo: 'descripcion', titulo: 'Descripción' },
+    { campo: 'info_adicional', titulo: 'Información adicional' },
+    { campo: 'lugar', titulo: 'Lugar' },
+    { campo: 'direccion', titulo: 'Dirección' },
+    { campo: 'link', titulo: 'Enlace' },
+  ];
+
+  // Las descargas son para cuentas registradas (el invitado ve la invitación a registrarse).
+  router.get('/:id/exportar', requiereSesion, async (req, res) => {
+    const id = idPositivo.parse(req.params.id);
+    const formato = z.enum(['xlsx', 'pdf']).default('pdf').parse(req.query.formato);
+    const fila = await conRol(req.sesion, (c) => obtener(c, id));
+    if (!fila) throw noEncontrado();
+    limpiar(fila, req.sesion);
+    const base = op.columnasExportar.filter((c) => puedeGestionar(req.sesion) || c.campo !== op.columnaEstado);
+    const columnas = [...base, ...EXTRAS_FICHA.filter((e) => e.campo in fila && !base.some((c) => c.campo === e.campo))];
+    const nombre = String(fila.titulo ?? fila.razon_social ?? fila.tendencia ?? `${op.titulo} ${id}`);
+    const contenido = formato === 'pdf'
+      ? await generarFichaPdf(op.titulo, nombre, columnas, fila)
+      : await generarFichaExcel(op.titulo, nombre, columnas, fila);
+    res
+      .type(formato === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      .attachment(`${op.nombre}-${id}.${formato}`)
       .send(contenido);
   });
 
