@@ -28,6 +28,9 @@ const HASH_FALSO = bcrypt.hashSync('contraseña-que-no-existe', 10);
 
 export const COLUMNAS_PERFIL = `u.id_usuario, u.apodo_usuario, u.nombre_usuario, u.apellido_usuario, u.correo,
   u.ciudad, u.frecuencia_alertas, u.recordatorios_eventos, u.fecha_registro, u.estado_usuario, u.id_rol, r.nombre_rol,
+  coalesce((select json_agg(json_build_object('id_rol', rr.id_rol, 'nombre_rol', rr.nombre_rol) order by rr.id_rol)
+              from usuario_rol ur join rol rr on rr.id_rol = ur.id_rol
+             where ur.id_usuario = u.id_usuario), '[]'::json) as roles,
   coalesce((select json_agg(json_build_object('id_categoria', c.id_categoria, 'nombre', c.nombre_categoria)
                             order by c.nombre_categoria)
               from usuario_interes ui join categoria c on c.id_categoria = ui.id_categoria

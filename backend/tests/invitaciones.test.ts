@@ -85,12 +85,12 @@ describe('Invitaciones a empresas coformadoras', () => {
       expect((await agente.get('/api/invitaciones')).status).toBe(403);
     }
     expect((await invitado().get('/api/invitaciones')).status).toBe(401);
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     expect((await invitar(agente)).respuesta.status).toBe(201);
   });
 
   it('no invita a un correo con cuenta ni duplica invitaciones pendientes', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const existente = await crearUsuario('Usuario');
     expect((await invitar(agente, existente.correo)).respuesta.status).toBe(409);
 
@@ -101,7 +101,7 @@ describe('Invitaciones a empresas coformadoras', () => {
   });
 
   it('reenviar cambia el enlace; anular lo invalida', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const { respuesta, correo } = await invitar(agente);
     const id = respuesta.body.id_invitacion as number;
     const primero = codigoDelCorreo(correo);
@@ -119,7 +119,7 @@ describe('Invitaciones a empresas coformadoras', () => {
   });
 
   it('un enlace vencido no sirve y aparece como Vencida', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const { respuesta, correo } = await invitar(agente);
     await db().query("update invitacion_empresa set fecha_vencimiento = now() - interval '1 minute' where id_invitacion = $1", [
       respuesta.body.id_invitacion,
@@ -132,7 +132,7 @@ describe('Invitaciones a empresas coformadoras', () => {
   });
 
   it('valida los datos y un NIT repetido no deja nada a medias', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const { correo } = await invitar(agente);
     const codigo = codigoDelCorreo(correo);
 
@@ -171,7 +171,7 @@ describe('Invitaciones en lote', () => {
   });
 
   it('valida la lista y solo la usan los gestores de empresas', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     expect((await agente.post('/api/invitaciones/lote').send({ invitaciones: [] })).status).toBe(400);
     const { agente: usuario } = await sesion('Usuario');
     expect((await usuario.post('/api/invitaciones/lote').send({ invitaciones: [] })).status).toBe(403);
@@ -180,7 +180,7 @@ describe('Invitaciones en lote', () => {
 
 describe('Mi empresa (rol Empresa Coformadora)', () => {
   async function empresaRegistrada() {
-    const { agente: gestor } = await sesion('SuperAdmin');
+    const { agente: gestor } = await sesion('Gestor Observatorio');
     const { correo } = await invitar(gestor);
     const empresa = request.agent(app);
     const registro = await empresa.post('/api/invitaciones/completar').send(datosEmpresa(codigoDelCorreo(correo)));
@@ -215,7 +215,7 @@ describe('Mi empresa (rol Empresa Coformadora)', () => {
   });
 
   it('las demás cuentas no tienen esta sección', async () => {
-    for (const rol of ['Usuario', 'SuperAdmin', 'Gestor Empresas Coformadoras'] as const) {
+    for (const rol of ['Usuario', 'Gestor Observatorio', 'Gestor Empresas Coformadoras'] as const) {
       const { agente } = await sesion(rol);
       expect((await agente.get('/api/mi-empresa')).status).toBe(403);
     }

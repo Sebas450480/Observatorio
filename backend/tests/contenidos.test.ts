@@ -67,7 +67,7 @@ describe('Flash', () => {
   });
 
   it('el SuperAdmin puede gestionar cualquier módulo', async () => {
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const r = await agente.post('/api/flash').send(nuevoFlash('Creado por SuperAdmin'));
     expect(r.status).toBe(201);
   });
