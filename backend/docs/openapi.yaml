@@ -831,7 +831,17 @@ paths:
       summary: Ejecutar el envío de alertas ahora (SuperAdmin)
       requestBody:
         required: true
-        content: { application/json: { schema: { type: object, properties: { frecuencia: { type: string, enum: [Inmediata, Semanal] } } } } }
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [frecuencia]
+              properties:
+                frecuencia:
+                  type: string
+                  enum: [Recordatorios, Inmediata, Diaria, Semanal]
+                  description: 'Recordatorios de eventos favoritos o el boletín de novedades de esa frecuencia.'
+            example: { frecuencia: Recordatorios }
       responses: { '200': { description: 'Resultado: { enviados, errores }' } }
   /api/alertas/abierto/{id}/{firma}:
     get:
