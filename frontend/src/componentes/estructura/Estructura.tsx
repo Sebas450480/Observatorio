@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Outlet, useLocation } from 'react-router';
+import { Navigate, Outlet, useLocation } from 'react-router';
+import { RUTA_MODULO, rutaPermitida, useSesion } from '../../sesion/sesion';
 import { BarraLateral } from './BarraLateral';
 import { BarraSuperior } from './BarraSuperior';
 import semicirculo from '../../assets/figma/decoraciones/semicirculo.svg';
@@ -11,6 +12,7 @@ import semicirculo from '../../assets/figma/decoraciones/semicirculo.svg';
 export function Estructura() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const ubicacion = useLocation();
+  const { soloModulos } = useSesion();
   // Al cambiar de módulo (no al abrir un registro dentro del mismo) el contenido entra de nuevo.
   const seccion = ubicacion.pathname.split('/')[1] ?? '';
   const [rutaAnterior, setRutaAnterior] = useState(ubicacion.pathname);
@@ -19,6 +21,9 @@ export function Estructura() {
     setRutaAnterior(ubicacion.pathname);
     setMenuAbierto(false);
   }
+
+  // Quien entra como gestor de un módulo solo trabaja en él (y en Mi perfil): el resto lo lleva a su módulo.
+  if (soloModulos[0] && !rutaPermitida(ubicacion.pathname, soloModulos)) return <Navigate to={RUTA_MODULO[soloModulos[0]]} replace />;
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-fondo lg:pl-[325px]">

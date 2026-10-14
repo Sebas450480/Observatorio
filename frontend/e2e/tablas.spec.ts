@@ -14,8 +14,7 @@ test.describe('Tablas', () => {
   });
 
   test('un gestor ve la tabla de Tendencias y la ordena por columna como en Excel', async ({ page }) => {
-    await iniciarSesion(page, 'gestorFlash');
-    await page.goto('/tendencias');
+    await iniciarSesion(page, 'gestorTendencias');
     await page.getByRole('button', { name: 'Vista en tabla' }).click();
     const tabla = page.getByRole('table');
     const encabezadoId = tabla.getByRole('columnheader', { name: /^ID/ });
