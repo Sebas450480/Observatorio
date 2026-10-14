@@ -4,7 +4,7 @@ import { ErrorApi, api } from '../api/cliente';
 import type { Perfil } from '../api/tipos';
 
 /** Módulos de contenido; cada uno tiene su gestor. */
-export type Modulo = 'flash' | 'faro' | 'empresas' | 'tendencias' | 'calendario';
+export type Modulo = 'flash' | 'faro' | 'empresas' | 'tendencias' | 'calendario' | 'glosario';
 
 /** Nombres del rol gestor de cada módulo ("Gestor Flash Informativo" es el nombre anterior de "Gestor Flash"). */
 const GESTOR_DE: Record<Modulo, string[]> = {
@@ -13,6 +13,7 @@ const GESTOR_DE: Record<Modulo, string[]> = {
   empresas: ['Gestor Empresas Coformadoras'],
   tendencias: ['Gestor Tendencias'],
   calendario: ['Gestor Calendario'],
+  glosario: ['Gestor Glosario'],
 };
 
 /** Página de cada módulo. */
@@ -22,6 +23,7 @@ export const RUTA_MODULO: Record<Modulo, string> = {
   empresas: '/empresas',
   tendencias: '/tendencias',
   calendario: '/eventos',
+  glosario: '/glosario',
 };
 
 export const SUPER_ADMIN = 'Super Admin';

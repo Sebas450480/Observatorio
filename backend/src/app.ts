@@ -20,6 +20,7 @@ import { rutasActividad, rutasEstadisticas } from './modulos/estadisticas.js';
 import { rutasFaro } from './modulos/faro.js';
 import { rutasFavoritos } from './modulos/favoritos.js';
 import { rutasFlash } from './modulos/flash.js';
+import { rutasGlosario } from './modulos/glosario.js';
 import { rutasInvitaciones } from './modulos/invitaciones.js';
 import { rutasMiEmpresa } from './modulos/miEmpresa.js';
 import { rutasPerfil } from './modulos/perfil.js';
@@ -87,6 +88,7 @@ export function crearApp() {
   app.use('/api/empresas', rutasEmpresas);
   app.use('/api/tendencias', rutasTendencias);
   app.use('/api/calendario', rutasCalendario);
+  app.use('/api/glosario', rutasGlosario);
   app.use('/api/actividad', rutasActividad);
   app.use('/api/estadisticas', rutasEstadisticas);
   app.use('/api/alertas', rutasAlertas);

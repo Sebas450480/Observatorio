@@ -32,7 +32,8 @@ export type NombreRol =
   | 'Gestor Flash'
   | 'Gestor Empresas Coformadoras'
   | 'Gestor Tendencias'
-  | 'Gestor Calendario';
+  | 'Gestor Calendario'
+  | 'Gestor Glosario';
 
 /** Crea un usuario con el rol indicado y devuelve sus datos. */
 export async function crearUsuario(rol: NombreRol, extra: { ciudad?: string; frecuencia?: string } = {}) {

@@ -14,7 +14,9 @@ import { RegistroEmpresa } from './paginas/empresas/RegistroEmpresa';
 import { Estadisticas } from './paginas/estadisticas/Estadisticas';
 import { FaroEmpresarial } from './paginas/faro/FaroEmpresarial';
 import { FlashInformativo } from './paginas/flash/FlashInformativo';
+import { Glosario } from './paginas/glosario/Glosario';
 import { Inicio } from './paginas/Inicio';
+import { PoliticaDatos } from './paginas/legal/PoliticaDatos';
 import { NoEncontrada } from './paginas/NoEncontrada';
 import { MiPerfil } from './paginas/perfil/MiPerfil';
 import { Usuarios } from './paginas/usuarios/Usuarios';
@@ -67,6 +69,8 @@ export const enrutador = createBrowserRouter([
       },
       // El calendario (FullCalendar) y los gráficos (Recharts) se cargan solo al abrir su página.
       { path: '/tendencias/:id?', lazy: () => import('./paginas/tendencias/Tendencias').then((m) => ({ Component: m.Tendencias })) },
+      { path: '/glosario', element: <Glosario /> },
+      { path: '/politica-de-datos', element: <PoliticaDatos /> },
       { path: '/eventos/:id?', lazy: () => import('./paginas/eventos/Eventos').then((m) => ({ Component: m.Eventos })) },
       {
         path: '/usuarios',

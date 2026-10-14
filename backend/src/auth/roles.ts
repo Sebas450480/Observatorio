@@ -14,6 +14,7 @@ export const ROLES_BD = [
   'obs_gestor_empresas',
   'obs_gestor_tendencias',
   'obs_gestor_calendario',
+  'obs_gestor_glosario',
   'obs_superadmin',
   'obs_autenticacion',
 ] as const;
@@ -34,6 +35,8 @@ export const ROL_POR_NOMBRE: Record<string, RolBD> = {
   'Gestor Empresas Coformadoras': 'obs_gestor_empresas',
   'Gestor Tendencias': 'obs_gestor_tendencias',
   'Gestor Calendario': 'obs_gestor_calendario',
+  /** Rol delegado por el Super Admin para administrar el glosario. */
+  'Gestor Glosario': 'obs_gestor_glosario',
 };
 
 export const SUPER_ADMIN = 'Super Admin';
@@ -69,6 +72,7 @@ const PRIORIDAD: RolBD[] = [
   'obs_gestor_empresas',
   'obs_gestor_tendencias',
   'obs_gestor_calendario',
+  'obs_gestor_glosario',
   'obs_empresa',
   'obs_usuario',
 ];
