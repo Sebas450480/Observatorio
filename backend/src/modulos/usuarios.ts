@@ -60,7 +60,22 @@ async function asignarRoles(c: Cliente, idUsuario: number, roles: { id_rol: numb
 const listaRoles = z.array(z.number().int().positive()).min(1, 'Elige al menos un rol').max(12);
 const rolesPedidos = (d: { roles?: number[]; id_rol?: number }) => d.roles ?? (d.id_rol !== undefined ? [d.id_rol] : undefined);
 
+/** Columnas de la tabla de usuarios por las que se puede ordenar. */
+const ORDENES: Record<string, string> = {
+  id: 'u.id_usuario',
+  apodo: 'lower(u.apodo_usuario)',
+  nombre: 'lower(u.nombre_usuario)',
+  apellido: 'lower(u.apellido_usuario)',
+  correo: 'lower(u.correo)',
+  ciudad: 'lower(u.ciudad)',
+  rol: 'lower(r.nombre_rol)',
+  estado: 'u.estado_usuario',
+  registro: 'u.fecha_registro',
+};
+
 const esquemaFiltros = esquemaPaginacion.extend({
+  orden: z.enum(Object.keys(ORDENES) as [string, ...string[]]).optional(),
+  direccion: z.enum(['asc', 'desc']).optional(),
   q: z.string().trim().min(1).max(100).optional(),
   id_rol: idPositivo.optional(),
   estado: z.enum(ESTADOS).optional(),
@@ -79,7 +94,7 @@ rutasUsuarios.get('/', async (req, res) => {
     const total = await c.query<{ total: number }>(`select count(*)::int as total from usuario u ${f.where()}`, f.valores);
     const filas = await c.query(
       `select ${COLUMNAS_PERFIL} from usuario u join rol r on r.id_rol = u.id_rol ${f.where()}
-        order by u.fecha_registro desc, u.id_usuario desc
+        order by ${v.orden ? `${ORDENES[v.orden]} ${v.direccion ?? 'asc'} nulls last, u.id_usuario ${v.direccion ?? 'asc'}` : 'u.fecha_registro desc, u.id_usuario desc'}
         limit ${f.param(v.limite)} offset ${f.param((v.pagina - 1) * v.limite)}`,
       f.valores,
     );

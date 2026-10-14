@@ -1,6 +1,5 @@
-import { AlertTriangle, Download, FileSpreadsheet, FileText, Inbox, LoaderCircle } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { urlDescarga } from '../../api/cliente';
+import { AlertTriangle, Inbox, LoaderCircle } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { ICONOS_MODULO, type Modulo } from '../../assets/figma/iconos';
 import flechaDerecha from '../../assets/figma/iconos/flecha-derecha.svg';
 import flechaIzquierda from '../../assets/figma/iconos/flecha-izquierda.svg';
@@ -161,52 +160,6 @@ export function MensajeError({ mensaje, onReintentar }: { mensaje: string; onRei
         <button type="button" onClick={onReintentar} className="cursor-pointer font-semibold text-azul-titulo underline">
           Reintentar
         </button>
-      )}
-    </div>
-  );
-}
-
-/** Menú "Exportar" con descarga en PDF o Excel del listado filtrado. */
-export function MenuExportar({ ruta, consulta }: { ruta: string; consulta: Record<string, string | number | boolean | undefined> }) {
-  const [abierto, setAbierto] = useState(false);
-  const contenedor = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!abierto) return;
-    const cerrar = (e: MouseEvent) => {
-      if (!contenedor.current?.contains(e.target as Node)) setAbierto(false);
-    };
-    document.addEventListener('mousedown', cerrar);
-    return () => document.removeEventListener('mousedown', cerrar);
-  }, [abierto]);
-
-  return (
-    <div ref={contenedor} className="relative">
-      <button
-        type="button"
-        onClick={() => setAbierto((a) => !a)}
-        aria-expanded={abierto}
-        className="inline-flex h-[42px] cursor-pointer items-center gap-2 rounded-full border border-borde bg-white px-4 text-small font-semibold text-azul-titulo hover:bg-fondo"
-      >
-        <Download className="size-4" aria-hidden />
-        Exportar
-      </button>
-      {abierto && (
-        <div className="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-xl bg-white py-1 shadow-menu">
-          <a
-            href={urlDescarga(`${ruta}/exportar`, { ...consulta, formato: 'pdf' })}
-            className="flex items-center gap-2 px-4 py-2.5 text-small text-texto hover:bg-fondo"
-            onClick={() => setAbierto(false)}
-          >
-            <FileText className="size-4 text-rojo" aria-hidden /> Descargar PDF
-          </a>
-          <a
-            href={urlDescarga(`${ruta}/exportar`, { ...consulta, formato: 'xlsx' })}
-            className="flex items-center gap-2 px-4 py-2.5 text-small text-texto hover:bg-fondo"
-            onClick={() => setAbierto(false)}
-          >
-            <FileSpreadsheet className="size-4 text-exito" aria-hidden /> Descargar Excel
-          </a>
-        </div>
       )}
     </div>
   );

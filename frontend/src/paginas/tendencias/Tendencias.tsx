@@ -13,11 +13,13 @@ import vistaGrande from '../../assets/figma/tendencias/vista-grande.svg';
 import vistaLista from '../../assets/figma/tendencias/vista-lista.svg';
 import { useListado } from '../../api/consultas';
 import type { Tendencia } from '../../api/tipos';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { BotonOrden, ariaOrden, consultaOrden, type Orden } from '../../componentes/ui/Orden';
 import { useSesion } from '../../sesion/sesion';
 import { fechaCorta, numero } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
@@ -74,25 +76,41 @@ function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void })
           </span>
         </span>
       </button>
-      <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} className="absolute right-3 top-4" />
+      <div className="absolute right-3 top-4 flex gap-1">
+        <BotonDescargar ruta="/tendencias" id={t.id_te} titulo={t.tendencia} />
+        <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} />
+      </div>
     </div>
   );
 }
 
-const COLUMNAS_TABLA = [
-  { titulo: 'ID', ancho: 49 },
-  { titulo: 'Megatendencia', ancho: 310 },
-  { titulo: 'Tendencia', ancho: 205 },
-  { titulo: 'Descripción', ancho: 210 },
-  { titulo: 'Mundo', ancho: 186 },
-  { titulo: 'Colombia', ancho: 190 },
-  { titulo: 'Fecha', ancho: 130 },
+/** `orden`: nombre del orden en la API (las columnas sin él no se ordenan). */
+const COLUMNAS_TABLA: { titulo: string; ancho: number; orden?: string }[] = [
+  { titulo: 'ID', ancho: 64, orden: 'id' },
+  { titulo: 'Megatendencia', ancho: 300, orden: 'megatendencia' },
+  { titulo: 'Tendencia', ancho: 205, orden: 'tendencia' },
+  { titulo: 'Descripción', ancho: 210, orden: 'descripcion' },
+  { titulo: 'Mundo', ancho: 186, orden: 'mundo' },
+  { titulo: 'Colombia', ancho: 190, orden: 'colombia' },
+  { titulo: 'Fecha', ancho: 130, orden: 'publicacion' },
   { titulo: 'Fuente', ancho: 83 },
 ];
 
-function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onAbrir: (id: number) => void; onEditar?: (t: Tendencia) => void }) {
+function TablaTendencias({
+  datos,
+  onAbrir,
+  onEditar,
+  orden,
+  onOrdenar,
+}: {
+  datos: Tendencia[];
+  onAbrir: (id: number) => void;
+  onEditar?: (t: Tendencia) => void;
+  orden: Orden;
+  onOrdenar: (orden: Orden) => void;
+}) {
   const { usuario } = useSesion();
-  const columnas = [
+  const columnas: { titulo: string; ancho: number; orden?: string }[] = [
     ...COLUMNAS_TABLA,
     ...(usuario ? [{ titulo: 'Favorito', ancho: 90 }] : []),
     ...(onEditar ? [{ titulo: 'Acciones', ancho: 141 }] : []),
@@ -115,6 +133,7 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
               </span>
             </button>
             <div className="flex shrink-0 flex-col items-center gap-1">
+              <BotonDescargar ruta="/tendencias" id={t.id_te} titulo={t.tendencia} />
               <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} />
               {t.fuentes[0]?.link && (
                 <a href={t.fuentes[0].link} target="_blank" rel="noreferrer" aria-label={`Fuente de ${t.tendencia}`} className="grid size-10 place-items-center rounded-lg hover:bg-black/5">
@@ -143,9 +162,10 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
                 <th
                   key={c.titulo}
                   scope="col"
+                  aria-sort={c.orden ? ariaOrden(orden, c.orden) : undefined}
                   className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2' : ''} ${i === columnas.length - 1 ? 'border-r-2' : ''}`}
                 >
-                  {c.titulo}
+                  {c.orden ? <BotonOrden titulo={c.titulo} campo={c.orden} orden={orden} onOrdenar={onOrdenar} /> : c.titulo}
                 </th>
               ))}
             </tr>
@@ -175,7 +195,10 @@ function TablaTendencias({ datos, onAbrir, onEditar }: { datos: Tendencia[]; onA
                 </td>
                 {usuario && (
                   <td className={celda}>
-                    <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} className="mx-auto" />
+                    <div className="flex justify-center">
+                      <BotonDescargar ruta="/tendencias" id={t.id_te} titulo={t.tendencia} />
+                      <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} />
+                    </div>
                   </td>
                 )}
                 {onEditar && (
@@ -200,13 +223,16 @@ const FILTROS_INICIALES = { megatendencia: '', q: '', dias: '', estado: '' };
 export function Tendencias() {
   const { id } = useParams();
   const navegar = useNavigate();
-  const { puedeGestionar } = useSesion();
+  const { puedeGestionar, esSuperAdmin, esGestor } = useSesion();
   const gestiona = puedeGestionar('tendencias');
+  /** La vista en tabla es solo para los gestores y la administración (no para el público ni los invitados). */
+  const conTabla = esSuperAdmin || esGestor;
+  const [orden, setOrden] = useState<Orden>(null);
   const [pestana, setPestana] = useState<'lista' | 'mapa'>('lista');
   const [vistaElegida, setVista] = useState<VistaLista>('tarjetas');
   // En celular solo se usan las tarjetas compactas: la tabla y las tarjetas grandes no caben bien.
   const ancha = useConsultaMedia(DESDE_SM);
-  const vista: VistaLista = ancha ? vistaElegida : 'compactas';
+  const vista: VistaLista = !ancha ? 'compactas' : vistaElegida === 'tabla' && !conTabla ? 'tarjetas' : vistaElegida;
   const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
@@ -232,7 +258,12 @@ export function Tendencias() {
     estado: filtros.estado || undefined,
   };
   const limite = vista === 'tabla' ? 15 : vista === 'compactas' ? 12 : 8;
-  const { data, isLoading, error, refetch } = useListado<Tendencia>('/tendencias', { ...consulta, pagina, limite });
+  const { data, isLoading, error, refetch } = useListado<Tendencia>('/tendencias', {
+    ...consulta,
+    ...(vista === 'tabla' ? consultaOrden(orden) : {}),
+    pagina,
+    limite,
+  });
   const abrir = (idT: number) => navegar(`/tendencias/${idT}`);
   // Desde el mapa: vuelve al listado con la megatendencia y la tendencia elegidas como filtros.
   const verTendencia = (megatendencia: string, tendencia: string) => {
@@ -262,11 +293,13 @@ export function Tendencias() {
     `h-10 flex-1 cursor-pointer whitespace-nowrap rounded-full px-2 text-caption font-bold tracking-[0.02em] min-[400px]:text-small sm:rounded-[15px] sm:text-body ${
       activa ? 'bg-rojo-activo text-white' : 'text-black hover:bg-fondo sm:border-2 sm:border-black/10 sm:bg-[#fdfdfc]'
     }`;
-  const vistas: { valor: VistaLista; etiqueta: string; icono: string; forma: string; ancho: string }[] = [
+  type OpcionVista = { valor: VistaLista; etiqueta: string; icono: string; forma: string; ancho: string };
+  const vistas = ([
     { valor: 'tarjetas', etiqueta: 'Vista en tarjetas', icono: vistaGrande, forma: 'rounded-l-[20px]', ancho: 'w-[47px]' },
     { valor: 'compactas', etiqueta: 'Vista compacta', icono: vistaCompacta, forma: '', ancho: 'w-[47px]' },
     { valor: 'tabla', etiqueta: 'Vista en tabla', icono: vistaLista, forma: 'rounded-r-[20px]', ancho: 'w-[50px]' },
-  ];
+  ] as OpcionVista[]).filter((v) => v.valor !== 'tabla' || conTabla);
+  if (!conTabla) vistas[vistas.length - 1]!.forma = 'rounded-r-[20px]';
 
   return (
     <>
@@ -276,15 +309,10 @@ export function Tendencias() {
         subtitulo="Megatendencias globales y su impacto en Colombia"
         claseSubtitulo="text-body font-bold tracking-[-0.5px] text-[#0d2375] sm:text-subtitle"
         acciones={
-          pestana === 'lista' ? (
-            <>
-              {gestiona && (
-                <Boton variante="secundario" pildora icono={<FileUp className="size-4" />} onClick={() => setImportar(true)}>
-                  Importar Excel
-                </Boton>
-              )}
-              <MenuExportar ruta="/tendencias" consulta={consulta} />
-            </>
+          pestana === 'lista' && gestiona ? (
+            <Boton variante="secundario" pildora icono={<FileUp className="size-4" />} onClick={() => setImportar(true)}>
+              Importar Excel
+            </Boton>
           ) : undefined
         }
         className="mb-6"
@@ -391,7 +419,16 @@ export function Tendencias() {
           ) : (
             <>
               {vista === 'tabla' ? (
-                <TablaTendencias datos={data.datos} onAbrir={abrir} onEditar={gestiona ? (t) => setFormulario({ registro: t }) : undefined} />
+                <TablaTendencias
+                  datos={data.datos}
+                  onAbrir={abrir}
+                  onEditar={gestiona ? (t) => setFormulario({ registro: t }) : undefined}
+                  orden={orden}
+                  onOrdenar={(o) => {
+                    setOrden(o);
+                    setPagina(1);
+                  }}
+                />
               ) : (
                 <div className={`grid gap-6 ${vista === 'tarjetas' ? 'lg:grid-cols-2 xl:gap-8' : 'sm:grid-cols-2 xl:grid-cols-3 xl:gap-x-[33px] xl:gap-y-[30px]'}`}>
                   {data.datos.map((t) => (

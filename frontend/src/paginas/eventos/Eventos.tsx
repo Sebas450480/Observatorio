@@ -16,6 +16,7 @@ import {
   AccionesDetalle, BotonDetalle, CajaDetalle, CUERPO_DETALLE, codigoDetalle, DatoDetalle, DatosDetalle, EnlaceDetalle, ICONO_DETALLE,
   MetaDetalle, SeccionDetalle, TextoDetalle,
 } from '../../componentes/contenido/Detalle';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { EncabezadoPagina, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
@@ -120,7 +121,12 @@ function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerra
       destacado
       claseCuerpo={CUERPO_DETALLE}
       titulo={<span className="uppercase">{evento.titulo}</span>}
-      accion={<BotonFavorito tipo="Evento" id={evento.id_evento} titulo={evento.titulo} variante="encabezado" />}
+      accion={
+        <div className="flex gap-2">
+          <BotonDescargar ruta="/calendario" id={evento.id_evento} titulo={evento.titulo} variante="encabezado" />
+          <BotonFavorito tipo="Evento" id={evento.id_evento} titulo={evento.titulo} variante="encabezado" />
+        </div>
+      }
       sobreTitulo={<MetaDetalle etiqueta={nombreTipoEvento(evento)}>{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</MetaDetalle>}
     >
       <CuerpoEvento evento={evento} onEditar={onEditar} />

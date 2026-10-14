@@ -12,6 +12,7 @@ import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { Boton } from '../../componentes/ui/Boton';
 import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { BotonOrden, ariaOrden, consultaOrden, type Orden } from '../../componentes/ui/Orden';
 import { SUPER_ADMIN, descripcionRol, descripcionRoles, mismoRol, rolesDe, useSesion } from '../../sesion/sesion';
 
 const esSuperAdminDe = (perfil?: Pick<Perfil, 'nombre_rol' | 'roles'> | null) => rolesDe(perfil).some((r) => mismoRol(r, SUPER_ADMIN));
@@ -139,6 +140,18 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
   );
 }
 
+/** Columnas de la tabla; `orden` es el nombre del orden en la API. */
+const COLUMNAS: { titulo: string; orden?: string }[] = [
+  { titulo: 'ID', orden: 'id' },
+  { titulo: 'Apodo', orden: 'apodo' },
+  { titulo: 'Nombre', orden: 'nombre' },
+  { titulo: 'Apellido', orden: 'apellido' },
+  { titulo: 'Correo', orden: 'correo' },
+  { titulo: 'Estado', orden: 'estado' },
+  { titulo: 'Rol', orden: 'rol' },
+  { titulo: 'Acciones' },
+];
+
 /** Gestión de usuarios (Super Admin y Gestor Observatorio). */
 const FILTROS_INICIALES = { q: '', id_rol: '', estado: '' };
 
@@ -148,7 +161,9 @@ export function Usuarios() {
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const [formulario, setFormulario] = useState<{ registro?: Perfil } | null>(null);
+  const [orden, setOrden] = useState<Orden>(null);
   const { data, isLoading, error, refetch } = useListado<Perfil>('/usuarios', {
+    ...consultaOrden(orden),
     q: filtros.q || undefined,
     id_rol: filtros.id_rol || undefined,
     estado: filtros.estado || undefined,
@@ -278,13 +293,26 @@ export function Usuarios() {
               </colgroup>
               <thead>
                 <tr>
-                  {['ID', 'Apodo', 'Nombre', 'Apellido', 'Correo', 'Estado', 'Rol', 'Acciones'].map((c, i) => (
+                  {COLUMNAS.map((c, i) => (
                     <th
-                      key={c}
+                      key={c.titulo}
                       scope="col"
+                      aria-sort={c.orden ? ariaOrden(orden, c.orden) : undefined}
                       className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2 pr-[23px]' : ''} ${i === 6 ? 'pl-14' : ''} ${i === 7 ? 'border-r-2' : ''}`}
                     >
-                      {c}
+                      {c.orden ? (
+                        <BotonOrden
+                          titulo={c.titulo}
+                          campo={c.orden}
+                          orden={orden}
+                          onOrdenar={(o) => {
+                            setOrden(o);
+                            setPagina(1);
+                          }}
+                        />
+                      ) : (
+                        c.titulo
+                      )}
                     </th>
                   ))}
                 </tr>

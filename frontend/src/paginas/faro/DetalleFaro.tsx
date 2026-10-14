@@ -10,6 +10,7 @@ import { Cargando, Etiqueta, InsigniaEstado, MensajeError } from '../../componen
 import { Modal } from '../../componentes/ui/Modal';
 import { costo, fechaLarga, modalidadTexto } from '../../utilidades/formato';
 import { ESTILO_TIPO } from './FaroEmpresarial';
+import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 
 /** Detalle de una beca, convocatoria, curso o taller (Figma: "Modal — Detalle beca"). */
@@ -30,7 +31,14 @@ export function DetalleFaro({ id, onCerrar, onEditar }: { id: number; onCerrar: 
       destacado
       claseCuerpo={CUERPO_DETALLE}
       titulo={faro?.titulo ?? 'Faro Empresarial'}
-      accion={faro && <BotonFavorito tipo="Faro" id={faro.id_fe} titulo={faro.titulo} variante="encabezado" />}
+      accion={
+        faro && (
+          <div className="flex gap-2">
+            <BotonDescargar ruta="/faro" id={faro.id_fe} titulo={faro.titulo} variante="encabezado" />
+            <BotonFavorito tipo="Faro" id={faro.id_fe} titulo={faro.titulo} variante="encabezado" />
+          </div>
+        )
+      }
       sobreTitulo={
         faro && (
           <>
