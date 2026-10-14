@@ -8,7 +8,9 @@ import { Registro } from './paginas/auth/Registro';
 import { RestablecerContrasena } from './paginas/auth/RestablecerContrasena';
 import { DirectorioEmpresas } from './paginas/empresas/DirectorioEmpresas';
 import { FormularioEmpresa } from './paginas/empresas/FormularioEmpresa';
+import { Invitaciones } from './paginas/empresas/Invitaciones';
 import { PerfilEmpresa } from './paginas/empresas/PerfilEmpresa';
+import { RegistroEmpresa } from './paginas/empresas/RegistroEmpresa';
 import { Estadisticas } from './paginas/estadisticas/Estadisticas';
 import { FaroEmpresarial } from './paginas/faro/FaroEmpresarial';
 import { FlashInformativo } from './paginas/flash/FlashInformativo';
@@ -26,6 +28,8 @@ export const enrutador = createBrowserRouter([
   { path: '/registro', element: <Registro /> },
   { path: '/recuperar-contrasena', element: <RecuperarContrasena /> },
   { path: '/restablecer-contrasena', element: <RestablecerContrasena /> },
+  // Enlace del correo de invitación a una empresa coformadora.
+  { path: '/registro-empresa', element: <RegistroEmpresa /> },
   {
     element: <Estructura />,
     // Mientras se descarga una página que se carga aparte (Eventos, Tendencias).
@@ -41,6 +45,14 @@ export const enrutador = createBrowserRouter([
         element: (
           <RequiereSesion modulo="empresas">
             <FormularioEmpresa />
+          </RequiereSesion>
+        ),
+      },
+      {
+        path: '/empresas/invitaciones',
+        element: (
+          <RequiereSesion modulo="empresas">
+            <Invitaciones />
           </RequiereSesion>
         ),
       },

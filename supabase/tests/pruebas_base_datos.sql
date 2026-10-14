@@ -326,6 +326,59 @@ begin
     if not exists (select 1 from public.usuario where correo = 'PRUEBA.USUARIO@TEST.CO') then
         raise exception 'FALLO 4.2: el login no encuentra el correo escrito en mayúsculas';
     end if;
+
+    -- Registro de una empresa por invitación: nace activa y ligada a la cuenta.
+    begin
+        insert into public.empresa_coformadora (nit, razon_social, sector_economico, departamento, municipio, estado_ec, id_usuario)
+        select 'PRUEBA-NIT-INV', 'Invitada', 'x', 'x', 'x', 'Inactivo', id_usuario
+          from public.usuario where correo = 'prueba.registro@test.co';
+        raise exception 'FALLO 4.3: el registro por invitación puede crear una empresa inactiva';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+        insert into public.empresa_coformadora (nit, razon_social, sector_economico, departamento, municipio)
+        values ('PRUEBA-NIT-INV', 'Invitada', 'x', 'x', 'x');
+        raise exception 'FALLO 4.4: el registro por invitación puede crear una empresa sin cuenta';
+    exception when insufficient_privilege then null;
+    end;
+    insert into public.empresa_coformadora (nit, razon_social, sector_economico, departamento, municipio, id_usuario)
+    select 'PRUEBA-NIT-INV', 'Invitada', 'x', 'x', 'x', id_usuario
+      from public.usuario where correo = 'prueba.registro@test.co';
+    begin
+        delete from public.empresa_coformadora where nit = 'PRUEBA-NIT-INV';
+        raise exception 'FALLO 4.5: autenticación puede eliminar empresas';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+        insert into public.invitacion_empresa (nombre_contacto, apellido_contacto, correo, token_hash, fecha_vencimiento)
+        values ('Falsa', 'Invitación', 'falsa@test.co', 'x', now() + interval '1 day');
+        raise exception 'FALLO 4.6: autenticación puede crear invitaciones';
+    exception when insufficient_privilege then null;
+    end;
+end;
+$$;
+
+reset role;
+
+-- Las invitaciones son solo del SuperAdmin y del Gestor Empresas.
+set local role obs_gestor_empresas;
+insert into public.invitacion_empresa (nombre_contacto, apellido_contacto, correo, token_hash, fecha_vencimiento)
+values ('Ana', 'Pérez', 'prueba.invitada@test.co', 'huella-1', now() + interval '7 days');
+do $$
+begin
+    insert into public.invitacion_empresa (nombre_contacto, apellido_contacto, correo, token_hash, fecha_vencimiento)
+    values ('Ana', 'Pérez', 'PRUEBA.INVITADA@test.co', 'huella-2', now() + interval '7 days');
+    raise exception 'FALLO 4.7: se aceptaron dos invitaciones pendientes para el mismo correo';
+exception when unique_violation then null;
+end;
+$$;
+reset role;
+set local role obs_usuario;
+do $$
+begin
+    perform 1 from public.invitacion_empresa;
+    raise exception 'FALLO 4.8: un usuario puede ver las invitaciones';
+exception when insufficient_privilege then null;
 end;
 $$;
 

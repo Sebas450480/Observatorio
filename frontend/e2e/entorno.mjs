@@ -7,6 +7,8 @@ export const CONTRASENA_BACKEND_E2E = 'obs_backend_e2e';
 export const PUERTO_BACKEND = 3100;
 export const PUERTO_FRONTEND = 5174;
 export const CONTRASENA = 'Prueba-E2E-2026';
+/** Código del enlace de la invitación a una empresa que crea preparar-bd.mjs. */
+export const CODIGO_INVITACION = 'codigo-e2e-invitacion-empresa-0001';
 
 /** Una cuenta por perfil. */
 export const CUENTAS = {

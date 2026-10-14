@@ -27,6 +27,8 @@ tags:
   - name: Flash
   - name: Faro Empresarial
   - name: Empresas Coformadoras
+  - name: Invitaciones
+    description: Registro de empresas coformadoras por invitación. Gestión solo SuperAdmin y Gestor Empresas.
   - name: Tendencias
   - name: Calendario
   - name: Estadísticas
@@ -672,6 +674,86 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Contacto' } } } }
       responses: { '200': { description: Contacto actualizado } }
     delete: { tags: [Empresas Coformadoras], summary: Eliminar contacto, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+
+  # ------------------------------------------------------------------ Invitaciones
+  /api/invitaciones:
+    get:
+      tags: [Invitaciones]
+      summary: Invitaciones enviadas (estado Pendiente, Vencida, Completada o Anulada)
+      responses:
+        '200': { description: '[{ id_invitacion, nombre_contacto, apellido_contacto, correo, nombre_empresa, id_ec, estado, fecha_envio, fecha_vencimiento, fecha_completada }]' }
+        '403': { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Invitaciones]
+      summary: Invitar una empresa (envía el correo con el enlace de registro, vigente 7 días)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre_contacto, apellido_contacto, correo]
+              properties:
+                nombre_contacto: { type: string, maxLength: 50 }
+                apellido_contacto: { type: string, maxLength: 50 }
+                correo: { type: string, format: email }
+                nombre_empresa: { type: string, maxLength: 150, nullable: true }
+      responses:
+        '201': { description: 'Invitación creada; correo_enviado indica si el correo salió' }
+        '409': { description: El correo ya tiene cuenta o una invitación pendiente }
+  /api/invitaciones/{id}/reenviar:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    post:
+      tags: [Invitaciones]
+      summary: Reenviar con un enlace nuevo (el anterior deja de servir)
+      responses: { '200': { description: Invitación reenviada }, '409': { description: No está pendiente } }
+  /api/invitaciones/{id}/anular:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    post:
+      tags: [Invitaciones]
+      summary: Anular (el enlace deja de servir)
+      responses: { '200': { description: Invitación anulada }, '409': { description: No está pendiente } }
+  /api/invitaciones/codigo/{codigo}:
+    get:
+      tags: [Invitaciones]
+      summary: Datos de la invitación del enlace del correo (sin sesión)
+      security: []
+      parameters: [{ name: codigo, in: path, required: true, schema: { type: string } }]
+      responses:
+        '200': { description: '{ nombre_contacto, apellido_contacto, correo, nombre_empresa, fecha_vencimiento }' }
+        '404': { description: El enlace no es válido, ya se usó o venció }
+  /api/invitaciones/completar:
+    post:
+      tags: [Invitaciones]
+      summary: La empresa completa su registro (crea la cuenta, publica la empresa e inicia sesión)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, contrasena, acepta_tratamiento_datos, razon_social, nit, sector_economico, descripcion,
+                         tamano_empresa, anio_constitucion, departamento, municipio, estudiantes_recibidos]
+              properties:
+                codigo: { type: string }
+                contrasena: { type: string, minLength: 8, maxLength: 72 }
+                acepta_tratamiento_datos: { type: boolean, enum: [true] }
+                razon_social: { type: string, maxLength: 150 }
+                nombre_comercial: { type: string, maxLength: 100, nullable: true }
+                nit: { type: string, maxLength: 20 }
+                sector_economico: { type: string, maxLength: 50 }
+                descripcion: { type: string }
+                tamano_empresa: { type: string, enum: [Micro, Pequeña, Mediana, Grande] }
+                anio_constitucion: { type: integer }
+                departamento: { type: string }
+                municipio: { type: string }
+                direccion: { type: string, nullable: true }
+                estudiantes_recibidos: { type: integer, minimum: 0 }
+      responses:
+        '201': { description: '{ id_ec, usuario } y cookie de sesión' }
+        '400': { description: Datos inválidos o enlace vencido }
+        '409': { description: NIT o correo ya registrados }
 
   # ------------------------------------------------------------------ Tendencias
   /api/tendencias:

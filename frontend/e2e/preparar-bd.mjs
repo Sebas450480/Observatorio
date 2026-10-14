@@ -3,9 +3,10 @@
  * estructura (supabase/schema.sql), datos de ejemplo (supabase/seed.sql) y una cuenta por perfil.
  * Usa las dependencias del backend (pg y bcryptjs) para no duplicarlas en el frontend.
  */
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { BASE_E2E, CONTRASENA, CONTRASENA_BACKEND_E2E, CUENTAS, urlAdmin } from './entorno.mjs';
+import { BASE_E2E, CODIGO_INVITACION, CONTRASENA, CONTRASENA_BACKEND_E2E, CUENTAS, urlAdmin } from './entorno.mjs';
 
 const requerir = createRequire(new URL('../../backend/package.json', import.meta.url));
 const pg = requerir('pg');
@@ -35,5 +36,11 @@ for (const c of Object.values(CUENTAS)) {
     [c.nombre, c.apellido, c.correo, hash, c.rol],
   );
 }
+// Invitación pendiente con un código conocido (sin SMTP el correo no llega a ninguna parte).
+await base.query(
+  `insert into invitacion_empresa (nombre_contacto, apellido_contacto, correo, nombre_empresa, token_hash, fecha_vencimiento)
+   values ('Mateo', 'Rojas', 'empresa.invitada.e2e@empresa.co', 'Invitada E2E S.A.S.', $1, now() + interval '7 days')`,
+  [createHash('sha256').update(CODIGO_INVITACION).digest('hex')],
+);
 await base.end();
 console.log(`Base de datos ${BASE_E2E} lista.`);
