@@ -111,8 +111,24 @@ export interface Sesion {
   nombreRol: string | null;
   /** Todos los roles de PostgreSQL de la cuenta (una cuenta puede tener varios). */
   roles: RolBD[];
-  /** Nombres de todos los roles de la cuenta. */
+  /** Nombres de los roles con los que actúa (solo el elegido al entrar, si la cuenta tiene varios). */
   nombresRoles: string[];
+  /** Rol elegido al iniciar sesión (cuentas con varios roles), o null si actúa con todos. */
+  rolActivo: string | null;
+  /** "Recordar sesión" del token actual. */
+  recordar: boolean;
 }
 
-export const SESION_INVITADO: Sesion = { idUsuario: null, rol: 'obs_invitado', nombreRol: null, roles: [], nombresRoles: [] };
+export const SESION_INVITADO: Sesion = {
+  idUsuario: null, rol: 'obs_invitado', nombreRol: null, roles: [], nombresRoles: [], rolActivo: null, recordar: true,
+};
+
+/**
+ * Roles con los que actúa la sesión. Con un rol elegido al entrar, solo ese
+ * (si la cuenta aún lo tiene); si no, todos los de la cuenta.
+ */
+export function rolesDeSesion(nombresCuenta: string[], elegido: string | null): { nombres: string[]; rolActivo: string | null } {
+  const canonico = elegido ? nombreRolCanonico(elegido) : null;
+  if (canonico && nombresCuenta.length > 1 && nombresCuenta.includes(canonico)) return { nombres: [canonico], rolActivo: canonico };
+  return { nombres: nombresCuenta, rolActivo: null };
+}

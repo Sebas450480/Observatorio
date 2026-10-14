@@ -35,6 +35,13 @@ for (const c of Object.values(CUENTAS)) {
      select $1, $2, $3, $4, 'Bogotá', true, now(), id_rol from rol where nombre_rol = $5`,
     [c.nombre, c.apellido, c.correo, hash, c.rol],
   );
+  for (const otro of c.otrosRoles ?? []) {
+    await base.query(
+      `insert into usuario_rol (id_usuario, id_rol)
+       select u.id_usuario, r.id_rol from usuario u, rol r where u.correo = $1 and r.nombre_rol = $2`,
+      [c.correo, otro],
+    );
+  }
 }
 // Invitación pendiente con un código conocido (sin SMTP el correo no llega a ninguna parte).
 await base.query(

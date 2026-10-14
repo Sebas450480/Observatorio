@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { config } from '../config.js';
@@ -10,7 +10,8 @@ import {
 } from '../auth/tokens.js';
 import { enviarCorreo, escaparHtml, plantillaCorreo } from '../servicios/correo.js';
 import { FRECUENCIAS_ALERTA, contrasena, correo, listaIds, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
-import type { Sesion } from '../auth/roles.js';
+import { nombreRolCanonico, nombreRolPrincipal, type Sesion } from '../auth/roles.js';
+import { nombresDeRolesValidos, requiereSesion } from '../middlewares/sesion.js';
 
 export const rutasAuth = Router();
 
@@ -36,15 +37,24 @@ export const COLUMNAS_PERFIL = `u.id_usuario, u.apodo_usuario, u.nombre_usuario,
               from usuario_interes ui join categoria c on c.id_categoria = ui.id_categoria
              where ui.id_usuario = u.id_usuario), '[]'::json) as intereses`;
 
-/** Perfil del usuario de la sesión (con su rol e intereses). */
+/** Perfil del usuario de la sesión (con sus roles, el rol con el que entró y sus intereses). */
 export async function obtenerPerfil(sesion: Sesion) {
   return conRol(sesion, async (c) => {
     const { rows } = await c.query(
       `select ${COLUMNAS_PERFIL} from usuario u join rol r on r.id_rol = u.id_rol where u.id_usuario = $1`,
       [sesion.idUsuario],
     );
-    return rows[0];
+    return rows[0] && { ...rows[0], rol_activo: sesion.rolActivo };
   });
+}
+
+/** Nombres oficiales de los roles de un perfil. */
+const nombresDelPerfil = (perfil: { roles: { nombre_rol: string }[] }) => nombresDeRolesValidos(perfil.roles.map((r) => r.nombre_rol));
+
+/** Guarda en la cookie el token de sesión (con el rol elegido) respetando "Recordar sesión". */
+function guardarCookieSesion(res: Response, idUsuario: number, rol: string | null, recordar: boolean) {
+  const { maxAge, ...sinVencimiento } = opcionesCookie();
+  res.cookie(NOMBRE_COOKIE, firmarToken(idUsuario, { rol, recordar }), recordar ? { ...sinVencimiento, maxAge } : sinVencimiento);
 }
 
 async function guardarIntereses(c: Cliente, idUsuario: number, intereses: number[]) {
@@ -127,9 +137,27 @@ rutasAuth.post('/login', limiteIntentos, async (req, res) => {
   if (!usuario || !correcta) throw new ErrorApi(401, 'Correo o contraseña incorrectos');
   if (usuario.estado_usuario !== 'Activo') throw new ErrorApi(403, 'Tu cuenta está inactiva. Contacta al administrador.');
 
-  const { maxAge, ...sinVencimiento } = opcionesCookie();
-  res.cookie(NOMBRE_COOKIE, firmarToken(usuario.id_usuario), datos.recordar ? { ...sinVencimiento, maxAge } : sinVencimiento);
-  res.json(await perfilPorId(usuario.id_usuario));
+  // Con varios roles entra con el principal; la pantalla le pide elegir con cuál seguir (POST /auth/rol).
+  const perfil = await perfilPorId(usuario.id_usuario);
+  const nombres = nombresDelPerfil(perfil);
+  const rolActivo = nombres.length > 1 ? nombreRolPrincipal(nombres) : null;
+  guardarCookieSesion(res, usuario.id_usuario, rolActivo, datos.recordar);
+  res.json({ ...perfil, rol_activo: rolActivo });
+});
+
+// ---------------------------------------------------------------------- Rol con el que actúa
+/** Cuentas con varios roles: elegir (o cambiar) el rol con el que se usa la plataforma. */
+rutasAuth.post('/rol', requiereSesion, async (req, res) => {
+  const datos = z.object({ rol: z.string().trim().min(1).max(60) }).parse(req.body);
+  const idUsuario = req.sesion.idUsuario!;
+  const perfil = await perfilPorId(idUsuario);
+  const nombres = nombresDelPerfil(perfil);
+  const elegido = nombreRolCanonico(datos.rol);
+  if (!nombres.includes(elegido)) throw new ErrorApi(400, 'Tu cuenta no tiene ese rol');
+
+  const rolActivo = nombres.length > 1 ? elegido : null;
+  guardarCookieSesion(res, idUsuario, rolActivo, req.sesion.recordar);
+  res.json({ ...perfil, rol_activo: rolActivo });
 });
 
 export async function perfilPorId(idUsuario: number) {

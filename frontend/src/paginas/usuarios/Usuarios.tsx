@@ -35,13 +35,13 @@ type DatosCrear = z.infer<typeof esquemaCrear>;
 type DatosEditar = z.infer<typeof esquemaEditar>;
 
 function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar: () => void }) {
-  const { usuario: yo } = useSesion();
+  const { usuario: yo, roles: misRoles } = useSesion();
   const { data: roles = [] } = useRoles();
   const guardarApi = useGuardar<Perfil>('/usuarios');
   const eliminarApi = useEliminar('/usuarios');
   const editar = !!registro;
   // Solo un Super Admin asigna ese rol o cambia los roles y el estado de quien lo tiene.
-  const soySuperior = esSuperAdminDe(yo);
+  const soySuperior = misRoles.some((r) => mismoRol(r, SUPER_ADMIN));
   const protegido = !soySuperior && esSuperAdminDe(registro);
   const propio = registro?.id_usuario === yo?.id_usuario;
   const bloqueado = propio || protegido;

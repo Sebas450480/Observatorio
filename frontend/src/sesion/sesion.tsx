@@ -62,6 +62,31 @@ export function rolesDe(perfil: Pick<Perfil, 'nombre_rol' | 'roles'> | null | un
   return [...new Set(nombres.map(nombreRol))];
 }
 
+/** Roles con los que actúa la sesión: el elegido al entrar o, si no eligió, todos los de la cuenta. */
+export function rolesActivosDe(perfil: Pick<Perfil, 'nombre_rol' | 'roles' | 'rol_activo'> | null | undefined): string[] {
+  return perfil?.rol_activo ? [nombreRol(perfil.rol_activo)] : rolesDe(perfil);
+}
+
+/** Qué puede hacer cada rol (para elegir con cuál entrar). */
+export function funcionesRol(nombre: string): string {
+  const rol = nombreRol(nombre);
+  if (mismoRol(rol, SUPER_ADMIN)) return 'Control total del Observatorio, incluidos los demás administradores.';
+  if (mismoRol(rol, GESTOR_OBSERVATORIO)) return 'Administra todos los módulos, los usuarios y las estadísticas.';
+  if (esRolEmpresa(rol)) return 'Edita la información de tu empresa en el directorio.';
+  const modulo = (Object.keys(GESTOR_DE) as Modulo[]).find((m) => rolEnLista(rol, GESTOR_DE[m]));
+  if (modulo) return `Crea, edita y elimina contenidos de ${NOMBRE_MODULO[modulo]}.`;
+  return 'Consulta los contenidos, guarda favoritos y recibe alertas.';
+}
+
+const NOMBRE_MODULO: Record<Modulo, string> = {
+  flash: 'Flash Informativo',
+  faro: 'Faro Empresarial',
+  empresas: 'Empresas Coformadoras',
+  tendencias: 'Tendencias',
+  calendario: 'Eventos',
+  glosario: 'Glosario',
+};
+
 /** Texto del botón del menú de sesión según el rol principal. */
 export function etiquetaRol(nombre: string | undefined): string {
   if (!nombre) return 'Iniciar sesión';
@@ -76,9 +101,9 @@ export function descripcionRol(nombre: string): string {
   return nombreRol(nombre);
 }
 
-/** Todos los roles de la cuenta en una línea ("Gestor Faro Empresarial · Empresa Coformadora"). */
-export function descripcionRoles(perfil: Pick<Perfil, 'nombre_rol' | 'roles'>): string {
-  return rolesDe(perfil).join(' · ');
+/** Roles con los que actúa, en una línea ("Gestor Faro Empresarial · Empresa Coformadora"). */
+export function descripcionRoles(perfil: Pick<Perfil, 'nombre_rol' | 'roles' | 'rol_activo'>): string {
+  return rolesActivosDe(perfil).join(' · ');
 }
 
 interface ContextoSesion {
@@ -91,8 +116,14 @@ interface ContextoSesion {
   modulosGestor: Modulo[];
   /** ¿Tiene el rol Empresa Coformadora? */
   esEmpresa: boolean;
-  /** Nombres de todos sus roles. */
+  /** Roles con los que actúa ahora (el elegido al entrar, si la cuenta tiene varios). */
   roles: string[];
+  /** Todos los roles de la cuenta. */
+  rolesCuenta: string[];
+  /** Rol elegido al entrar (cuentas con varios roles). */
+  rolActivo: string | null;
+  /** Cambia el rol con el que actúa la sesión. */
+  elegirRol: (rol: string) => Promise<Perfil>;
   /** ¿Puede crear, editar y eliminar en este módulo? */
   puedeGestionar: (modulo: Modulo) => boolean;
   iniciarSesion: (correo: string, contrasena: string, recordar: boolean) => Promise<Perfil>;
@@ -134,6 +165,17 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     [clienteConsultas, establecerUsuario],
   );
 
+  const elegirRol = useCallback(
+    async (rol: string) => {
+      const perfil = await api<Perfil>('/auth/rol', { metodo: 'POST', cuerpo: { rol } });
+      // Lo que se ve y se puede editar cambia con el rol: se descarta lo consultado con el anterior.
+      clienteConsultas.removeQueries({ predicate: (q) => q.queryKey[0] !== CLAVE_SESION[0] });
+      establecerUsuario(perfil);
+      return perfil;
+    },
+    [clienteConsultas, establecerUsuario],
+  );
+
   const cerrarSesion = useCallback(async () => {
     await api('/auth/logout', { metodo: 'POST' }).catch(() => undefined);
     clienteConsultas.removeQueries({ predicate: (q) => q.queryKey[0] !== CLAVE_SESION[0] });
@@ -141,7 +183,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
   }, [clienteConsultas, establecerUsuario]);
 
   const valor = useMemo<ContextoSesion>(() => {
-    const roles = rolesDe(usuario);
+    const roles = rolesActivosDe(usuario);
     const esSuperAdmin = roles.some((r) => esRolSuperAdmin(r));
     const modulosGestor = (Object.keys(GESTOR_DE) as Modulo[]).filter((m) => roles.some((r) => rolEnLista(r, GESTOR_DE[m])));
     return {
@@ -152,12 +194,15 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       modulosGestor,
       esEmpresa: roles.some((r) => esRolEmpresa(r)),
       roles,
+      rolesCuenta: rolesDe(usuario),
+      rolActivo: usuario?.rol_activo ? nombreRol(usuario.rol_activo) : null,
+      elegirRol,
       puedeGestionar: (modulo) => esSuperAdmin || modulosGestor.includes(modulo),
       iniciarSesion,
       cerrarSesion,
       establecerUsuario,
     };
-  }, [usuario, isLoading, iniciarSesion, cerrarSesion, establecerUsuario]);
+  }, [usuario, isLoading, iniciarSesion, elegirRol, cerrarSesion, establecerUsuario]);
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

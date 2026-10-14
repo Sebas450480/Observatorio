@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { Menu } from 'lucide-react';
+import { Menu, Repeat } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
 import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
 import { descripcionRoles, etiquetaRol, useSesion } from '../../sesion/sesion';
+import { ModalElegirRol } from '../ModalElegirRol';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 
@@ -142,8 +143,9 @@ function BuscadorGlobal() {
 
 /** Botón rojo con el rol y menú desplegable (Figma: "Menú de sesión"). */
 function MenuSesion() {
-  const { usuario, cerrarSesion, esEmpresa } = useSesion();
+  const { usuario, cerrarSesion, esEmpresa, rolesCuenta, rolActivo } = useSesion();
   const [abierto, setAbierto] = useState(false);
+  const [cambiarRol, setCambiarRol] = useState(false);
   const navegar = useNavigate();
   const contenedor = useRef<HTMLDivElement>(null);
 
@@ -176,7 +178,7 @@ function MenuSesion() {
   return (
     <div ref={contenedor} className="relative">
       <button type="button" className={claseBoton} onClick={() => setAbierto((a) => !a)} aria-expanded={abierto} aria-haspopup="menu">
-        <span className="hidden sm:inline">{etiquetaRol(usuario.nombre_rol)}</span>
+        <span className="hidden sm:inline">{etiquetaRol(rolActivo ?? usuario.nombre_rol)}</span>
         <img src={iconoUsuario} alt={`Sesión de ${usuario.nombre_usuario}`} className="size-8 sm:size-10" />
       </button>
       {abierto && (
@@ -211,6 +213,23 @@ function MenuSesion() {
               <span className="text-caption text-gris-azulado">{esEmpresa ? 'Ver y editar mis datos y mi empresa' : 'Ver y editar mis datos'}</span>
             </span>
           </button>
+          {rolesCuenta.length > 1 && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setAbierto(false);
+                setCambiarRol(true);
+              }}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left hover:bg-fondo"
+            >
+              <Repeat className="size-[22px] shrink-0 p-0.5 text-azul-marino" aria-hidden />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-small font-semibold text-azul-marino">Cambiar de rol</span>
+                <span className="text-caption text-gris-azulado">Tu cuenta tiene {rolesCuenta.length} roles</span>
+              </span>
+            </button>
+          )}
           <div className="h-px bg-[#e8ebf2]" />
           <button
             type="button"
@@ -226,6 +245,15 @@ function MenuSesion() {
             Cerrar sesión
           </button>
         </div>
+      )}
+      {cambiarRol && (
+        <ModalElegirRol
+          onCerrar={(rol) => {
+            setCambiarRol(false);
+            // Con otro rol cambian los módulos que gestiona: se vuelve al inicio.
+            if (rol) navegar('/inicio');
+          }}
+        />
       )}
     </div>
   );
