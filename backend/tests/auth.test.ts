@@ -16,6 +16,14 @@ describe('Salud', () => {
     expect(r.body.openapi).toBe('3.0.3');
   });
 
+  it('muestra la documentación interactiva en /api/docs sin redirigir', async () => {
+    const pagina = await invitado().get('/api/docs');
+    expect(pagina.status).toBe(200);
+    expect(pagina.text).toContain('/api/docs.json');
+    expect((await invitado().get('/api/docs/archivos/swagger-ui-bundle.js')).status).toBe(200);
+    expect((await invitado().get('/api/docs/archivos/swagger-ui.css')).status).toBe(200);
+  });
+
   it('responde 404 en rutas que no existen', async () => {
     const r = await invitado().get('/api/no-existe');
     expect(r.status).toBe(404);

@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
-import swaggerUi from 'swagger-ui-express';
+import { getAbsoluteFSPath } from 'swagger-ui-dist';
 import YAML from 'yaml';
 import { config } from './config.js';
 import { pool } from './db/pool.js';
@@ -24,6 +24,21 @@ import { rutasPerfil } from './modulos/perfil.js';
 import { rutasTendencias } from './modulos/tendencias.js';
 import { rutasUsuarios } from './modulos/usuarios.js';
 
+const PAGINA_DOCS = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Observatorio Empresarial</title>
+  <link rel="stylesheet" href="/api/docs/archivos/swagger-ui.css">
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="/api/docs/archivos/swagger-ui-bundle.js"></script>
+  <script>SwaggerUIBundle({ url: '/api/docs.json', dom_id: '#swagger-ui', deepLinking: true });</script>
+</body>
+</html>`;
+
 export function crearApp() {
   const app = express();
 
@@ -42,9 +57,10 @@ export function crearApp() {
   // Documentación interactiva de la API.
   const especificacion = YAML.parse(readFileSync(new URL('../docs/openapi.yaml', import.meta.url), 'utf8'));
   app.get('/api/docs.json', (_req, res) => res.json(especificacion));
-  app.use('/api/docs', helmet({ contentSecurityPolicy: false }), swaggerUi.serve, swaggerUi.setup(especificacion, {
-    customSiteTitle: 'API Observatorio Empresarial',
-  }));
+  // La página se sirve en /api/docs sin redirigir a /api/docs/ (en Vercel esa ruta con barra da 404),
+  // por eso los archivos de Swagger UI se piden con rutas absolutas.
+  app.use('/api/docs/archivos', express.static(getAbsoluteFSPath(), { index: false, maxAge: '7d' }));
+  app.get('/api/docs', helmet({ contentSecurityPolicy: false }), (_req, res) => res.type('html').send(PAGINA_DOCS));
 
   app.get('/api/salud', async (_req, res) => {
     await pool.query('select 1');
