@@ -34,8 +34,17 @@ export const ROL_POR_NOMBRE: Record<string, RolBD> = {
   'Gestor Calendario': 'obs_gestor_calendario',
 };
 
+/** Compara nombres de rol sin importar mayúsculas ni espacios de más ("SuperAdmin superior" = "SuperAdmin Superior"). */
+const clave = (nombre: string) => nombre.trim().replace(/\s+/g, ' ').toLowerCase();
+const NOMBRE_POR_CLAVE = new Map(Object.keys(ROL_POR_NOMBRE).map((nombre) => [clave(nombre), nombre]));
+
+/** Nombre oficial del rol (el de ROL_POR_NOMBRE), aunque en la base esté escrito con otras mayúsculas. */
+export function nombreRolCanonico(nombreRol: string): string {
+  return NOMBRE_POR_CLAVE.get(clave(nombreRol)) ?? nombreRol;
+}
+
 export function rolBdDesdeNombre(nombreRol: string): RolBD {
-  const rol = ROL_POR_NOMBRE[nombreRol];
+  const rol = ROL_POR_NOMBRE[nombreRolCanonico(nombreRol)];
   if (!rol) {
     throw new Error(`El rol "${nombreRol}" no tiene un rol de PostgreSQL asociado`);
   }

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { z } from 'zod';
+import { nombreRolCanonico } from '../auth/roles.js';
 import { config } from '../config.js';
 import { conRol, type Cliente } from '../db/contexto.js';
 import { ErrorApi, noEncontrado, prohibido } from '../errores.js';
@@ -26,12 +27,12 @@ async function nombreRolDeUsuario(c: Cliente, idUsuario: number): Promise<string
     'select r.nombre_rol from usuario u join rol r on r.id_rol = u.id_rol where u.id_usuario = $1',
     [idUsuario],
   );
-  return rows[0]?.nombre_rol;
+  return rows[0] && nombreRolCanonico(rows[0].nombre_rol);
 }
 
 async function nombreRol(c: Cliente, idRol: number): Promise<string | undefined> {
   const { rows } = await c.query<{ nombre_rol: string }>('select nombre_rol from rol where id_rol = $1', [idRol]);
-  return rows[0]?.nombre_rol;
+  return rows[0] && nombreRolCanonico(rows[0].nombre_rol);
 }
 
 const esquemaFiltros = esquemaPaginacion.extend({

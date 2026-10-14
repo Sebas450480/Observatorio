@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 import { conAutenticacion } from '../db/contexto.js';
 import { NOMBRE_COOKIE, verificarToken } from '../auth/tokens.js';
-import { ROL_POR_NOMBRE, SESION_INVITADO, type RolBD, type Sesion } from '../auth/roles.js';
+import { ROL_POR_NOMBRE, SESION_INVITADO, nombreRolCanonico, type RolBD, type Sesion } from '../auth/roles.js';
 import { noAutenticado, prohibido } from '../errores.js';
 
 declare module 'express-serve-static-core' {
@@ -51,10 +51,11 @@ export const identificarSesion: RequestHandler = async (req, _res, next) => {
     return next();
   }
 
-  const rol = ROL_POR_NOMBRE[usuario.nombre_rol];
+  const nombreRol = nombreRolCanonico(usuario.nombre_rol);
+  const rol = ROL_POR_NOMBRE[nombreRol];
   if (!rol) return next();
 
-  req.sesion = { idUsuario: datos.idUsuario, rol, nombreRol: usuario.nombre_rol };
+  req.sesion = { idUsuario: datos.idUsuario, rol, nombreRol };
   next();
 };
 
