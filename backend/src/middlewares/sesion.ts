@@ -1,7 +1,9 @@
 import type { RequestHandler } from 'express';
 import { conAutenticacion } from '../db/contexto.js';
 import { NOMBRE_COOKIE, verificarToken } from '../auth/tokens.js';
-import { ROL_POR_NOMBRE, SESION_INVITADO, nombreRolCanonico, type RolBD, type Sesion } from '../auth/roles.js';
+import {
+  ROL_POR_NOMBRE, SESION_INVITADO, nombreRolCanonico, nombreRolPrincipal, rolPrincipal, type RolBD, type Sesion,
+} from '../auth/roles.js';
 import { noAutenticado, prohibido } from '../errores.js';
 
 declare module 'express-serve-static-core' {
@@ -33,9 +35,11 @@ export const identificarSesion: RequestHandler = async (req, _res, next) => {
   if (!datos) return next();
 
   const usuario = await conAutenticacion(async (c) => {
-    const { rows } = await c.query<{ estado_usuario: string; nombre_rol: string; fecha_cambio_contrasena: Date | null }>(
-      `select u.estado_usuario, r.nombre_rol, u.fecha_cambio_contrasena
-         from usuario u join rol r on r.id_rol = u.id_rol
+    const { rows } = await c.query<{ estado_usuario: string; fecha_cambio_contrasena: Date | null; roles: string[] }>(
+      `select u.estado_usuario, u.fecha_cambio_contrasena,
+              array(select r.nombre_rol from usuario_rol ur join rol r on r.id_rol = ur.id_rol
+                     where ur.id_usuario = u.id_usuario) as roles
+         from usuario u
         where u.id_usuario = $1`,
       [datos.idUsuario],
     );
@@ -51,13 +55,26 @@ export const identificarSesion: RequestHandler = async (req, _res, next) => {
     return next();
   }
 
-  const nombreRol = nombreRolCanonico(usuario.nombre_rol);
-  const rol = ROL_POR_NOMBRE[nombreRol];
-  if (!rol) return next();
+  const nombresRoles = [...new Set(usuario.roles.map(nombreRolCanonico).filter((n) => ROL_POR_NOMBRE[n]))];
+  if (!nombresRoles.length) return next();
+  const roles = [...new Set(nombresRoles.map((n) => ROL_POR_NOMBRE[n]!))];
 
-  req.sesion = { idUsuario: datos.idUsuario, rol, nombreRol };
+  req.sesion = { idUsuario: datos.idUsuario, rol: rolPrincipal(roles), nombreRol: nombreRolPrincipal(nombresRoles), roles, nombresRoles };
   next();
 };
+
+/**
+ * Si la cuenta tiene el rol indicado, las consultas de la petición se hacen con él.
+ * Así una cuenta con varios roles usa en cada módulo el rol que lo gestiona
+ * (por ejemplo, Gestor Faro en Faro Empresarial y Empresa Coformadora en Mi empresa).
+ * El SuperAdmin conserva su rol: ya puede todo.
+ */
+export function usarRol(req: { sesion: Sesion }, rol: RolBD): boolean {
+  if (req.sesion.rol === 'obs_superadmin') return true;
+  if (!req.sesion.roles.includes(rol)) return false;
+  req.sesion = { ...req.sesion, rol };
+  return true;
+}
 
 /** Exige haber iniciado sesión. */
 export const requiereSesion: RequestHandler = (req, _res, next) => {
@@ -69,7 +86,7 @@ export const requiereSesion: RequestHandler = (req, _res, next) => {
 export function requiereRol(...roles: RolBD[]): RequestHandler {
   return (req, _res, next) => {
     if (req.sesion.idUsuario === null) return next(noAutenticado());
-    if (req.sesion.rol !== 'obs_superadmin' && !roles.includes(req.sesion.rol)) return next(prohibido());
+    if (req.sesion.rol !== 'obs_superadmin' && !roles.some((r) => usarRol(req, r))) return next(prohibido());
     next();
   };
 }

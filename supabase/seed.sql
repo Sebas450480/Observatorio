@@ -4,12 +4,12 @@
 --
 -- Se carga automáticamente con `supabase db reset` (ver supabase/config.toml).
 -- Contiene:
---   * Catálogos reales: los 7 roles y las categorías.
+--   * Catálogos reales: los roles y las categorías (Empresa Coformadora la crea su migración).
 --   * Datos de EJEMPLO tomados del prototipo en Figma, para que backend y
 --     frontend tengan con qué trabajar. Las empresas distintas de
 --     TecnoSoluciones y los NIT son ficticios.
 --
--- No crea usuarios: el SuperAdmin inicial se crea en la Fase 2 con un script
+-- No crea usuarios: el Super Admin inicial se crea en la Fase 2 con un script
 -- del backend, para que ninguna contraseña quede escrita en el repositorio.
 -- =============================================================================
 
@@ -17,14 +17,14 @@
 -- Roles
 -- -----------------------------------------------------------------------------
 insert into public.rol (nombre_rol, descripcion_rol, permisos) values
-    ('SuperAdmin',                   'Administrador del sistema. Control total de la plataforma, usuarios, roles, categorías y estadísticas.', 'Crear, modificar, eliminar y visualizar todas las tablas'),
+    ('Gestor Observatorio',          'Rol transversal: administra todos los módulos, los usuarios, las categorías y las estadísticas.', 'Crear, modificar, eliminar y visualizar todas las tablas'),
     ('Usuario',                      'Usuario registrado. Consulta los registros activos de todos los módulos y administra su perfil e intereses.', 'Visualizar registros activos; editar su perfil'),
     ('Gestor Faro Empresarial',      'Administra becas, convocatorias, cursos y talleres del Faro Empresarial.', 'CRUD Faro Empresarial; visualizar los demás módulos'),
     ('Gestor Flash',                 'Administra los eventos del Flash.',             'CRUD Flash; visualizar los demás módulos'),
     ('Gestor Empresas Coformadoras', 'Administra el catálogo de empresas coformadoras y sus contactos.', 'CRUD Empresas Coformadoras; visualizar los demás módulos'),
     ('Gestor Tendencias',            'Administra las tendencias, sus fuentes y menciones.', 'CRUD Tendencias; visualizar los demás módulos'),
     ('Gestor Calendario',            'Administra los eventos institucionales del calendario.', 'CRUD Calendario; visualizar los demás módulos'),
-    ('SuperAdmin Superior',          'Administrador principal. Las mismas funciones del SuperAdmin; ningún otro SuperAdmin puede cambiarle el rol.', 'Crear, modificar, eliminar y visualizar todas las tablas');
+    ('Super Admin',                  'Control total del sistema. Solo otro Super Admin puede asignar este rol o cambiarle los roles y el estado.', 'Crear, modificar, eliminar y visualizar todas las tablas');
 
 -- -----------------------------------------------------------------------------
 -- Categorías (intereses y etiquetas de contenidos)

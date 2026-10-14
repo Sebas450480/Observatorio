@@ -16,7 +16,9 @@ export const rutasMiEmpresa = Router();
 
 const soloEmpresa: RequestHandler = (req, _res, next) => {
   if (req.sesion.idUsuario === null) return next(noAutenticado());
-  if (req.sesion.rol !== 'obs_empresa') return next(prohibido('Solo las cuentas de empresas coformadoras tienen esta sección'));
+  // Solo con el rol Empresa Coformadora (aunque la cuenta tenga además otros roles).
+  if (!req.sesion.roles.includes('obs_empresa')) return next(prohibido('Solo las cuentas de empresas coformadoras tienen esta sección'));
+  req.sesion = { ...req.sesion, rol: 'obs_empresa' };
   next();
 };
 rutasMiEmpresa.use(soloEmpresa);

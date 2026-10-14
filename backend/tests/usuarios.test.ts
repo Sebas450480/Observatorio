@@ -40,7 +40,7 @@ describe('Mi perfil', () => {
 describe('Gestión de usuarios (SuperAdmin)', () => {
   it('lista y filtra usuarios sin exponer contraseñas', async () => {
     await crearUsuario('Usuario', { ciudad: 'Cali' });
-    const { agente } = await sesion('SuperAdmin');
+    const { agente } = await sesion('Gestor Observatorio');
     const r = await agente.get('/api/usuarios?ciudad=cali');
     expect(r.status).toBe(200);
     expect(r.body.total).toBeGreaterThanOrEqual(1);
@@ -48,7 +48,7 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
   });
 
   it('crea un gestor y le cambia el rol; el cambio aplica de inmediato', async () => {
-    const { agente: admin } = await sesion('SuperAdmin');
+    const { agente: admin } = await sesion('Gestor Observatorio');
     const roles = await admin.get('/api/roles');
     const idRol = (nombre: string) => roles.body.find((r: { nombre_rol: string }) => r.nombre_rol === nombre).id_rol;
 
@@ -68,15 +68,15 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
   });
 
   it('el SuperAdmin no puede quitarse su rol ni eliminarse', async () => {
-    const { agente, usuario } = await sesion('SuperAdmin');
+    const { agente, usuario } = await sesion('Gestor Observatorio');
     expect((await agente.patch(`/api/usuarios/${usuario.id}`).send({ estado_usuario: 'Inactivo' })).status).toBe(400);
     expect((await agente.delete(`/api/usuarios/${usuario.id}`)).status).toBe(400);
   });
 
   it('un SuperAdmin no puede cambiarle el rol a un SuperAdmin Superior, eliminarlo ni asignar ese rol', async () => {
-    const { agente: admin } = await sesion('SuperAdmin');
-    const { agente: superior } = await sesion('SuperAdmin Superior');
-    const protegido = await crearUsuario('SuperAdmin Superior');
+    const { agente: admin } = await sesion('Gestor Observatorio');
+    const { agente: superior } = await sesion('Super Admin');
+    const protegido = await crearUsuario('Super Admin');
     const roles = (await admin.get('/api/roles')).body as { id_rol: number; nombre_rol: string }[];
     const idRol = (nombre: string) => roles.find((r) => r.nombre_rol === nombre)!.id_rol;
 
@@ -84,24 +84,24 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
     expect((await admin.patch(`/api/usuarios/${protegido.id}`).send({ estado_usuario: 'Inactivo' })).status).toBe(403);
     expect((await admin.delete(`/api/usuarios/${protegido.id}`)).status).toBe(403);
     const otro = await crearUsuario('Usuario');
-    expect((await admin.patch(`/api/usuarios/${otro.id}`).send({ id_rol: idRol('SuperAdmin Superior') })).status).toBe(403);
+    expect((await admin.patch(`/api/usuarios/${otro.id}`).send({ id_rol: idRol('Super Admin') })).status).toBe(403);
 
     // El SuperAdmin Superior sí puede, y tiene las funciones del SuperAdmin.
-    expect((await superior.patch(`/api/usuarios/${otro.id}`).send({ id_rol: idRol('SuperAdmin Superior') })).status).toBe(200);
+    expect((await superior.patch(`/api/usuarios/${otro.id}`).send({ id_rol: idRol('Super Admin') })).status).toBe(200);
     expect((await superior.patch(`/api/usuarios/${protegido.id}`).send({ estado_usuario: 'Inactivo' })).status).toBe(200);
     expect((await superior.get('/api/usuarios')).status).toBe(200);
   });
 
   it('reconoce el rol aunque en la base esté escrito con otras mayúsculas ("SuperAdmin superior")', async () => {
-    const { agente: admin } = await sesion('SuperAdmin');
-    const { agente: superior } = await sesion('SuperAdmin Superior');
-    const protegido = await crearUsuario('SuperAdmin Superior');
-    await db().query(`update rol set nombre_rol = 'SuperAdmin superior' where nombre_rol = 'SuperAdmin Superior'`);
+    const { agente: admin } = await sesion('Gestor Observatorio');
+    const { agente: superior } = await sesion('Super Admin');
+    const protegido = await crearUsuario('Super Admin');
+    await db().query(`update rol set nombre_rol = 'SuperAdmin superior' where nombre_rol = 'Super Admin'`);
     try {
       expect((await superior.get('/api/usuarios')).status).toBe(200);
       expect((await admin.delete(`/api/usuarios/${protegido.id}`)).status).toBe(403);
     } finally {
-      await db().query(`update rol set nombre_rol = 'SuperAdmin Superior' where nombre_rol = 'SuperAdmin superior'`);
+      await db().query(`update rol set nombre_rol = 'Super Admin' where nombre_rol = 'SuperAdmin superior'`);
     }
   });
 
@@ -125,7 +125,7 @@ describe('Catálogos', () => {
     expect(deGestor.status).toBe(201);
     expect((await gestor.delete(`/api/categorias/${deGestor.body.id_categoria}`)).status).toBe(403);
 
-    const { agente: admin } = await sesion('SuperAdmin');
+    const { agente: admin } = await sesion('Gestor Observatorio');
     const creada = await admin.post('/api/categorias').send({ nombre_categoria: 'Robótica' });
     expect(creada.status).toBe(201);
     expect((await admin.post('/api/categorias').send({ nombre_categoria: 'Robótica' })).status).toBe(409);

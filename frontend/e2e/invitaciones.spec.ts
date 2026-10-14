@@ -80,7 +80,7 @@ test.describe('Empresas por invitación', () => {
 
     // Mi perfil muestra la ficha de su empresa para editarla en cualquier momento.
     await page.getByRole('button', { name: 'Sesión de Mateo' }).click();
-    await expect(page.getByText('Ver y editar mi empresa')).toBeVisible();
+    await expect(page.getByText('Ver y editar mis datos y mi empresa')).toBeVisible();
     await page.getByRole('menuitem', { name: /Mi perfil/ }).click();
     const miEmpresa = page.getByRole('form', { name: /Mi empresa/ });
     await expect(miEmpresa.getByText('empresa.invitada.e2e@empresa.co')).toBeVisible();

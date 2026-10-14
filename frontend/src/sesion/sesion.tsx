@@ -15,7 +15,7 @@ const GESTOR_DE: Record<Modulo, string[]> = {
   calendario: ['Gestor Calendario'],
 };
 
-/** Página de cada módulo; un gestor solo puede entrar a la de su módulo. */
+/** Página de cada módulo. */
 export const RUTA_MODULO: Record<Modulo, string> = {
   flash: '/flash-informativo',
   faro: '/faro-empresarial',
@@ -24,43 +24,73 @@ export const RUTA_MODULO: Record<Modulo, string> = {
   calendario: '/eventos',
 };
 
-/** Roles con todas las funciones del SuperAdmin. */
-export const ROLES_SUPERADMIN = ['SuperAdmin', 'SuperAdmin Superior'];
-
-/** ¿Es el mismo rol? Sin importar mayúsculas ni espacios de más ("SuperAdmin superior" = "SuperAdmin Superior"). */
-export const mismoRol = (a: string | undefined, b: string) =>
-  !!a && a.trim().replace(/\s+/g, ' ').toLowerCase() === b.toLowerCase();
-const rolEnLista = (nombreRol: string | undefined, lista: string[]) => lista.some((r) => mismoRol(nombreRol, r));
-
-export const esRolSuperAdmin = (nombreRol: string | undefined) => rolEnLista(nombreRol, ROLES_SUPERADMIN);
-
+export const SUPER_ADMIN = 'Super Admin';
+export const GESTOR_OBSERVATORIO = 'Gestor Observatorio';
 /** Cuenta que representa a una empresa coformadora (registro por invitación). */
 export const ROL_EMPRESA = 'Empresa Coformadora';
-export const esRolEmpresa = (nombreRol: string | undefined) => mismoRol(nombreRol, ROL_EMPRESA);
 
-/** Texto del botón del menú de sesión, como en el Figma. */
-export function etiquetaRol(nombreRol: string | undefined): string {
-  if (!nombreRol) return 'Iniciar sesión';
-  if (esRolSuperAdmin(nombreRol)) return 'SuperAdmin';
-  if (nombreRol.startsWith('Gestor')) return 'Gestor';
-  if (esRolEmpresa(nombreRol)) return 'Empresa';
+/** Roles con control de todo el Observatorio. */
+export const ROLES_SUPERADMIN = [SUPER_ADMIN, GESTOR_OBSERVATORIO];
+
+const clave = (nombre: string) => nombre.trim().replace(/\s+/g, ' ').toLowerCase();
+
+/** Nombres anteriores de los roles (bases que aún no tienen la migración que los renombra). */
+const NOMBRES_ANTERIORES: Record<string, string> = {
+  'superadmin superior': SUPER_ADMIN,
+  superadmin: GESTOR_OBSERVATORIO,
+  'gestor flash informativo': 'Gestor Flash',
+};
+
+/** Nombre oficial del rol, sin importar mayúsculas, espacios de más ni el nombre anterior. */
+export function nombreRol(nombre: string): string {
+  return NOMBRES_ANTERIORES[clave(nombre)] ?? nombre.trim().replace(/\s+/g, ' ');
+}
+
+/** ¿Es el mismo rol? ("Super admin" = "Super Admin" = "SuperAdmin Superior"). */
+export const mismoRol = (a: string | undefined, b: string) => !!a && clave(nombreRol(a)) === clave(nombreRol(b));
+const rolEnLista = (nombre: string | undefined, lista: string[]) => lista.some((r) => mismoRol(nombre, r));
+
+export const esRolSuperAdmin = (nombre: string | undefined) => rolEnLista(nombre, ROLES_SUPERADMIN);
+export const esRolEmpresa = (nombre: string | undefined) => mismoRol(nombre, ROL_EMPRESA);
+
+/** Nombres de todos los roles de la cuenta. */
+export function rolesDe(perfil: Pick<Perfil, 'nombre_rol' | 'roles'> | null | undefined): string[] {
+  if (!perfil) return [];
+  const nombres = perfil.roles?.length ? perfil.roles.map((r) => r.nombre_rol) : [perfil.nombre_rol];
+  return [...new Set(nombres.map(nombreRol))];
+}
+
+/** Texto del botón del menú de sesión según el rol principal. */
+export function etiquetaRol(nombre: string | undefined): string {
+  if (!nombre) return 'Iniciar sesión';
+  if (mismoRol(nombre, SUPER_ADMIN)) return 'Super Admin';
+  if (nombreRol(nombre).startsWith('Gestor')) return 'Gestor';
+  if (esRolEmpresa(nombre)) return 'Empresa';
   return 'Usuario';
 }
 
-/** Descripción del rol para el menú de sesión y Mi perfil. */
-export function descripcionRol(nombreRol: string): string {
-  if (mismoRol(nombreRol, 'SuperAdmin')) return 'Superadministrador';
-  if (mismoRol(nombreRol, 'SuperAdmin Superior')) return 'Superadministrador superior';
-  return nombreRol;
+/** Nombre del rol para mostrar (con su nombre oficial). */
+export function descripcionRol(nombre: string): string {
+  return nombreRol(nombre);
+}
+
+/** Todos los roles de la cuenta en una línea ("Gestor Faro Empresarial · Empresa Coformadora"). */
+export function descripcionRoles(perfil: Pick<Perfil, 'nombre_rol' | 'roles'>): string {
+  return rolesDe(perfil).join(' · ');
 }
 
 interface ContextoSesion {
   usuario: Perfil | null;
   cargando: boolean;
   esSuperAdmin: boolean;
+  /** ¿Gestiona al menos un módulo? */
   esGestor: boolean;
-  /** Módulo del gestor (solo ve y entra a ese módulo); null para los demás roles. */
-  moduloGestor: Modulo | null;
+  /** Módulos que gestiona (de los demás ve lo mismo que un usuario: solo lectura). */
+  modulosGestor: Modulo[];
+  /** ¿Tiene el rol Empresa Coformadora? */
+  esEmpresa: boolean;
+  /** Nombres de todos sus roles. */
+  roles: string[];
   /** ¿Puede crear, editar y eliminar en este módulo? */
   puedeGestionar: (modulo: Modulo) => boolean;
   iniciarSesion: (correo: string, contrasena: string, recordar: boolean) => Promise<Perfil>;
@@ -109,14 +139,18 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
   }, [clienteConsultas, establecerUsuario]);
 
   const valor = useMemo<ContextoSesion>(() => {
-    const rol = usuario?.nombre_rol;
+    const roles = rolesDe(usuario);
+    const esSuperAdmin = roles.some((r) => esRolSuperAdmin(r));
+    const modulosGestor = (Object.keys(GESTOR_DE) as Modulo[]).filter((m) => roles.some((r) => rolEnLista(r, GESTOR_DE[m])));
     return {
       usuario,
       cargando: isLoading,
-      esSuperAdmin: esRolSuperAdmin(rol),
-      esGestor: !!rol?.startsWith('Gestor'),
-      moduloGestor: (Object.keys(GESTOR_DE) as Modulo[]).find((m) => rolEnLista(rol, GESTOR_DE[m])) ?? null,
-      puedeGestionar: (modulo) => esRolSuperAdmin(rol) || rolEnLista(rol, GESTOR_DE[modulo]),
+      esSuperAdmin,
+      esGestor: modulosGestor.length > 0,
+      modulosGestor,
+      esEmpresa: roles.some((r) => esRolEmpresa(r)),
+      roles,
+      puedeGestionar: (modulo) => esSuperAdmin || modulosGestor.includes(modulo),
       iniciarSesion,
       cerrarSesion,
       establecerUsuario,

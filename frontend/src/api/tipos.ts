@@ -51,9 +51,17 @@ export interface Perfil {
   recordatorios_eventos: boolean;
   fecha_registro: string;
   estado_usuario: Estado;
+  /** Rol principal (el de más alcance). */
   id_rol: number;
   nombre_rol: string;
+  /** Todos los roles de la cuenta (una cuenta puede tener varios). */
+  roles: RolRef[];
   intereses: CategoriaRef[];
+}
+
+export interface RolRef {
+  id_rol: number;
+  nombre_rol: string;
 }
 
 interface Auditoria {
