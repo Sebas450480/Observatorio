@@ -3,7 +3,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { correosDePrueba } from '../src/servicios/correo.js';
 import { ASUNTO_INVITACION } from '../src/modulos/invitaciones.js';
-import { app, crearUsuario, db, invitado, sesion } from './ayudas.js';
+import { PNG_1X1, app, crearUsuario, db, invitado, sesion } from './ayudas.js';
 
 /** Código del enlace del último correo de invitación enviado a `correo`. */
 function codigoDelCorreo(correo: string) {
@@ -55,7 +55,7 @@ describe('Invitaciones a empresas coformadoras', () => {
     const empresa = request.agent(app);
     const registro = await empresa.post('/api/invitaciones/completar').send(datosEmpresa(codigo));
     expect(registro.status).toBe(201);
-    expect(registro.body.usuario).toMatchObject({ correo, nombre_usuario: 'Ana', nombre_rol: 'Usuario' });
+    expect(registro.body.usuario).toMatchObject({ correo, nombre_usuario: 'Ana', nombre_rol: 'Empresa Coformadora' });
     const idEc = registro.body.id_ec as number;
 
     // Sesión iniciada con la cuenta nueva.
@@ -149,5 +149,79 @@ describe('Invitaciones a empresas coformadoras', () => {
     expect(cuenta.rowCount).toBe(0);
     // El enlace sigue sirviendo para corregir el dato.
     expect((await invitado().post('/api/invitaciones/completar').send(datosEmpresa(codigo))).status).toBe(201);
+  });
+});
+
+describe('Invitaciones en lote', () => {
+  it('envía varias a la vez y reporta las que fallan sin detener las demás', async () => {
+    const { agente } = await sesion('Gestor Empresas Coformadoras');
+    const existente = await crearUsuario('Usuario');
+    const [a, b] = [nuevoCorreo(), nuevoCorreo()];
+    const fila = (correo: string, empresa: string) => ({ nombre_contacto: 'Ana', apellido_contacto: 'Pérez', correo, nombre_empresa: empresa });
+    const respuesta = await agente.post('/api/invitaciones/lote').send({
+      invitaciones: [fila(a, 'Uno'), fila(b, 'Dos'), fila(a.toUpperCase(), 'Repetida'), fila(existente.correo, 'Con cuenta')],
+    });
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.body.enviadas).toBe(2);
+    expect(respuesta.body.resultados.map((r: { ok: boolean }) => r.ok)).toEqual([true, true, false, false]);
+    expect(respuesta.body.resultados[2].error).toMatch(/repetido/);
+    expect(respuesta.body.resultados[3].error).toMatch(/cuenta/);
+    expect(codigoDelCorreo(a)).toBeTruthy();
+    expect(codigoDelCorreo(b)).toBeTruthy();
+  });
+
+  it('valida la lista y solo la usan los gestores de empresas', async () => {
+    const { agente } = await sesion('SuperAdmin');
+    expect((await agente.post('/api/invitaciones/lote').send({ invitaciones: [] })).status).toBe(400);
+    const { agente: usuario } = await sesion('Usuario');
+    expect((await usuario.post('/api/invitaciones/lote').send({ invitaciones: [] })).status).toBe(403);
+  });
+});
+
+describe('Mi empresa (rol Empresa Coformadora)', () => {
+  async function empresaRegistrada() {
+    const { agente: gestor } = await sesion('SuperAdmin');
+    const { correo } = await invitar(gestor);
+    const empresa = request.agent(app);
+    const registro = await empresa.post('/api/invitaciones/completar').send(datosEmpresa(codigoDelCorreo(correo)));
+    return { empresa, correo, idEc: registro.body.id_ec as number };
+  }
+
+  it('ve y edita su empresa en cualquier momento, con el correo de la invitación', async () => {
+    const { empresa, correo, idEc } = await empresaRegistrada();
+    const mia = await empresa.get('/api/mi-empresa');
+    expect(mia.status).toBe(200);
+    expect(mia.body).toMatchObject({ id_ec: idEc, razon_social: 'Invitada S.A.S.', correo_cuenta: correo });
+
+    const edicion = await empresa.patch('/api/mi-empresa').send({ descripcion: 'Nueva descripción', estudiantes_recibidos: 30, link: 'https://invitada.co' });
+    expect(edicion.status).toBe(200);
+    expect((await invitado().get(`/api/empresas/${idEc}`)).body).toMatchObject({ descripcion: 'Nueva descripción', estudiantes_recibidos: 30 });
+
+    // No puede cambiar el estado ni editar otras empresas por la API general.
+    expect((await empresa.patch('/api/mi-empresa').send({ estado_ec: 'Inactivo' })).body.estado_ec).toBe('Activo');
+    expect((await empresa.patch(`/api/empresas/${idEc}`).send({ descripcion: 'x' })).status).toBe(403);
+
+    // Sigue teniendo lo de un usuario: favoritos.
+    expect((await empresa.put(`/api/favoritos/Empresa/${idEc}`)).status).toBe(200);
+  });
+
+  it('sube su logo y su portada', async () => {
+    const { empresa } = await empresaRegistrada();
+    const logo = await empresa.post('/api/mi-empresa/imagen/logo_ec').attach('imagen', PNG_1X1, 'logo.png');
+    expect(logo.status).toBe(201);
+    expect((await empresa.get('/api/mi-empresa')).body.logo_ec).toBe(logo.body.logo_ec);
+    expect((await empresa.delete('/api/mi-empresa/imagen/logo_ec')).status).toBe(204);
+    expect((await empresa.post('/api/mi-empresa/imagen/otro').attach('imagen', PNG_1X1, 'x.png')).status).toBe(400);
+  });
+
+  it('las demás cuentas no tienen esta sección', async () => {
+    for (const rol of ['Usuario', 'SuperAdmin', 'Gestor Empresas Coformadoras'] as const) {
+      const { agente } = await sesion(rol);
+      expect((await agente.get('/api/mi-empresa')).status).toBe(403);
+    }
+    expect((await invitado().get('/api/mi-empresa')).status).toBe(401);
+    // Un SuperAdmin puede asignar el rol a una cuenta sin empresa: ve el aviso.
+    const { agente } = await sesion('Empresa Coformadora');
+    expect((await agente.get('/api/mi-empresa')).status).toBe(404);
   });
 });

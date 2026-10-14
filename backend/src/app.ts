@@ -21,6 +21,7 @@ import { rutasFaro } from './modulos/faro.js';
 import { rutasFavoritos } from './modulos/favoritos.js';
 import { rutasFlash } from './modulos/flash.js';
 import { rutasInvitaciones } from './modulos/invitaciones.js';
+import { rutasMiEmpresa } from './modulos/miEmpresa.js';
 import { rutasPerfil } from './modulos/perfil.js';
 import { rutasTendencias } from './modulos/tendencias.js';
 import { rutasUsuarios } from './modulos/usuarios.js';
@@ -92,6 +93,7 @@ export function crearApp() {
   app.use('/api/buscar', rutasBuscar);
   app.use('/api/favoritos', rutasFavoritos);
   app.use('/api/invitaciones', rutasInvitaciones);
+  app.use('/api/mi-empresa', rutasMiEmpresa);
 
   if (config.frontendDir) servirFrontend(app, config.frontendDir);
 

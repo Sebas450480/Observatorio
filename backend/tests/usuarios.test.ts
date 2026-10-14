@@ -114,7 +114,7 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
 
 describe('Catálogos', () => {
   it('roles y categorías son públicos; los gestores crean categorías y solo el SuperAdmin las modifica', async () => {
-    expect((await invitado().get('/api/roles')).body).toHaveLength(8);
+    expect((await invitado().get('/api/roles')).body).toHaveLength(9);
     expect((await invitado().get('/api/categorias')).body.length).toBeGreaterThanOrEqual(18);
 
     const { agente: usuario } = await sesion('Usuario');
