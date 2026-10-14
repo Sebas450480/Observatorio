@@ -10,7 +10,7 @@ info:
 
     **Permisos.** Cada petición se ejecuta en PostgreSQL con el rol del usuario:
     Invitado y Usuario solo ven registros **activos** y no ven el campo de estado; cada gestor
-    administra su módulo; el SuperAdmin administra todo.
+    administra su módulo; el Super Admin y el Gestor Observatorio administran todo.
 
     **Errores.** Respuesta `{ "error": "mensaje", "detalles": ... }` con el código HTTP correspondiente
     (400 datos inválidos, 401 sin sesión, 403 sin permiso, 404 no existe, 409 duplicado, 413/415 archivo, 422 importación).
@@ -22,13 +22,13 @@ tags:
   - name: Favoritos
     description: Usuarios registrados; cada uno ve solo los suyos.
   - name: Usuarios
-    description: Solo SuperAdmin.
+    description: Super Admin y Gestor Observatorio.
   - name: Catálogos
   - name: Flash
   - name: Faro Empresarial
   - name: Empresas Coformadoras
   - name: Invitaciones
-    description: Registro de empresas coformadoras por invitación. Gestión solo SuperAdmin y Gestor Empresas.
+    description: Registro de empresas coformadoras por invitación. Gestión: Super Admin, Gestor Observatorio y Gestor Empresas.
   - name: Mi empresa
     description: Solo cuentas con el rol Empresa Coformadora; editan la ficha de su propia empresa.
   - name: Tendencias
@@ -66,7 +66,7 @@ components:
     estado:
       name: estado
       in: query
-      description: Solo para el gestor del módulo y el SuperAdmin.
+      description: Solo para el gestor del módulo, el Super Admin y el Gestor Observatorio.
       schema: { type: string, enum: [Activo, Inactivo] }
     categoria:
       name: categoria
@@ -119,8 +119,12 @@ components:
         ciudad: { type: string, nullable: true }
         frecuencia_alertas: { type: string, enum: [Inmediata, Semanal, Ninguna] }
         estado_usuario: { type: string, enum: [Activo, Inactivo] }
-        id_rol: { type: integer }
+        id_rol: { type: integer, description: Rol principal (el de más alcance) }
         nombre_rol: { type: string }
+        roles:
+          type: array
+          description: Todos los roles de la cuenta (una cuenta puede tener varios)
+          items: { type: object, properties: { id_rol: { type: integer }, nombre_rol: { type: string } } }
         intereses: { type: array, items: { $ref: '#/components/schemas/Categoria' } }
     Flash:
       type: object
@@ -418,7 +422,7 @@ paths:
       summary: Listar usuarios
       parameters:
         - $ref: '#/components/parameters/q'
-        - { name: id_rol, in: query, schema: { type: integer } }
+        - { name: id_rol, in: query, description: Cuentas que tienen este rol (entre todos sus roles), schema: { type: integer } }
         - $ref: '#/components/parameters/estado'
         - { name: ciudad, in: query, schema: { type: string } }
         - $ref: '#/components/parameters/pagina'
@@ -426,14 +430,14 @@ paths:
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
       tags: [Usuarios]
-      summary: Crear un usuario con cualquier rol
+      summary: Crear un usuario con uno o varios roles (solo un Super Admin asigna Super Admin)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [nombre_usuario, apellido_usuario, correo, contrasena, id_rol, acepta_tratamiento_datos]
+              required: [nombre_usuario, apellido_usuario, correo, contrasena, roles, acepta_tratamiento_datos]
               properties:
                 nombre_usuario: { type: string }
                 apellido_usuario: { type: string }
@@ -441,7 +445,7 @@ paths:
                 correo: { type: string }
                 contrasena: { type: string }
                 ciudad: { type: string }
-                id_rol: { type: integer }
+                roles: { type: array, minItems: 1, items: { type: integer }, description: 'Ids de los roles (id_rol, un solo rol, también se acepta)' }
                 intereses: { type: array, items: { type: integer } }
                 acepta_tratamiento_datos: { type: boolean, enum: [true] }
       responses: { '201': { description: Usuario creado } }
@@ -453,7 +457,7 @@ paths:
       responses: { '200': { description: Usuario }, '404': { $ref: '#/components/responses/Error' } }
     patch:
       tags: [Usuarios]
-      summary: Cambiar rol, estado o datos de un usuario
+      summary: Cambiar roles, estado o datos de un usuario
       requestBody:
         required: true
         content:
@@ -461,7 +465,7 @@ paths:
             schema:
               type: object
               properties:
-                id_rol: { type: integer }
+                roles: { type: array, minItems: 1, items: { type: integer }, description: La cuenta queda exactamente con estos roles }
                 estado_usuario: { type: string, enum: [Activo, Inactivo] }
                 nombre_usuario: { type: string }
                 apellido_usuario: { type: string }
@@ -486,7 +490,7 @@ paths:
       responses: { '200': { description: Categorías } }
     post:
       tags: [Catálogos]
-      summary: Crear categoría (SuperAdmin)
+      summary: Crear categoría (Super Admin o Gestor Observatorio)
       requestBody:
         required: true
         content: { application/json: { schema: { type: object, required: [nombre_categoria], properties: { nombre_categoria: { type: string } } } } }
@@ -495,14 +499,14 @@ paths:
     parameters: [{ $ref: '#/components/parameters/id' }]
     patch:
       tags: [Catálogos]
-      summary: Renombrar categoría (SuperAdmin)
+      summary: Renombrar categoría (Super Admin o Gestor Observatorio)
       requestBody:
         required: true
         content: { application/json: { schema: { type: object, required: [nombre_categoria], properties: { nombre_categoria: { type: string } } } } }
       responses: { '200': { description: Actualizada } }
     delete:
       tags: [Catálogos]
-      summary: Eliminar categoría (SuperAdmin)
+      summary: Eliminar categoría (Super Admin o Gestor Observatorio)
       responses: { '204': { $ref: '#/components/responses/SinContenido' } }
 
   # ------------------------------------------------------------------ Flash
@@ -527,7 +531,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
       tags: [Flash]
-      summary: Crear (Gestor Flash o SuperAdmin)
+      summary: Crear (Gestor Flash o administración)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Flash' } } } }
       responses: { '201': { description: Creado } }
   /api/flash/exportar:
@@ -582,7 +586,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
       tags: [Faro Empresarial]
-      summary: Crear (Gestor Faro Empresarial o SuperAdmin)
+      summary: Crear (Gestor Faro Empresarial o administración)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Faro' } } } }
       responses: { '201': { description: Creado } }
   /api/faro/exportar:
@@ -628,7 +632,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
       tags: [Empresas Coformadoras]
-      summary: Crear (Gestor Empresas Coformadoras o SuperAdmin)
+      summary: Crear (Gestor Empresas Coformadoras o administración)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Empresa' } } } }
       responses: { '201': { description: Creada } }
   /api/empresas/resumen:
@@ -847,7 +851,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
       tags: [Tendencias]
-      summary: Crear (Gestor Tendencias o SuperAdmin)
+      summary: Crear (Gestor Tendencias o administración)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Tendencia' } } } }
       responses: { '201': { description: Creada } }
   /api/tendencias/mapa:
@@ -869,7 +873,7 @@ paths:
   /api/tendencias/plantilla:
     get:
       tags: [Tendencias]
-      summary: Descargar la plantilla de importación (Gestor Tendencias o SuperAdmin)
+      summary: Descargar la plantilla de importación (Gestor Tendencias o administración)
       responses: { '200': { $ref: '#/components/responses/Archivo' } }
   /api/tendencias/importar:
     post:
@@ -927,7 +931,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
       tags: [Calendario]
-      summary: Crear (Gestor Calendario o SuperAdmin)
+      summary: Crear (Gestor Calendario o administración)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Evento' } } } }
       responses: { '201': { description: Creado } }
   /api/calendario/exportar:
@@ -966,25 +970,25 @@ paths:
   /api/estadisticas/panel:
     get:
       tags: [Estadísticas]
-      summary: Tarjetas del Panel con variación frente al mes anterior (SuperAdmin)
+      summary: Tarjetas del Panel con variación frente al mes anterior (Super Admin o Gestor Observatorio)
       description: Usuarios registrados, contenidos publicados (por módulo), visitas del mes y suscriptores a alertas.
       responses: { '200': { description: Panel } }
   /api/estadisticas/resumen:
-    get: { tags: [Estadísticas], summary: Resumen del mes (SuperAdmin), responses: { '200': { description: Resumen } } }
+    get: { tags: [Estadísticas], summary: Resumen del mes (Super Admin o Gestor Observatorio), responses: { '200': { description: Resumen } } }
   /api/estadisticas/top-contenidos:
-    get: { tags: [Estadísticas], summary: Top 5 contenidos más vistos en 30 días (SuperAdmin), responses: { '200': { description: Top 5 } } }
+    get: { tags: [Estadísticas], summary: Top 5 contenidos más vistos en 30 días (Super Admin o Gestor Observatorio), responses: { '200': { description: Top 5 } } }
   /api/estadisticas/modulos:
-    get: { tags: [Estadísticas], summary: Actividad por módulo en 30 días (SuperAdmin), responses: { '200': { description: Módulos } } }
+    get: { tags: [Estadísticas], summary: Actividad por módulo en 30 días (Super Admin o Gestor Observatorio), responses: { '200': { description: Módulos } } }
   /api/estadisticas/ciudades:
-    get: { tags: [Estadísticas], summary: Usuarios por ciudad (SuperAdmin), responses: { '200': { description: Ciudades } } }
+    get: { tags: [Estadísticas], summary: Usuarios por ciudad (Super Admin o Gestor Observatorio), responses: { '200': { description: Ciudades } } }
   /api/estadisticas/intereses:
-    get: { tags: [Estadísticas], summary: Distribución de intereses (SuperAdmin), responses: { '200': { description: Intereses } } }
+    get: { tags: [Estadísticas], summary: Distribución de intereses (Super Admin o Gestor Observatorio), responses: { '200': { description: Intereses } } }
 
   # ------------------------------------------------------------------ Alertas
   /api/alertas/ejecutar:
     post:
       tags: [Alertas]
-      summary: Ejecutar el envío de alertas ahora (SuperAdmin)
+      summary: Ejecutar el envío de alertas ahora (Super Admin o Gestor Observatorio)
       requestBody:
         required: true
         content:

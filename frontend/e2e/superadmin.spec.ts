@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { iniciarSesion, irA } from './ayudas';
 
-test.describe('SuperAdmin', () => {
+test.describe('Gestor Observatorio', () => {
   test.beforeEach(async ({ page }) => {
     await iniciarSesion(page, 'superadmin');
   });
 
-  test('crea un usuario gestor y lo encuentra en la tabla', async ({ page }) => {
+  test('crea un usuario con varios roles y lo encuentra en la tabla', async ({ page }) => {
     await irA(page, 'Usuarios');
     await page.getByRole('button', { name: 'Crear usuario' }).click();
     const formulario = page.getByRole('dialog', { name: 'Crear usuario' });
@@ -15,7 +15,11 @@ test.describe('SuperAdmin', () => {
     await formulario.getByLabel('Apodo').fill('mjimenez');
     await formulario.getByLabel('Correo').fill('m.jimenez.e2e@uniempresarial.edu.co');
     await formulario.getByLabel('Contraseña inicial').fill('Temporal-2026');
-    await formulario.getByLabel('Rol').selectOption({ label: 'Gestor Tendencias' });
+    // Una misma cuenta con dos roles.
+    await formulario.getByRole('checkbox', { name: 'Gestor Tendencias' }).check();
+    await formulario.getByRole('checkbox', { name: 'Gestor Calendario' }).check();
+    // Solo un Super Admin asigna ese rol.
+    await expect(formulario.getByRole('checkbox', { name: 'Super Admin' })).toHaveCount(0);
     await formulario.getByLabel(/autorizó el tratamiento/).check();
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
     await expect(page.getByRole('dialog', { name: 'Registro creado' })).toBeVisible();
@@ -24,7 +28,7 @@ test.describe('SuperAdmin', () => {
     await page.getByRole('searchbox', { name: 'Buscar usuarios' }).fill('mjimenez');
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     const fila = page.getByRole('row', { name: /mjimenez/ });
-    await expect(fila).toContainText('Gestor');
+    await expect(fila).toContainText('Gestor Tendencias · Gestor Calendario');
     await expect(fila).toContainText('Activo');
   });
 
