@@ -385,6 +385,70 @@ $$;
 reset role;
 
 -- -----------------------------------------------------------------------------
+-- 4b. Empresa Coformadora: edita solo su empresa y conserva lo de un Usuario
+-- -----------------------------------------------------------------------------
+insert into public.usuario (nombre_usuario, apellido_usuario, correo, contrasena_hash,
+                            acepta_tratamiento_datos, fecha_aceptacion_datos, id_rol)
+select 'Empresa', 'Prueba', 'prueba.empresa.rol@test.co', 'x', true, now(), id_rol
+  from public.rol where nombre_rol = 'Empresa Coformadora';
+insert into public.empresa_coformadora (nit, razon_social, sector_economico, departamento, municipio, estado_ec, id_usuario)
+select 'PRUEBA-NIT-PROPIA', 'Propia', 'x', 'x', 'x', 'Inactivo', id_usuario
+  from public.usuario where correo = 'prueba.empresa.rol@test.co';
+select set_config('app.id_usuario', id_usuario::text, true) from public.usuario where correo = 'prueba.empresa.rol@test.co';
+set local role obs_empresa;
+do $$
+declare
+    n integer;
+begin
+    if not exists (select 1 from public.empresa_coformadora where nit = 'PRUEBA-NIT-PROPIA') then
+        raise exception 'FALLO 4b.1: la empresa no ve su propia ficha inactiva';
+    end if;
+    update public.empresa_coformadora set descripcion = 'Editada' where nit = 'PRUEBA-NIT-PROPIA';
+    update public.empresa_coformadora set descripcion = 'Intrusa' where nit <> 'PRUEBA-NIT-PROPIA';
+    get diagnostics n = row_count;
+    if n > 0 then
+        raise exception 'FALLO 4b.2: la empresa editó una empresa ajena';
+    end if;
+    begin
+        update public.empresa_coformadora set estado_ec = 'Activo' where nit = 'PRUEBA-NIT-PROPIA';
+        raise exception 'FALLO 4b.3: la empresa puede cambiar su estado';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+        update public.empresa_coformadora set id_usuario = null where nit = 'PRUEBA-NIT-PROPIA';
+        raise exception 'FALLO 4b.4: la empresa puede desligar su cuenta';
+    exception when insufficient_privilege then null;
+    end;
+    -- Hereda lo del Usuario: su propio perfil.
+    if (select count(*) from public.usuario) <> 1 then
+        raise exception 'FALLO 4b.5: la empresa no ve (solo) su propio perfil';
+    end if;
+end;
+$$;
+reset role;
+do $$
+begin
+    if (select descripcion from public.empresa_coformadora where nit = 'PRUEBA-NIT-PROPIA') <> 'Editada' then
+        raise exception 'FALLO 4b.6: la empresa no pudo editar su ficha';
+    end if;
+end;
+$$;
+
+-- El registro público no puede crear cuentas de empresa sin invitación.
+set local role obs_autenticacion;
+do $$
+begin
+    insert into public.usuario (nombre_usuario, apellido_usuario, correo, contrasena_hash,
+                                acepta_tratamiento_datos, fecha_aceptacion_datos, id_rol)
+    select 'Sin', 'Invitación', 'prueba.sin.invitacion@test.co', 'x', true, now(), id_rol
+      from public.rol where nombre_rol = 'Empresa Coformadora';
+    raise exception 'FALLO 4b.7: se creó una cuenta de empresa sin invitación';
+exception when insufficient_privilege then null;
+end;
+$$;
+reset role;
+
+-- -----------------------------------------------------------------------------
 -- 5. SuperAdmin
 -- -----------------------------------------------------------------------------
 set local role obs_superadmin;

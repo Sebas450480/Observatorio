@@ -8,6 +8,7 @@
 export const ROLES_BD = [
   'obs_invitado',
   'obs_usuario',
+  'obs_empresa',
   'obs_gestor_faro',
   'obs_gestor_flash',
   'obs_gestor_empresas',
@@ -25,6 +26,8 @@ export const ROL_POR_NOMBRE: Record<string, RolBD> = {
   /** Mismas funciones del SuperAdmin; protegido en la gestión de usuarios. */
   'SuperAdmin Superior': 'obs_superadmin',
   Usuario: 'obs_usuario',
+  /** Usuario que además edita la ficha de su propia empresa (registro por invitación). */
+  'Empresa Coformadora': 'obs_empresa',
   'Gestor Faro Empresarial': 'obs_gestor_faro',
   'Gestor Flash': 'obs_gestor_flash',
   /** Nombre anterior de "Gestor Flash" (bases que aún no tienen la migración que lo renombra). */

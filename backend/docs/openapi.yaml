@@ -29,6 +29,8 @@ tags:
   - name: Empresas Coformadoras
   - name: Invitaciones
     description: Registro de empresas coformadoras por invitación. Gestión solo SuperAdmin y Gestor Empresas.
+  - name: Mi empresa
+    description: Solo cuentas con el rol Empresa Coformadora; editan la ficha de su propia empresa.
   - name: Tendencias
   - name: Calendario
   - name: Estadísticas
@@ -701,6 +703,32 @@ paths:
       responses:
         '201': { description: 'Invitación creada; correo_enviado indica si el correo salió' }
         '409': { description: El correo ya tiene cuenta o una invitación pendiente }
+  /api/invitaciones/lote:
+    post:
+      tags: [Invitaciones]
+      summary: Invitar varias empresas a la vez (máximo 50); las que fallan no detienen las demás
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invitaciones]
+              properties:
+                invitaciones:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    type: object
+                    required: [nombre_contacto, apellido_contacto, correo]
+                    properties:
+                      nombre_contacto: { type: string, maxLength: 50 }
+                      apellido_contacto: { type: string, maxLength: 50 }
+                      correo: { type: string, format: email }
+                      nombre_empresa: { type: string, maxLength: 150, nullable: true }
+      responses:
+        '200': { description: '{ enviadas, resultados: [{ correo, ok, invitacion | error }] }' }
   /api/invitaciones/{id}/reenviar:
     parameters: [{ $ref: '#/components/parameters/id' }]
     post:
@@ -754,6 +782,52 @@ paths:
         '201': { description: '{ id_ec, usuario } y cookie de sesión' }
         '400': { description: Datos inválidos o enlace vencido }
         '409': { description: NIT o correo ya registrados }
+
+  # ------------------------------------------------------------------ Mi empresa
+  /api/mi-empresa:
+    get:
+      tags: [Mi empresa]
+      summary: Ficha de mi empresa (incluye correo_cuenta, el correo de la invitación)
+      responses:
+        '200': { description: Empresa }
+        '403': { description: La cuenta no tiene el rol Empresa Coformadora }
+        '404': { description: La cuenta no está ligada a una empresa }
+    patch:
+      tags: [Mi empresa]
+      summary: Editar mi empresa (el estado lo maneja el Observatorio)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                razon_social: { type: string }
+                nombre_comercial: { type: string, nullable: true }
+                nit: { type: string }
+                sector_economico: { type: string }
+                descripcion: { type: string, nullable: true }
+                tamano_empresa: { type: string, enum: [Micro, Pequeña, Mediana, Grande], nullable: true }
+                anio_constitucion: { type: integer, nullable: true }
+                estudiantes_recibidos: { type: integer, minimum: 0 }
+                link: { type: string, nullable: true }
+                telefono: { type: string, nullable: true }
+                correo: { type: string, nullable: true }
+                departamento: { type: string }
+                municipio: { type: string }
+                direccion: { type: string, nullable: true }
+      responses: { '200': { description: Empresa actualizada } }
+  /api/mi-empresa/imagen/{campo}:
+    parameters: [{ name: campo, in: path, required: true, schema: { type: string, enum: [logo_ec, imagen_portada] } }]
+    post:
+      tags: [Mi empresa]
+      summary: Subir logo o portada (JPG o PNG)
+      requestBody: { required: true, content: { multipart/form-data: { schema: { type: object, properties: { imagen: { type: string, format: binary } } } } } }
+      responses: { '201': { description: Imagen guardada } }
+    delete:
+      tags: [Mi empresa]
+      summary: Quitar logo o portada
+      responses: { '204': { description: Imagen quitada } }
 
   # ------------------------------------------------------------------ Tendencias
   /api/tendencias:

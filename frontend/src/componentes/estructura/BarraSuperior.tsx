@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/cliente';
 import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../../assets/figma/iconos';
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
-import { descripcionRol, etiquetaRol, RUTA_MODULO, useSesion } from '../../sesion/sesion';
+import { descripcionRol, esRolEmpresa, etiquetaRol, RUTA_MODULO, useSesion } from '../../sesion/sesion';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 
@@ -212,7 +212,7 @@ function MenuSesion() {
             <img src={iconoPerfil} alt="" aria-hidden className="size-[22px]" />
             <span className="flex flex-col gap-0.5">
               <span className="text-small font-semibold text-azul-marino">Mi perfil</span>
-              <span className="text-caption text-gris-azulado">Ver y editar mis datos</span>
+              <span className="text-caption text-gris-azulado">{esRolEmpresa(usuario.nombre_rol) ? 'Ver y editar mi empresa' : 'Ver y editar mis datos'}</span>
             </span>
           </button>
           <div className="h-px bg-[#e8ebf2]" />
