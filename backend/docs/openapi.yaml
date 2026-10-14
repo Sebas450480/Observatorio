@@ -22,7 +22,7 @@ tags:
   - name: Usuarios
     description: Solo SuperAdmin.
   - name: Catálogos
-  - name: Flash Informativo
+  - name: Flash
   - name: Faro Empresarial
   - name: Empresas Coformadoras
   - name: Tendencias
@@ -473,10 +473,10 @@ paths:
       summary: Eliminar categoría (SuperAdmin)
       responses: { '204': { $ref: '#/components/responses/SinContenido' } }
 
-  # ------------------------------------------------------------------ Flash Informativo
+  # ------------------------------------------------------------------ Flash
   /api/flash:
     get:
-      tags: [Flash Informativo]
+      tags: [Flash]
       summary: Listar
       parameters:
         - $ref: '#/components/parameters/q'
@@ -494,40 +494,40 @@ paths:
         - $ref: '#/components/parameters/limite'
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
-      tags: [Flash Informativo]
-      summary: Crear (Gestor Flash Informativo o SuperAdmin)
+      tags: [Flash]
+      summary: Crear (Gestor Flash o SuperAdmin)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Flash' } } } }
       responses: { '201': { description: Creado } }
   /api/flash/exportar:
     get:
-      tags: [Flash Informativo]
+      tags: [Flash]
       summary: Exportar el listado (mismos filtros)
       parameters: [{ $ref: '#/components/parameters/formato' }]
       responses: { '200': { $ref: '#/components/responses/Archivo' } }
   /api/flash/{id}:
     parameters: [{ $ref: '#/components/parameters/id' }]
     get:
-      tags: [Flash Informativo]
+      tags: [Flash]
       summary: Detalle
       responses: { '200': { description: Detalle }, '404': { $ref: '#/components/responses/Error' } }
     patch:
-      tags: [Flash Informativo]
+      tags: [Flash]
       summary: Editar (campos parciales)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Flash' } } } }
       responses: { '200': { description: Actualizado } }
     delete:
-      tags: [Flash Informativo]
+      tags: [Flash]
       summary: Eliminar
       responses: { '204': { $ref: '#/components/responses/SinContenido' } }
   /api/flash/{id}/imagen/{campo}:
     parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/campoImagen' }]
     post:
-      tags: [Flash Informativo]
+      tags: [Flash]
       summary: Subir imagen (campo = imagen)
       requestBody: { $ref: '#/components/requestBodies/Imagen' }
       responses: { '201': { description: Ruta de la imagen } }
     delete:
-      tags: [Flash Informativo]
+      tags: [Flash]
       summary: Quitar imagen
       responses: { '204': { $ref: '#/components/responses/SinContenido' } }
 

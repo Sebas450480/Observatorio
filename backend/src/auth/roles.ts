@@ -26,6 +26,8 @@ export const ROL_POR_NOMBRE: Record<string, RolBD> = {
   'SuperAdmin Superior': 'obs_superadmin',
   Usuario: 'obs_usuario',
   'Gestor Faro Empresarial': 'obs_gestor_faro',
+  'Gestor Flash': 'obs_gestor_flash',
+  /** Nombre anterior de "Gestor Flash" (bases que aún no tienen la migración que lo renombra). */
   'Gestor Flash Informativo': 'obs_gestor_flash',
   'Gestor Empresas Coformadoras': 'obs_gestor_empresas',
   'Gestor Tendencias': 'obs_gestor_tendencias',

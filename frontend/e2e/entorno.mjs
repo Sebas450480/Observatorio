@@ -11,7 +11,7 @@ export const CONTRASENA = 'Prueba-E2E-2026';
 /** Una cuenta por perfil. */
 export const CUENTAS = {
   superadmin: { correo: 'superadmin.e2e@uniempresarial.edu.co', rol: 'SuperAdmin', nombre: 'Andrés', apellido: 'Martínez' },
-  gestorFlash: { correo: 'gestor.flash.e2e@uniempresarial.edu.co', rol: 'Gestor Flash Informativo', nombre: 'Carolina', apellido: 'Ruiz' },
+  gestorFlash: { correo: 'gestor.flash.e2e@uniempresarial.edu.co', rol: 'Gestor Flash', nombre: 'Carolina', apellido: 'Ruiz' },
   gestorEmpresas: { correo: 'gestor.empresas.e2e@uniempresarial.edu.co', rol: 'Gestor Empresas Coformadoras', nombre: 'Camila', apellido: 'Torres' },
   usuario: { correo: 'usuario.e2e@gmail.com', rol: 'Usuario', nombre: 'Laura', apellido: 'Gómez' },
 };

@@ -20,7 +20,7 @@ insert into public.rol (nombre_rol, descripcion_rol, permisos) values
     ('SuperAdmin',                   'Administrador del sistema. Control total de la plataforma, usuarios, roles, categorías y estadísticas.', 'Crear, modificar, eliminar y visualizar todas las tablas'),
     ('Usuario',                      'Usuario registrado. Consulta los registros activos de todos los módulos y administra su perfil e intereses.', 'Visualizar registros activos; editar su perfil'),
     ('Gestor Faro Empresarial',      'Administra becas, convocatorias, cursos y talleres del Faro Empresarial.', 'CRUD Faro Empresarial; visualizar los demás módulos'),
-    ('Gestor Flash Informativo',     'Administra los eventos del Flash Informativo.', 'CRUD Flash Informativo; visualizar los demás módulos'),
+    ('Gestor Flash',                 'Administra los eventos del Flash.',             'CRUD Flash; visualizar los demás módulos'),
     ('Gestor Empresas Coformadoras', 'Administra el catálogo de empresas coformadoras y sus contactos.', 'CRUD Empresas Coformadoras; visualizar los demás módulos'),
     ('Gestor Tendencias',            'Administra las tendencias, sus fuentes y menciones.', 'CRUD Tendencias; visualizar los demás módulos'),
     ('Gestor Calendario',            'Administra los eventos institucionales del calendario.', 'CRUD Calendario; visualizar los demás módulos'),
@@ -36,7 +36,7 @@ insert into public.categoria (nombre_categoria) values
     ('Eventos'), ('Transformación digital'), ('Talento humano');
 
 -- -----------------------------------------------------------------------------
--- Flash Informativo (ejemplos del Figma)
+-- Flash (ejemplos del Figma)
 -- -----------------------------------------------------------------------------
 insert into public.flash_informativo
     (titulo, descripcion, fecha_inicio, fecha_fin, modalidad, costo, es_gratuito, lugar, link, info_adicional, tipo_evento, departamento)

@@ -91,7 +91,7 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
   );
 }
 
-/** Flash Informativo: eventos y oportunidades del entorno empresarial. */
+/** Flash: eventos y oportunidades del entorno empresarial. */
 const FILTROS_INICIALES = { departamento: '', anio: '', categoria: '', estado: '' };
 
 export function FlashInformativo() {
@@ -119,7 +119,7 @@ export function FlashInformativo() {
     <>
       <EncabezadoPagina
         modulo="flash"
-        titulo="Flash Informativo"
+        titulo="Flash"
         subtitulo="Mantente informado sobre los últimos acontecimientos empresariales, innovaciones y tendencias del mundo corporativo."
       acciones={<MenuExportar ruta="/flash" consulta={consulta} />} />
       <BarraFiltros
@@ -129,7 +129,7 @@ export function FlashInformativo() {
         extra={
           gestiona && (
             <Boton pildora onClick={() => setFormulario({})}>
-              Crear Flash informativo
+              Crear Flash
             </Boton>
           )
         }

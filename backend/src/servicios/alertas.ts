@@ -31,7 +31,7 @@ const RUTA_FRONTEND: Record<Novedad['tipo'], string> = {
 };
 
 const ETIQUETA: Record<Novedad['tipo'], string> = {
-  Flash: 'Flash Informativo',
+  Flash: 'Flash',
   Faro: 'Faro Empresarial',
   Tendencia: 'Tendencia',
   Evento: 'Evento institucional',

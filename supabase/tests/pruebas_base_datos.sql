@@ -25,7 +25,7 @@ grant obs_invitado, obs_usuario, obs_gestor_faro, obs_gestor_flash, obs_gestor_e
    to current_user;
 
 insert into public.rol (nombre_rol) values
-    ('SuperAdmin'), ('Usuario'), ('Gestor Flash Informativo')
+    ('SuperAdmin'), ('Usuario'), ('Gestor Flash')
 on conflict (nombre_rol) do nothing;
 
 insert into public.categoria (nombre_categoria) values ('PRUEBA categoría')
@@ -51,7 +51,7 @@ with u as (
     insert into public.usuario (nombre_usuario, apellido_usuario, correo, contrasena_hash,
                                 acepta_tratamiento_datos, fecha_aceptacion_datos, id_rol)
     select 'Prueba', 'Gestor', 'prueba.gestor@test.co', 'x', true, now(), id_rol
-    from public.rol where nombre_rol = 'Gestor Flash Informativo'
+    from public.rol where nombre_rol = 'Gestor Flash'
     returning id_usuario
 ) select set_config('prueba.gestor', id_usuario::text, true) from u;
 
@@ -144,7 +144,7 @@ $$;
 reset role;
 
 -- -----------------------------------------------------------------------------
--- 2. Gestor Flash Informativo
+-- 2. Gestor Flash
 -- -----------------------------------------------------------------------------
 set local role obs_gestor_flash;
 select set_config('app.id_usuario', current_setting('prueba.gestor'), true);

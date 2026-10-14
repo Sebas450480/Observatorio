@@ -7,7 +7,7 @@ import { iniciarSesion } from './ayudas';
  */
 const PANTALLAS = [
   { ruta: '/inicio', nombre: 'inicio', espera: 'Bienvenido al Observatorio Empresarial' },
-  { ruta: '/flash-informativo', nombre: 'flash', espera: 'Flash Informativo' },
+  { ruta: '/flash-informativo', nombre: 'flash', espera: 'Flash' },
   { ruta: '/faro-empresarial', nombre: 'faro', espera: 'Faro Empresarial' },
   { ruta: '/empresas', nombre: 'empresas', espera: 'Empresas Coformadoras' },
   { ruta: '/tendencias', nombre: 'tendencias', espera: 'Tendencias Empresariales' },
