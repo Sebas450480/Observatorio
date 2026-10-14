@@ -5,9 +5,9 @@ import { CONTRASENA, app, crearUsuario, db, invitado, sesion } from './ayudas.js
 describe('Mi perfil', () => {
   it('cada usuario ve y edita su perfil e intereses', async () => {
     const { agente } = await sesion('Usuario');
-    const editado = await agente.patch('/api/perfil').send({ ciudad: 'Medellín', apodo_usuario: 'Ana', frecuencia_alertas: 'Inmediata' });
+    const editado = await agente.patch('/api/perfil').send({ ciudad: 'Medellín', apodo_usuario: 'Ana', frecuencia_alertas: 'Diaria', recordatorios_eventos: false });
     expect(editado.status).toBe(200);
-    expect(editado.body).toMatchObject({ ciudad: 'Medellín', apodo_usuario: 'Ana', frecuencia_alertas: 'Inmediata' });
+    expect(editado.body).toMatchObject({ ciudad: 'Medellín', apodo_usuario: 'Ana', frecuencia_alertas: 'Diaria', recordatorios_eventos: false });
 
     const intereses = await agente.put('/api/perfil/intereses').send({ intereses: [1, 3, 9999] });
     expect(intereses.status).toBe(200);

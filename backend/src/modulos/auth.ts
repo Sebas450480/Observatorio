@@ -17,7 +17,7 @@ export const rutasAuth = Router();
 /** Limita los intentos para frenar ataques de fuerza bruta. */
 const limiteIntentos = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: config.esPrueba ? 1000 : 20,
+  limit: config.esPrueba ? 1000 : config.limiteIntentosAuth,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },
@@ -27,7 +27,7 @@ const limiteIntentos = rateLimit({
 const HASH_FALSO = bcrypt.hashSync('contraseña-que-no-existe', 10);
 
 export const COLUMNAS_PERFIL = `u.id_usuario, u.apodo_usuario, u.nombre_usuario, u.apellido_usuario, u.correo,
-  u.ciudad, u.frecuencia_alertas, u.fecha_registro, u.estado_usuario, u.id_rol, r.nombre_rol,
+  u.ciudad, u.frecuencia_alertas, u.recordatorios_eventos, u.fecha_registro, u.estado_usuario, u.id_rol, r.nombre_rol,
   coalesce((select json_agg(json_build_object('id_categoria', c.id_categoria, 'nombre', c.nombre_categoria)
                             order by c.nombre_categoria)
               from usuario_interes ui join categoria c on c.id_categoria = ui.id_categoria

@@ -50,6 +50,8 @@ const esquemaEntorno = z.object({
 
   // Envío automático de alertas por correo (tareas programadas).
   ALERTAS_ACTIVAS: booleano.default(true),
+  // Intentos de inicio de sesión, registro y recuperación por IP cada 15 minutos.
+  LIMITE_INTENTOS_AUTH: z.coerce.number().int().positive().default(20),
   // Vercel Cron llama a GET /api/alertas/cron con "Authorization: Bearer <CRON_SECRET>".
   CRON_SECRET: z.string().min(16, 'CRON_SECRET debe tener al menos 16 caracteres').optional(),
   ZONA_HORARIA: z.string().default('America/Bogota'),
@@ -67,6 +69,7 @@ export const config = {
   entorno: env.NODE_ENV,
   esProduccion: env.NODE_ENV === 'production',
   esPrueba: env.NODE_ENV === 'test',
+  limiteIntentosAuth: env.LIMITE_INTENTOS_AUTH,
   puerto: env.PUERTO,
   baseDatos: {
     url: env.DATABASE_URL,
