@@ -10,6 +10,7 @@ import {
 import { Cargando, Etiqueta, InsigniaEstado, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
 import { fechaCorta } from '../../utilidades/formato';
+import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 
 /** Detalle de una tendencia (Figma: "Modal — Detalle tendencia: IA generativa"). */
 export function DetalleTendencia({ id, onCerrar, onEditar }: { id: number; onCerrar: () => void; onEditar?: (t: Tendencia) => void }) {
@@ -27,6 +28,7 @@ export function DetalleTendencia({ id, onCerrar, onEditar }: { id: number; onCer
       destacado
       claseCuerpo={CUERPO_DETALLE}
       titulo={t?.tendencia ?? 'Tendencia'}
+      accion={t && <BotonFavorito tipo="Tendencia" id={t.id_te} titulo={t.tendencia} variante="encabezado" />}
       sobreTitulo={
         t && (
           <>

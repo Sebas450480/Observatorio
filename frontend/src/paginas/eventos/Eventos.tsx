@@ -16,6 +16,7 @@ import {
   AccionesDetalle, BotonDetalle, CajaDetalle, CUERPO_DETALLE, codigoDetalle, DatoDetalle, DatosDetalle, EnlaceDetalle, ICONO_DETALLE,
   MetaDetalle, SeccionDetalle, TextoDetalle,
 } from '../../componentes/contenido/Detalle';
+import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { EncabezadoPagina, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
@@ -119,6 +120,7 @@ function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerra
       destacado
       claseCuerpo={CUERPO_DETALLE}
       titulo={<span className="uppercase">{evento.titulo}</span>}
+      accion={<BotonFavorito tipo="Evento" id={evento.id_evento} titulo={evento.titulo} variante="encabezado" />}
       sobreTitulo={<MetaDetalle etiqueta={nombreTipoEvento(evento)}>{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</MetaDetalle>}
     >
       <CuerpoEvento evento={evento} onEditar={onEditar} />
@@ -135,6 +137,8 @@ function PanelEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerrar:
         <span className="rounded-full px-3 py-1 text-caption font-bold uppercase" style={{ color, background: fondoTipo(evento.tipo_evento) }}>
           {nombreTipoEvento(evento)}
         </span>
+        <span className="ml-auto" />
+        <BotonFavorito tipo="Evento" id={evento.id_evento} titulo={evento.titulo} className="-my-0.5" />
         <button
           type="button"
           onClick={onCerrar}

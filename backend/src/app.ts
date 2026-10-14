@@ -18,6 +18,7 @@ import { rutasCategorias, rutasRoles } from './modulos/catalogos.js';
 import { rutasEmpresas } from './modulos/empresas.js';
 import { rutasActividad, rutasEstadisticas } from './modulos/estadisticas.js';
 import { rutasFaro } from './modulos/faro.js';
+import { rutasFavoritos } from './modulos/favoritos.js';
 import { rutasFlash } from './modulos/flash.js';
 import { rutasPerfil } from './modulos/perfil.js';
 import { rutasTendencias } from './modulos/tendencias.js';
@@ -68,6 +69,7 @@ export function crearApp() {
   app.use('/api/estadisticas', rutasEstadisticas);
   app.use('/api/alertas', rutasAlertas);
   app.use('/api/buscar', rutasBuscar);
+  app.use('/api/favoritos', rutasFavoritos);
 
   if (config.frontendDir) servirFrontend(app, config.frontendDir);
 

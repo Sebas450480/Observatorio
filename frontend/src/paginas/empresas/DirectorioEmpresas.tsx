@@ -8,6 +8,7 @@ import iconoNit from '../../assets/figma/iconos/nit.svg';
 import iconoSector from '../../assets/figma/iconos/sector.svg';
 import { useListado } from '../../api/consultas';
 import type { Empresa } from '../../api/tipos';
+import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, MenuExportar, Paginacion } from '../../componentes/ui/Elementos';
@@ -46,32 +47,36 @@ export function Portada({ empresa, className = '' }: { empresa: Empresa; classNa
 }
 
 function TarjetaEmpresa({ empresa }: { empresa: Empresa }) {
+  // La banderita va fuera del enlace (un botón no puede ir dentro de un enlace).
   return (
-    <Link
-      to={`/empresas/${empresa.id_ec}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.02)] transition-shadow hover:shadow-menu focus-visible:outline-2 focus-visible:outline-azul-oscuro"
-    >
-      <div className="relative">
-        <Portada empresa={empresa} className="h-[130px] w-full" />
-        {empresa.estado_ec === 'Inactivo' && (
-          <span className="absolute right-3 top-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVA</span>
-        )}
-      </div>
-      <div className="flex flex-col gap-2 px-4 py-5">
-        <h2 className="truncate text-subtitle font-bold text-[#0a1c40] group-hover:underline">{nombreEmpresa(empresa)}</h2>
-        <div className="flex flex-col gap-1.5 text-small text-[#64748b]">
-          <p className="flex items-center gap-2">
-            <img src={iconoSector} alt="" aria-hidden className="size-3.5 shrink-0" /> <span className="truncate">{empresa.sector_economico}</span>
-          </p>
-          <p className="flex min-w-0 items-center gap-3">
-            <span className="flex shrink-0 items-center gap-1.5">
-              <img src={iconoNit} alt="" aria-hidden className="size-3.5 shrink-0" /> NIT: {empresa.nit}
-            </span>
-            <span className="truncate">{empresa.departamento}</span>
-          </p>
+    <div className="relative">
+      <Link
+        to={`/empresas/${empresa.id_ec}`}
+        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.02)] transition-shadow hover:shadow-menu focus-visible:outline-2 focus-visible:outline-azul-oscuro"
+      >
+        <div className="relative">
+          <Portada empresa={empresa} className="h-[130px] w-full" />
+          {empresa.estado_ec === 'Inactivo' && (
+            <span className="absolute bottom-3 right-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVA</span>
+          )}
         </div>
-      </div>
-    </Link>
+        <div className="flex flex-col gap-2 px-4 py-5">
+          <h2 className="truncate text-subtitle font-bold text-[#0a1c40] group-hover:underline">{nombreEmpresa(empresa)}</h2>
+          <div className="flex flex-col gap-1.5 text-small text-[#64748b]">
+            <p className="flex items-center gap-2">
+              <img src={iconoSector} alt="" aria-hidden className="size-3.5 shrink-0" /> <span className="truncate">{empresa.sector_economico}</span>
+            </p>
+            <p className="flex min-w-0 items-center gap-3">
+              <span className="flex shrink-0 items-center gap-1.5">
+                <img src={iconoNit} alt="" aria-hidden className="size-3.5 shrink-0" /> NIT: {empresa.nit}
+              </span>
+              <span className="truncate">{empresa.departamento}</span>
+            </p>
+          </div>
+        </div>
+      </Link>
+      <BotonFavorito tipo="Empresa" id={empresa.id_ec} titulo={nombreEmpresa(empresa)} variante="imagen" className="absolute right-2.5 top-2.5" />
+    </div>
   );
 }
 

@@ -43,3 +43,32 @@ test.describe('Usuario registrado', () => {
     await expect(modal.getByText('La contraseña actual no es correcta')).toBeVisible();
   });
 });
+
+test.describe('Favoritos', () => {
+  test('guarda con la banderita, lo ve en Mi perfil y lo quita', async ({ page }) => {
+    await iniciarSesion(page, 'usuario');
+    await page.goto('/flash-informativo');
+    const banderita = page.getByRole('button', { name: /^Guardar en favoritos: / }).first();
+    const titulo = (await banderita.getAttribute('aria-label'))!.replace('Guardar en favoritos: ', '');
+    await banderita.click();
+    await expect(page.getByRole('button', { name: `Quitar de favoritos: ${titulo}` })).toHaveAttribute('aria-pressed', 'true');
+
+    // En el detalle también aparece marcada.
+    await page.getByRole('button', { name: `Acceder : ${titulo}` }).click();
+    await expect(page.getByRole('dialog').getByRole('button', { name: `Quitar de favoritos: ${titulo}` })).toBeVisible();
+
+    await page.goto('/mi-perfil');
+    const panel = page.getByRole('region', { name: 'Mis favoritos' });
+    await expect(panel.getByRole('link', { name: titulo })).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Flash (1)' })).toBeVisible();
+
+    await panel.getByRole('button', { name: `Quitar de favoritos: ${titulo}` }).click();
+    await expect(panel.getByText('Aún no tienes favoritos')).toBeVisible();
+  });
+
+  test('el invitado no ve la banderita', async ({ page }) => {
+    await page.goto('/flash-informativo');
+    await expect(page.getByRole('button', { name: 'Acceder', exact: false }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /favoritos/ })).toHaveCount(0);
+  });
+});
