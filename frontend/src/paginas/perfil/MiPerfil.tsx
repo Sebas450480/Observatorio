@@ -10,7 +10,8 @@ import { SelectorIntereses } from '../../componentes/SelectorIntereses';
 import { Boton } from '../../componentes/ui/Boton';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso, Modal } from '../../componentes/ui/Modal';
-import { descripcionRol, esRolSuperAdmin, useSesion } from '../../sesion/sesion';
+import { descripcionRol, esRolEmpresa, esRolSuperAdmin, useSesion } from '../../sesion/sesion';
+import { MiEmpresa } from './MiEmpresa';
 import { iniciales } from '../../utilidades/formato';
 import { MisFavoritos } from './MisFavoritos';
 import { EncabezadoTarjeta, TARJETA } from './TarjetaPerfil';
@@ -130,7 +131,10 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
   const silenciado = frecuencia === 'Ninguna' && !recordatorios;
   const esAdmin = esRolSuperAdmin(usuario.nombre_rol);
   const esGestor = usuario.nombre_rol.startsWith('Gestor');
-  const institucional = esAdmin || esGestor;
+  const esEmpresa = esRolEmpresa(usuario.nombre_rol);
+  const institucional = esAdmin || esGestor || esEmpresa;
+  /** La empresa ve su ficha en lugar de intereses, alertas y favoritos. */
+  const panelUsuario = !esAdmin && !esEmpresa;
   const desde = new Date(usuario.fecha_registro).toLocaleDateString('es-CO', { month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
   const botonClaro = 'cursor-pointer rounded-control border border-[#d1d9e3] bg-white font-semibold text-azul-marino hover:bg-fondo';
 
@@ -142,7 +146,11 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
         <div className="flex flex-col gap-1 xl:mt-px">
           <h1 className="text-titulo font-bold text-azul-marino">Mi perfil</h1>
           <p className="text-small text-gris-azulado sm:text-body">
-            {esAdmin ? 'Actualiza tus datos como administrador del Observatorio.' : 'Actualiza tus datos y elige sobre qué quieres recibir alertas del Observatorio.'}
+            {esAdmin
+              ? 'Actualiza tus datos como administrador del Observatorio.'
+              : esEmpresa
+                ? 'Actualiza tus datos de contacto y la información de tu empresa.'
+                : 'Actualiza tus datos y elige sobre qué quieres recibir alertas del Observatorio.'}
           </p>
         </div>
         <div className="flex w-full items-center gap-3 sm:w-auto xl:mt-[5px] [&>*]:flex-1 sm:[&>*]:flex-none">
@@ -160,7 +168,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
         </p>
       )}
 
-      <div className={`grid items-start gap-6 ${esAdmin ? '' : 'xl:grid-cols-[900fr_580fr]'}`}>
+      <div className={`grid items-start gap-6 ${panelUsuario ? 'xl:grid-cols-[900fr_580fr]' : ''}`}>
         <section className={TARJETA}>
           <EncabezadoTarjeta
             titulo="Mis datos"
@@ -169,6 +177,8 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
                 ? 'Tu información como administrador del Observatorio.'
                 : esGestor
                   ? 'Tu información como gestor de contenidos del Observatorio.'
+                  : esEmpresa
+                    ? 'Tus datos como contacto de la empresa en el Observatorio.'
                   : 'Esta información nos ayuda a personalizar tus alertas.'
             }
           />
@@ -180,7 +190,9 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
               <p className="text-body font-bold text-azul-marino">
                 {usuario.nombre_usuario} {usuario.apellido_usuario}
               </p>
-              <p className="text-small text-gris-azulado">{institucional ? 'Cuenta institucional' : `Usuario registrado desde ${desde}`}</p>
+              <p className="text-small text-gris-azulado">
+                {esEmpresa ? `Empresa coformadora desde ${desde}` : institucional ? 'Cuenta institucional' : `Usuario registrado desde ${desde}`}
+              </p>
             </div>
             {institucional && (
               <span className="rounded-[14px] bg-azul-marino/10 px-3 py-1.5 text-caption font-semibold text-azul-marino">{descripcionRol(usuario.nombre_rol)}</span>
@@ -191,7 +203,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
             <Entrada variante="perfil" etiqueta="Apellido" error={e.apellido_usuario?.message} {...register('apellido_usuario')} />
             <Entrada
               variante="perfil"
-              etiqueta={institucional ? 'Correo institucional' : 'Correo electrónico'}
+              etiqueta={esAdmin || esGestor ? 'Correo institucional' : 'Correo electrónico'}
               type="email"
               autoComplete="email"
               error={e.correo?.message}
@@ -211,7 +223,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
           </div>
         </section>
 
-        {!esAdmin && (
+        {panelUsuario && (
           <div className="flex flex-col gap-6">
             <section className={TARJETA}>
               <EncabezadoTarjeta titulo="Mis intereses" detalle="Recibirás alertas solo de lo que marques." />
@@ -281,9 +293,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
       </div>
     </form>
 
-      <div className="mt-6">
-        <MisFavoritos intereses={usuario.intereses} />
-      </div>
+      <div className="mt-6">{esEmpresa ? <MiEmpresa /> : <MisFavoritos intereses={usuario.intereses} />}</div>
 
       {modal === 'contrasena' && <CambiarContrasena onCerrar={() => setModal(null)} onListo={() => setModal('contrasena-lista')} />}
       <Aviso abierto={modal === 'contrasena-lista'} titulo="Contraseña actualizada" mensaje="Tu contraseña se cambió correctamente." onCerrar={() => setModal(null)} />

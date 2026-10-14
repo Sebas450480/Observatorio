@@ -55,7 +55,7 @@ function useConPausa<T>(valor: T, ms = 800): T {
   return actual;
 }
 
-function VistaMapa({ departamento, municipio, direccion }: { departamento: string; municipio: string; direccion: string }) {
+export function VistaMapa({ departamento, municipio, direccion }: { departamento: string; municipio: string; direccion: string }) {
   const lugar = useConPausa([direccion.trim(), municipio.trim(), departamento, 'Colombia'].filter(Boolean).join(', '));
   if (!departamento || !municipio.trim()) {
     return <p className="rounded-xl bg-fondo px-4 py-5 text-center text-small text-gris-azulado">Elige el departamento y el municipio para ver la ubicación en el mapa.</p>;
@@ -66,7 +66,7 @@ function VistaMapa({ departamento, municipio, direccion }: { departamento: strin
       src={`https://maps.google.com/maps?q=${encodeURIComponent(lugar)}&z=${direccion.trim() ? 16 : 12}&hl=es&output=embed`}
       loading="lazy"
       referrerPolicy="no-referrer-when-downgrade"
-      className="aspect-[16/9] w-full rounded-xl border border-[#e2e8f0] bg-[#f1f5f9]"
+      className="aspect-[16/9] max-h-[320px] w-full rounded-xl border border-[#e2e8f0] bg-[#f1f5f9]"
     />
   );
 }

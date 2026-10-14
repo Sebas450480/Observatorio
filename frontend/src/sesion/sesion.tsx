@@ -34,11 +34,16 @@ const rolEnLista = (nombreRol: string | undefined, lista: string[]) => lista.som
 
 export const esRolSuperAdmin = (nombreRol: string | undefined) => rolEnLista(nombreRol, ROLES_SUPERADMIN);
 
+/** Cuenta que representa a una empresa coformadora (registro por invitación). */
+export const ROL_EMPRESA = 'Empresa Coformadora';
+export const esRolEmpresa = (nombreRol: string | undefined) => mismoRol(nombreRol, ROL_EMPRESA);
+
 /** Texto del botón del menú de sesión, como en el Figma. */
 export function etiquetaRol(nombreRol: string | undefined): string {
   if (!nombreRol) return 'Iniciar sesión';
   if (esRolSuperAdmin(nombreRol)) return 'SuperAdmin';
   if (nombreRol.startsWith('Gestor')) return 'Gestor';
+  if (esRolEmpresa(nombreRol)) return 'Empresa';
   return 'Usuario';
 }
 

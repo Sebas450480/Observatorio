@@ -6,6 +6,7 @@ import { conAutenticacion, conRol } from '../db/contexto.js';
 import { ErrorApi } from '../errores.js';
 import { NOMBRE_COOKIE, firmarToken, generarCodigoRecuperacion, huellaCodigo, opcionesCookie } from '../auth/tokens.js';
 import { requiereRol } from '../middlewares/sesion.js';
+import type { Sesion } from '../auth/roles.js';
 import { enviarCorreo, escaparHtml, plantillaCorreo } from '../servicios/correo.js';
 import {
   TAMANOS_EMPRESA, contrasena, correo, idPositivo, textoObligatorio, textoOpcional,
@@ -79,11 +80,13 @@ rutasInvitaciones.get('/', soloGestor, async (req, res) => {
   res.json(rows);
 });
 
-rutasInvitaciones.post('/', soloGestor, async (req, res) => {
-  const datos = esquemaInvitacion.parse(req.body);
+type DatosInvitacion = z.infer<typeof esquemaInvitacion>;
+
+/** Registra una invitación y envía el correo. Lanza ErrorApi si el correo ya tiene cuenta o invitación pendiente. */
+async function crearInvitacion(sesion: Sesion, datos: DatosInvitacion) {
   await verificarCorreoLibre(datos.correo);
   const codigo = generarCodigoRecuperacion();
-  const invitacion = await conRol(req.sesion, async (c) => {
+  const invitacion = await conRol(sesion, async (c) => {
     const pendiente = await c.query(
       "select 1 from invitacion_empresa where correo = $1 and estado = 'Pendiente'",
       [datos.correo],
@@ -95,12 +98,44 @@ rutasInvitaciones.post('/', soloGestor, async (req, res) => {
        values ($1, $2, $3, $4, $5, now() + make_interval(days => $6), $7)
        returning ${COLUMNAS}`,
       [datos.nombre_contacto, datos.apellido_contacto, datos.correo, datos.nombre_empresa ?? null,
-        huellaCodigo(codigo), VIGENCIA_DIAS, req.sesion.idUsuario],
+        huellaCodigo(codigo), VIGENCIA_DIAS, sesion.idUsuario],
     );
     return rows[0];
   });
   const correoEnviado = await enviarInvitacion(invitacion, codigo);
-  res.status(201).json({ ...invitacion, correo_enviado: correoEnviado });
+  return { ...invitacion, correo_enviado: correoEnviado };
+}
+
+rutasInvitaciones.post('/', soloGestor, async (req, res) => {
+  const datos = esquemaInvitacion.parse(req.body);
+  res.status(201).json(await crearInvitacion(req.sesion, datos));
+});
+
+/**
+ * Varias invitaciones a la vez (una por empresa). Cada una se procesa por separado:
+ * si una falla (correo con cuenta, repetido...) las demás se envían igual.
+ */
+export const MAXIMO_LOTE = 50;
+rutasInvitaciones.post('/lote', soloGestor, async (req, res) => {
+  const { invitaciones } = z
+    .object({ invitaciones: z.array(esquemaInvitacion).min(1, 'Agrega al menos una invitación').max(MAXIMO_LOTE, `Máximo ${MAXIMO_LOTE} invitaciones a la vez`) })
+    .parse(req.body);
+  const vistos = new Set<string>();
+  const resultados = [];
+  for (const datos of invitaciones) {
+    if (vistos.has(datos.correo)) {
+      resultados.push({ correo: datos.correo, ok: false, error: 'El correo está repetido en la lista' });
+      continue;
+    }
+    vistos.add(datos.correo);
+    try {
+      resultados.push({ correo: datos.correo, ok: true, invitacion: await crearInvitacion(req.sesion, datos) });
+    } catch (error) {
+      if (!(error instanceof ErrorApi)) throw error;
+      resultados.push({ correo: datos.correo, ok: false, error: error.message });
+    }
+  }
+  res.json({ enviadas: resultados.filter((r) => r.ok).length, resultados });
 });
 
 /** Envía un enlace nuevo (el anterior deja de servir) y renueva el plazo. */
@@ -197,7 +232,7 @@ rutasInvitaciones.post('/completar', limiteIntentos, async (req, res) => {
     const usuario = await c.query<{ id_usuario: number }>(
       `insert into usuario (nombre_usuario, apellido_usuario, correo, contrasena_hash, ciudad,
                             acepta_tratamiento_datos, fecha_aceptacion_datos, id_rol)
-       values ($1, $2, $3, $4, $5, true, now(), (select id_rol from rol where nombre_rol = 'Usuario'))
+       values ($1, $2, $3, $4, $5, true, now(), (select id_rol from rol where nombre_rol = 'Empresa Coformadora'))
        returning id_usuario`,
       [invitacion.nombre_contacto, invitacion.apellido_contacto, invitacion.correo, hash, datos.municipio],
     );
