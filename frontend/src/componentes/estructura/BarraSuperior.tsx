@@ -18,7 +18,7 @@ export const RUTA_DE: Record<TipoContenido, string> = {
 };
 
 const ETIQUETA_DE: Record<TipoContenido, string> = {
-  Flash: 'Flash informativo',
+  Flash: 'Flash',
   Faro: 'Faro Empresarial',
   Empresa: 'Empresa coformadora',
   Tendencia: 'Tendencia',

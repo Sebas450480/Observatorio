@@ -144,7 +144,7 @@ describe('Tendencias', () => {
   });
 
   it('solo el gestor de tendencias importa', async () => {
-    const { agente } = await sesion('Gestor Flash Informativo');
+    const { agente } = await sesion('Gestor Flash');
     const r = await agente.post('/api/tendencias/importar').attach('archivo', await excel([]), 'x.xlsx');
     expect(r.status).toBe(403);
   });

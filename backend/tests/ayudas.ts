@@ -28,7 +28,7 @@ export type NombreRol =
   | 'SuperAdmin Superior'
   | 'Usuario'
   | 'Gestor Faro Empresarial'
-  | 'Gestor Flash Informativo'
+  | 'Gestor Flash'
   | 'Gestor Empresas Coformadoras'
   | 'Gestor Tendencias'
   | 'Gestor Calendario';

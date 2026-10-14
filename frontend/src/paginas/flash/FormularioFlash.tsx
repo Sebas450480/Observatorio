@@ -42,7 +42,7 @@ const esquema = z
   });
 type Datos = z.infer<typeof esquema>;
 
-/** Crear y editar un Flash Informativo (Figma: "Modal — Crear/Editar evento"). */
+/** Crear y editar un Flash (Figma: "Modal — Crear/Editar evento"). */
 export function FormularioFlash({ registro, onCerrar }: { registro?: Flash; onCerrar: () => void }) {
   const { data: categorias = [] } = useCategorias();
   const guardarApi = useGuardar<Flash>('/flash');

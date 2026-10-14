@@ -5,7 +5,7 @@ import {
   textoObligatorio, textoOpcional,
 } from '../utilidades/esquemas.js';
 
-/** Flash Informativo: eventos y oportunidades del entorno empresarial. */
+/** Flash: eventos y oportunidades del entorno empresarial. */
 const esquema = z.object({
   titulo: textoObligatorio(150),
   descripcion: textoOpcional(),
@@ -37,7 +37,7 @@ const esquemaFiltros = z.object({
 
 export const rutasFlash = crearRecurso({
   nombre: 'flash',
-  titulo: 'Flash Informativo',
+  titulo: 'Flash',
   tabla: 'flash_informativo',
   id: 'id_fi',
   rolGestor: 'obs_gestor_flash',

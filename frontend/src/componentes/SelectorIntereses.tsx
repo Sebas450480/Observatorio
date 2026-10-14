@@ -1,7 +1,7 @@
 import type { Categoria } from '../api/tipos';
 
 /** Categorías que describen tipos de contenido; las demás son sectores (Figma: registro paso 2). */
-const CONTENIDO = ['Becas', 'Convocatorias', 'Cursos', 'Talleres', 'Eventos', 'Tendencias', 'Flash informativo'];
+const CONTENIDO = ['Becas', 'Convocatorias', 'Cursos', 'Talleres', 'Eventos', 'Tendencias', 'Flash'];
 /** Orden de los sectores en el Figma; los demás van después, en orden alfabético. */
 const SECTORES = ['Tecnología', 'Innovación', 'Emprendimiento', 'Finanzas', 'Educación', 'Medio ambiente', 'Salud', 'Comercio'];
 

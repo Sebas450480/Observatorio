@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { iniciarSesion } from './ayudas';
 
-test.describe('Gestor Flash Informativo', () => {
-  test('crea, edita y elimina un Flash informativo', async ({ page }) => {
+test.describe('Gestor Flash', () => {
+  test('crea, edita y elimina un Flash', async ({ page }) => {
     await iniciarSesion(page, 'gestorFlash');
     await page.goto('/flash-informativo');
 
-    await page.getByRole('button', { name: 'Crear Flash informativo' }).click();
+    await page.getByRole('button', { name: 'Crear Flash' }).click();
     const formulario = page.getByRole('dialog', { name: 'Nuevo evento' });
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
     await expect(formulario.getByText('Escribe el título')).toBeVisible();
