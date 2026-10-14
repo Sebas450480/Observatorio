@@ -210,7 +210,7 @@ function Formulario({ codigo, contacto, correo, nombreEmpresa }: { codigo: strin
         etiqueta={
           <>
             Autorizo el tratamiento de mis datos personales y los de la empresa según la{' '}
-            <strong className="font-semibold text-azul-marino underline">Política de tratamiento de datos</strong> (Ley 1581 de 2012)
+            <a href="/politica-de-datos" target="_blank" rel="noreferrer" className="font-semibold text-azul-marino underline" onClick={(ev) => ev.stopPropagation()}>Política de tratamiento de datos</a> (Ley 1581 de 2012)
           </>
         }
         checked={autoriza}

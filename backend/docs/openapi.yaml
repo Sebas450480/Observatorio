@@ -33,6 +33,8 @@ tags:
     description: Solo cuentas con el rol Empresa Coformadora; editan la ficha de su propia empresa.
   - name: Tendencias
   - name: Calendario
+  - name: Glosario
+    description: Términos y conceptos clave. Lo administran el Super Admin, el Gestor Observatorio y el Gestor Glosario.
   - name: Estadísticas
   - name: Alertas
   - name: Búsqueda
@@ -840,6 +842,44 @@ paths:
       tags: [Mi empresa]
       summary: Quitar logo o portada
       responses: { '204': { description: Imagen quitada } }
+
+  # ------------------------------------------------------------------ Glosario
+  /api/glosario:
+    get:
+      tags: [Glosario]
+      summary: Listar términos (el público ve solo los activos)
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - { name: letra, in: query, description: 'Inicial del término (A-Z, Ñ) o # para números y símbolos', schema: { type: string } }
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/limite'
+      responses: { '200': { $ref: '#/components/responses/Pagina' } }
+    post:
+      tags: [Glosario]
+      summary: Crear término
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [termino, definicion]
+              properties:
+                termino: { type: string, maxLength: 120 }
+                definicion: { type: string }
+                fuente: { type: string, nullable: true }
+                estado_gt: { type: string, enum: [Activo, Inactivo] }
+      responses: { '201': { description: Término creado }, '409': { description: El término ya existe } }
+  /api/glosario/letras:
+    get:
+      tags: [Glosario]
+      summary: Letras iniciales que tienen términos (índice A-Z)
+      responses: { '200': { description: '["A", "C", "#"]' } }
+  /api/glosario/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Glosario], summary: Ver un término, responses: { '200': { description: Término } } }
+    patch: { tags: [Glosario], summary: Editar término, responses: { '200': { description: Término actualizado } } }
+    delete: { tags: [Glosario], summary: Eliminar término, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
 
   # ------------------------------------------------------------------ Tendencias
   /api/tendencias:

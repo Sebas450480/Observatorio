@@ -6,6 +6,7 @@ import bombillo from './iconos/bombillo.png';
 import calendario from './iconos/calendario.png';
 import edificio from './iconos/edificio.png';
 import estadisticas from './iconos/estadisticas.png';
+import glosario from './iconos/glosario.svg';
 import inicio from './iconos/inicio.svg';
 import megafono from './iconos/megafono.png';
 import tendencias from './iconos/tendencias.svg';
@@ -16,7 +17,7 @@ export { default as iconoUsuario } from './iconos/usuario.png';
 export { default as iconoPerfil } from './iconos/perfil.svg';
 export { default as iconoCerrarSesion } from './iconos/cerrar-sesion.svg';
 
-export type Modulo = 'inicio' | 'flash' | 'faro' | 'empresas' | 'tendencias' | 'eventos' | 'usuarios' | 'estadisticas';
+export type Modulo = 'inicio' | 'flash' | 'faro' | 'empresas' | 'tendencias' | 'eventos' | 'glosario' | 'usuarios' | 'estadisticas';
 
 export const ICONOS_MODULO: Record<Modulo, string> = {
   inicio,
@@ -25,6 +26,7 @@ export const ICONOS_MODULO: Record<Modulo, string> = {
   empresas: edificio,
   tendencias,
   eventos: calendario,
+  glosario,
   usuarios: usuario,
   estadisticas,
 };

@@ -490,6 +490,50 @@ $$;
 reset role;
 
 -- -----------------------------------------------------------------------------
+-- 4d. Glosario
+-- -----------------------------------------------------------------------------
+insert into public.glosario_termino (termino, definicion) values ('PRUEBA Coformación', 'Definición activa');
+insert into public.glosario_termino (termino, definicion, estado_gt) values ('PRUEBA Borrador', 'Definición oculta', 'Inactivo');
+do $$
+begin
+    insert into public.glosario_termino (termino, definicion) values ('  prueba   coformación ', 'Repetido');
+    raise exception 'FALLO 4d.1: se aceptó un término repetido';
+exception when unique_violation then null;
+end;
+$$;
+set local role obs_invitado;
+do $$
+begin
+    if exists (select 1 from public.glosario_termino where termino = 'PRUEBA Borrador') then
+        raise exception 'FALLO 4d.2: el invitado ve un término inactivo';
+    end if;
+    if not exists (select 1 from public.glosario_termino where termino = 'PRUEBA Coformación') then
+        raise exception 'FALLO 4d.3: el invitado no ve un término activo';
+    end if;
+end;
+$$;
+reset role;
+set local role obs_usuario;
+do $$
+begin
+    insert into public.glosario_termino (termino, definicion) values ('PRUEBA Intruso', 'x');
+    raise exception 'FALLO 4d.4: un usuario creó un término';
+exception when insufficient_privilege then null;
+end;
+$$;
+reset role;
+set local role obs_gestor_glosario;
+do $$
+begin
+    update public.glosario_termino set estado_gt = 'Activo' where termino = 'PRUEBA Borrador';
+    if not found then
+        raise exception 'FALLO 4d.5: el Gestor Glosario no puede editar términos';
+    end if;
+end;
+$$;
+reset role;
+
+-- -----------------------------------------------------------------------------
 -- 5. SuperAdmin
 -- -----------------------------------------------------------------------------
 set local role obs_superadmin;
