@@ -28,7 +28,7 @@ tags:
   - name: Faro Empresarial
   - name: Empresas Coformadoras
   - name: Invitaciones
-    description: Registro de empresas coformadoras por invitación. Gestión: Super Admin, Gestor Observatorio y Gestor Empresas.
+    description: 'Registro de empresas coformadoras por invitación. Gestión: Super Admin, Gestor Observatorio y Gestor Empresas.'
   - name: Mi empresa
     description: Solo cuentas con el rol Empresa Coformadora; editan la ficha de su propia empresa.
   - name: Tendencias
