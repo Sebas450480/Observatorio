@@ -243,10 +243,57 @@ begin
         raise exception 'FALLO 3.6: el usuario puede crear categorías';
     exception when insufficient_privilege then null;
     end;
+
+    insert into public.favorito (id_usuario, tipo_contenido, id_contenido)
+    values (current_setting('prueba.usuario')::int, 'Flash', current_setting('prueba.flash_activo')::int);
+
+    begin
+        insert into public.favorito (id_usuario, tipo_contenido, id_contenido)
+        values (current_setting('prueba.otro')::int, 'Flash', current_setting('prueba.flash_activo')::int);
+        raise exception 'FALLO 3.7: el usuario puede agregar favoritos a otro usuario';
+    exception when insufficient_privilege then null;
+    end;
+
+    begin
+        insert into public.favorito (id_usuario, tipo_contenido, id_contenido)
+        values (current_setting('prueba.usuario')::int, 'Flash', current_setting('prueba.flash_activo')::int);
+        raise exception 'FALLO 3.8: se aceptó un favorito repetido';
+    exception when unique_violation then null;
+    end;
 end;
 $$;
 
+-- Los favoritos de otro usuario no se ven.
 reset role;
+insert into public.favorito (id_usuario, tipo_contenido, id_contenido)
+values (current_setting('prueba.otro')::int, 'Empresa', current_setting('prueba.empresa')::int);
+set local role obs_usuario;
+select set_config('app.id_usuario', current_setting('prueba.usuario'), true);
+
+do $$
+begin
+    if exists (select 1 from public.favorito where id_usuario <> current_setting('prueba.usuario')::int) then
+        raise exception 'FALLO 3.9: el usuario ve favoritos de otro usuario';
+    end if;
+end;
+$$;
+
+-- Al eliminar un contenido desaparecen sus favoritos (aunque los borre un gestor).
+reset role;
+set local role obs_gestor_flash;
+select set_config('app.id_usuario', current_setting('prueba.gestor'), true);
+delete from public.flash_informativo where id_fi = current_setting('prueba.flash_activo')::int;
+reset role;
+
+do $$
+begin
+    if exists (select 1 from public.favorito
+                where tipo_contenido = 'Flash' and id_contenido = current_setting('prueba.flash_activo')::int) then
+        raise exception 'FALLO 3.10: quedaron favoritos de un flash eliminado';
+    end if;
+end;
+$$;
+
 
 -- -----------------------------------------------------------------------------
 -- 4. Autenticación (registro de cuentas)

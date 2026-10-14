@@ -42,6 +42,8 @@
   --color-naranja: #f97316;
   --color-naranja-claro: #fff7ed;
   --color-cian-claro: #ecfeff;
+  --color-dorado: #d4a017;        /* banderita de favorito marcada */
+  --color-dorado-borde: #a87c00;
 
   --radius-tarjeta: 12px;
   --radius-control: 8px;

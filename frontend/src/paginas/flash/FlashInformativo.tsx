@@ -12,6 +12,7 @@ import maletin from '../../assets/figma/tarjetas/maletin.svg';
 import premio from '../../assets/figma/tarjetas/premio.svg';
 import { useCategorias, useListado } from '../../api/consultas';
 import type { Flash, Modalidad } from '../../api/tipos';
+import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
@@ -62,8 +63,9 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
         <Insignia tono={tonoModalidad(flash.modalidad)} className="absolute left-3 top-3">
           {modalidadTexto(flash.modalidad)}
         </Insignia>
+        <BotonFavorito tipo="Flash" id={flash.id_fi} titulo={flash.titulo} variante="imagen" className="absolute right-2.5 top-2.5" />
         {flash.estado_fi === 'Inactivo' && (
-          <span className="absolute right-3 top-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVO</span>
+          <span className="absolute bottom-3 right-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVO</span>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-[18px]">

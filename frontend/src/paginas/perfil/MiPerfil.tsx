@@ -12,6 +12,8 @@ import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso, Modal } from '../../componentes/ui/Modal';
 import { descripcionRol, esRolSuperAdmin, useSesion } from '../../sesion/sesion';
 import { iniciales } from '../../utilidades/formato';
+import { MisFavoritos } from './MisFavoritos';
+import { EncabezadoTarjeta, TARJETA } from './TarjetaPerfil';
 
 const esquema = z.object({
   nombre_usuario: z.string().trim().min(1, 'Escribe tu nombre').max(50),
@@ -37,17 +39,6 @@ const FRECUENCIAS: { valor: FrecuenciaAlertas; titulo: string; detalle: string }
   { valor: 'Semanal', titulo: 'Resumen semanal', detalle: 'Un correo los lunes con lo más importante' },
   { valor: 'Ninguna', titulo: 'No recibir alertas', detalle: 'Solo verás las novedades al entrar al sitio' },
 ];
-
-const TARJETA = 'flex flex-col gap-5 rounded-2xl border border-[#e5ebf2] bg-white p-5 shadow-[0_4px_16px_0_rgba(13,26,64,0.06)] sm:p-8';
-
-function EncabezadoTarjeta({ titulo, detalle }: { titulo: string; detalle: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <h2 className="text-subtitle font-bold text-azul-marino">{titulo}</h2>
-      <p className="text-small text-gris-azulado">{detalle}</p>
-    </div>
-  );
-}
 
 function CambiarContrasena({ onCerrar, onListo }: { onCerrar: () => void; onListo: () => void }) {
   const { register, handleSubmit, setError, formState } = useForm<DatosContrasena>({ resolver: zodResolver(esquemaContrasena) });
@@ -249,6 +240,10 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
         )}
       </div>
     </form>
+
+      <div className="mt-6">
+        <MisFavoritos intereses={usuario.intereses} />
+      </div>
 
       {modal === 'contrasena' && <CambiarContrasena onCerrar={() => setModal(null)} onListo={() => setModal('contrasena-lista')} />}
       <Aviso abierto={modal === 'contrasena-lista'} titulo="Contraseña actualizada" mensaje="Tu contraseña se cambió correctamente." onCerrar={() => setModal(null)} />
