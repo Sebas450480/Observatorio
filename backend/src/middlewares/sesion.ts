@@ -81,7 +81,7 @@ export const identificarSesion: RequestHandler = async (req, _res, next) => {
 /**
  * Si la cuenta tiene el rol indicado, las consultas de la petición se hacen con él.
  * Así una cuenta con varios roles usa en cada módulo el rol que lo gestiona
- * (por ejemplo, Gestor Faro en Faro Empresarial y Empresa Coformadora en Mi empresa).
+ * (por ejemplo, Gestor Faro en Faro y Empresa Coformadora en Mi empresa).
  * El SuperAdmin conserva su rol: ya puede todo.
  */
 export function usarRol(req: { sesion: Sesion }, rol: RolBD): boolean {

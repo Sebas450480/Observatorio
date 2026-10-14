@@ -15,8 +15,8 @@ interface Opcion {
 
 const OPCIONES: Opcion[] = [
   { ruta: '/inicio', texto: 'Inicio', icono: 'inicio' },
-  { ruta: '/flash-informativo', texto: 'Flash', icono: 'flash' },
-  { ruta: '/faro-empresarial', texto: 'Faro Empresarial', icono: 'faro' },
+  { ruta: '/flash-informativo', texto: 'Flash Informativo', icono: 'flash' },
+  { ruta: '/faro-empresarial', texto: 'Faro', icono: 'faro' },
   { ruta: '/empresas', texto: 'Empresas coformadoras', icono: 'empresas' },
   { ruta: '/tendencias', texto: 'Tendencias', icono: 'tendencias' },
   { ruta: '/eventos', texto: 'Eventos institucionales', icono: 'eventos' },

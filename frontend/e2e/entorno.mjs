@@ -13,13 +13,13 @@ export const CODIGO_INVITACION = 'codigo-e2e-invitacion-empresa-0001';
 /** Una cuenta por perfil. */
 export const CUENTAS = {
   superadmin: { correo: 'superadmin.e2e@uniempresarial.edu.co', rol: 'Gestor Observatorio', nombre: 'Andrés', apellido: 'Martínez' },
-  gestorFlash: { correo: 'gestor.flash.e2e@uniempresarial.edu.co', rol: 'Gestor Flash', nombre: 'Carolina', apellido: 'Ruiz' },
+  gestorFlash: { correo: 'gestor.flash.e2e@uniempresarial.edu.co', rol: 'Gestor Flash Informativo', nombre: 'Carolina', apellido: 'Ruiz' },
   gestorTendencias: { correo: 'gestor.tendencias.e2e@uniempresarial.edu.co', rol: 'Gestor Tendencias', nombre: 'Diego', apellido: 'Pardo' },
   gestorEmpresas: { correo: 'gestor.empresas.e2e@uniempresarial.edu.co', rol: 'Gestor Empresas Coformadoras', nombre: 'Camila', apellido: 'Torres' },
   usuario: { correo: 'usuario.e2e@gmail.com', rol: 'Usuario', nombre: 'Laura', apellido: 'Gómez' },
   /** Cuenta con dos roles: al entrar elige con cuál. */
   variosRoles: {
-    correo: 'varios.roles.e2e@uniempresarial.edu.co', rol: 'Gestor Flash', otrosRoles: ['Gestor Calendario'], nombre: 'Julián', apellido: 'Rojas',
+    correo: 'varios.roles.e2e@uniempresarial.edu.co', rol: 'Gestor Flash Informativo', otrosRoles: ['Gestor Calendario'], nombre: 'Julián', apellido: 'Rojas',
   },
 };
 

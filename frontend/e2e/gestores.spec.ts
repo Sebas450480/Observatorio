@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { iniciarSesion } from './ayudas';
 
-test.describe('Gestor Flash', () => {
+test.describe('Gestor Flash Informativo', () => {
   test('crea, edita y elimina un Flash', async ({ page }) => {
     await iniciarSesion(page, 'gestorFlash');
     await page.goto('/flash-informativo');
 
-    await page.getByRole('button', { name: 'Crear Flash' }).click();
+    await page.getByRole('button', { name: 'Crear Flash Informativo' }).click();
     const formulario = page.getByRole('dialog', { name: 'Nuevo evento' });
     await formulario.getByRole('button', { name: 'Guardar nuevo registro' }).click();
     await expect(formulario.getByText('Escribe el título')).toBeVisible();
@@ -52,11 +52,11 @@ test.describe('Gestor Flash', () => {
     await iniciarSesion(page, 'gestorFlash');
     await expect(page).toHaveURL(/\/flash-informativo$/);
     const menu = page.getByRole('complementary', { name: 'Menú principal' });
-    await expect(menu.getByRole('link', { name: 'Flash', exact: true })).toBeVisible();
-    for (const otro of ['Inicio', 'Faro Empresarial', 'Empresas coformadoras', 'Tendencias', 'Eventos institucionales', 'Glosario', 'Usuarios']) {
+    await expect(menu.getByRole('link', { name: 'Flash Informativo', exact: true })).toBeVisible();
+    for (const otro of ['Inicio', 'Faro', 'Empresas coformadoras', 'Tendencias', 'Eventos institucionales', 'Glosario', 'Usuarios']) {
       await expect(menu.getByRole('link', { name: otro, exact: true })).toHaveCount(0);
     }
-    await expect(page.getByRole('button', { name: 'Crear Flash' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Crear Flash Informativo' })).toBeVisible();
     for (const ruta of ['/inicio', '/empresas', '/empresas/nueva', '/tendencias', '/usuarios']) {
       await page.goto(ruta);
       await expect(page).toHaveURL(/\/flash-informativo$/);

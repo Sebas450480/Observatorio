@@ -10,8 +10,8 @@ import { EncabezadoTarjeta, TARJETA } from './TarjetaPerfil';
 
 /** Nombre y página de cada módulo. */
 const MODULOS: Record<TipoContenido, { nombre: string; ruta: (id: number) => string }> = {
-  Flash: { nombre: 'Flash', ruta: (id) => `/flash-informativo/${id}` },
-  Faro: { nombre: 'Faro Empresarial', ruta: (id) => `/faro-empresarial/${id}` },
+  Flash: { nombre: 'Flash Informativo', ruta: (id) => `/flash-informativo/${id}` },
+  Faro: { nombre: 'Faro', ruta: (id) => `/faro-empresarial/${id}` },
   Empresa: { nombre: 'Empresas', ruta: (id) => `/empresas/${id}` },
   Tendencia: { nombre: 'Tendencias', ruta: (id) => `/tendencias/${id}` },
   Evento: { nombre: 'Eventos', ruta: (id) => `/eventos/${id}` },
@@ -90,7 +90,7 @@ export function MisFavoritos({ intereses }: { intereses: CategoriaRef[] }) {
   return (
     <section className={TARJETA} aria-labelledby="titulo-favoritos">
       <div id="titulo-favoritos">
-        <EncabezadoTarjeta titulo="Mis favoritos" detalle="Lo que guardaste con la banderita en Flash, Faro Empresarial, Empresas, Tendencias y Eventos." />
+        <EncabezadoTarjeta titulo="Mis favoritos" detalle="Lo que guardaste con la banderita en Flash Informativo, Faro, Empresas, Tendencias y Eventos." />
       </div>
 
       {isLoading ? (

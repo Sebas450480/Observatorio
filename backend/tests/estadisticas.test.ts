@@ -27,7 +27,7 @@ describe('Actividad y estadísticas', () => {
 
   it('valida la actividad y protege el panel', async () => {
     expect((await invitado().post('/api/actividad').send({ tipo_contenido: 'Otro', id_contenido: 1, accion: 'Vista' })).status).toBe(400);
-    const { agente } = await sesion('Gestor Flash');
+    const { agente } = await sesion('Gestor Flash Informativo');
     expect((await agente.get('/api/estadisticas/resumen')).status).toBe(403);
   });
 });
@@ -42,7 +42,7 @@ describe('Alertas por correo', () => {
     );
     const sinAlertas = await crearUsuario('Usuario', { frecuencia: 'Ninguna' });
 
-    const { agente: gestor } = await sesion('Gestor Flash');
+    const { agente: gestor } = await sesion('Gestor Flash Informativo');
     const finanzas = (await invitado().get('/api/categorias')).body.find((c: { nombre_categoria: string }) => c.nombre_categoria === 'Finanzas');
     const tecnologia = (await invitado().get('/api/categorias')).body.find((c: { nombre_categoria: string }) => c.nombre_categoria === 'Tecnología');
     const base = { fecha_inicio: '2026-12-10T08:00:00-05:00', modalidad: 'Virtual', tipo_evento: 'Foro' };
@@ -193,7 +193,7 @@ describe('Búsqueda global', () => {
   });
 
   it('no muestra registros inactivos a un invitado, pero sí al gestor', async () => {
-    const { agente } = await sesion('Gestor Faro Empresarial');
+    const { agente } = await sesion('Gestor Faro');
     await agente.post('/api/faro').send({ titulo: 'Convocatoria secreta zafiro', tipo: 'Convocatorias', estado_fe: 'Inactivo' });
     expect((await invitado().get('/api/buscar?q=zafiro')).body.total).toBe(0);
     expect((await agente.get('/api/buscar?q=zafiro')).body.total).toBe(1);

@@ -25,7 +25,7 @@ grant obs_invitado, obs_usuario, obs_gestor_faro, obs_gestor_flash, obs_gestor_e
    to current_user;
 
 insert into public.rol (nombre_rol) values
-    ('SuperAdmin'), ('Usuario'), ('Gestor Flash')
+    ('SuperAdmin'), ('Usuario'), ('Gestor Flash Informativo')
 on conflict (nombre_rol) do nothing;
 
 insert into public.categoria (nombre_categoria) values ('PRUEBA categoría')
@@ -51,7 +51,7 @@ with u as (
     insert into public.usuario (nombre_usuario, apellido_usuario, correo, contrasena_hash,
                                 acepta_tratamiento_datos, fecha_aceptacion_datos, id_rol)
     select 'Prueba', 'Gestor', 'prueba.gestor@test.co', 'x', true, now(), id_rol
-    from public.rol where nombre_rol = 'Gestor Flash'
+    from public.rol where nombre_rol = 'Gestor Flash Informativo'
     returning id_usuario
 ) select set_config('prueba.gestor', id_usuario::text, true) from u;
 
@@ -144,7 +144,7 @@ $$;
 reset role;
 
 -- -----------------------------------------------------------------------------
--- 2. Gestor Flash
+-- 2. Gestor Flash Informativo
 -- -----------------------------------------------------------------------------
 set local role obs_gestor_flash;
 select set_config('app.id_usuario', current_setting('prueba.gestor'), true);
@@ -459,9 +459,9 @@ begin
                     where ur.id_usuario = id_empresa and r.nombre_rol = 'Empresa Coformadora') then
         raise exception 'FALLO 4c.1: el rol principal no quedó en usuario_rol';
     end if;
-    -- La misma cuenta también es Gestor Faro Empresarial.
+    -- La misma cuenta también es Gestor Faro.
     insert into public.usuario_rol (id_usuario, id_rol)
-    select id_empresa, id_rol from public.rol where nombre_rol = 'Gestor Faro Empresarial';
+    select id_empresa, id_rol from public.rol where nombre_rol = 'Gestor Faro';
     if (select count(*) from public.usuario_rol where id_usuario = id_empresa) <> 2 then
         raise exception 'FALLO 4c.2: la cuenta no quedó con dos roles';
     end if;
