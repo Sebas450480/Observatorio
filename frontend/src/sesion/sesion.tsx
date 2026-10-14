@@ -26,7 +26,13 @@ export const RUTA_MODULO: Record<Modulo, string> = {
 
 /** Roles con todas las funciones del SuperAdmin. */
 export const ROLES_SUPERADMIN = ['SuperAdmin', 'SuperAdmin Superior'];
-export const esRolSuperAdmin = (nombreRol: string | undefined) => !!nombreRol && ROLES_SUPERADMIN.includes(nombreRol);
+
+/** ¿Es el mismo rol? Sin importar mayúsculas ni espacios de más ("SuperAdmin superior" = "SuperAdmin Superior"). */
+export const mismoRol = (a: string | undefined, b: string) =>
+  !!a && a.trim().replace(/\s+/g, ' ').toLowerCase() === b.toLowerCase();
+const rolEnLista = (nombreRol: string | undefined, lista: string[]) => lista.some((r) => mismoRol(nombreRol, r));
+
+export const esRolSuperAdmin = (nombreRol: string | undefined) => rolEnLista(nombreRol, ROLES_SUPERADMIN);
 
 /** Texto del botón del menú de sesión, como en el Figma. */
 export function etiquetaRol(nombreRol: string | undefined): string {
@@ -38,8 +44,8 @@ export function etiquetaRol(nombreRol: string | undefined): string {
 
 /** Descripción del rol para el menú de sesión y Mi perfil. */
 export function descripcionRol(nombreRol: string): string {
-  if (nombreRol === 'SuperAdmin') return 'Superadministrador';
-  if (nombreRol === 'SuperAdmin Superior') return 'Superadministrador superior';
+  if (mismoRol(nombreRol, 'SuperAdmin')) return 'Superadministrador';
+  if (mismoRol(nombreRol, 'SuperAdmin Superior')) return 'Superadministrador superior';
   return nombreRol;
 }
 
@@ -104,8 +110,8 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       cargando: isLoading,
       esSuperAdmin: esRolSuperAdmin(rol),
       esGestor: !!rol?.startsWith('Gestor'),
-      moduloGestor: (Object.keys(GESTOR_DE) as Modulo[]).find((m) => !!rol && GESTOR_DE[m].includes(rol)) ?? null,
-      puedeGestionar: (modulo) => esRolSuperAdmin(rol) || (!!rol && GESTOR_DE[modulo].includes(rol)),
+      moduloGestor: (Object.keys(GESTOR_DE) as Modulo[]).find((m) => rolEnLista(rol, GESTOR_DE[m])) ?? null,
+      puedeGestionar: (modulo) => esRolSuperAdmin(rol) || rolEnLista(rol, GESTOR_DE[modulo]),
       iniciarSesion,
       cerrarSesion,
       establecerUsuario,
