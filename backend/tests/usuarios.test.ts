@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { CONTRASENA, app, crearUsuario, invitado, sesion } from './ayudas.js';
+import { CONTRASENA, app, crearUsuario, db, invitado, sesion } from './ayudas.js';
 
 describe('Mi perfil', () => {
   it('cada usuario ve y edita su perfil e intereses', async () => {
@@ -90,6 +90,19 @@ describe('Gestión de usuarios (SuperAdmin)', () => {
     expect((await superior.patch(`/api/usuarios/${otro.id}`).send({ id_rol: idRol('SuperAdmin Superior') })).status).toBe(200);
     expect((await superior.patch(`/api/usuarios/${protegido.id}`).send({ estado_usuario: 'Inactivo' })).status).toBe(200);
     expect((await superior.get('/api/usuarios')).status).toBe(200);
+  });
+
+  it('reconoce el rol aunque en la base esté escrito con otras mayúsculas ("SuperAdmin superior")', async () => {
+    const { agente: admin } = await sesion('SuperAdmin');
+    const { agente: superior } = await sesion('SuperAdmin Superior');
+    const protegido = await crearUsuario('SuperAdmin Superior');
+    await db().query(`update rol set nombre_rol = 'SuperAdmin superior' where nombre_rol = 'SuperAdmin Superior'`);
+    try {
+      expect((await superior.get('/api/usuarios')).status).toBe(200);
+      expect((await admin.delete(`/api/usuarios/${protegido.id}`)).status).toBe(403);
+    } finally {
+      await db().query(`update rol set nombre_rol = 'SuperAdmin Superior' where nombre_rol = 'SuperAdmin superior'`);
+    }
   });
 
   it('otros perfiles no acceden a la gestión de usuarios', async () => {

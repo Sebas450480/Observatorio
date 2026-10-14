@@ -1156,3 +1156,13 @@ update public.rol
 comment on type public.tipo_evento is 'Tipo de evento (Flash y Calendario).';
 comment on table public.flash_informativo_categoria is 'Categorías (etiquetas) de cada Flash.';
 comment on table public.flash_informativo is 'Flash: eventos y oportunidades del entorno empresarial.';
+
+
+-- >>> migrations/20261014030000_nombre_superadmin_superior.sql
+-- El rol "SuperAdmin Superior" quedó escrito "SuperAdmin superior" en la base de
+-- producción. La aplicación ya lo reconoce sin importar mayúsculas, pero se deja el
+-- nombre oficial para que coincida en todas partes.
+update public.rol
+   set nombre_rol = 'SuperAdmin Superior'
+ where lower(regexp_replace(btrim(nombre_rol), '\s+', ' ', 'g')) = 'superadmin superior'
+   and nombre_rol <> 'SuperAdmin Superior';

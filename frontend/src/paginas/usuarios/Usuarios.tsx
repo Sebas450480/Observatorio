@@ -12,12 +12,12 @@ import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { Boton } from '../../componentes/ui/Boton';
 import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
-import { descripcionRol, etiquetaRol, useSesion } from '../../sesion/sesion';
+import { descripcionRol, etiquetaRol, mismoRol, useSesion } from '../../sesion/sesion';
 
 const SUPERIOR = 'SuperAdmin Superior';
 
 /** Rol abreviado para la tabla y las tarjetas del listado. */
-const nombreRolCorto = (rol: string) => (rol === SUPERIOR ? 'Superadmin superior' : etiquetaRol(rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(rol));
+const nombreRolCorto = (rol: string) => (mismoRol(rol, SUPERIOR) ? 'Superadmin superior' : etiquetaRol(rol) === 'SuperAdmin' ? 'Superadmin' : etiquetaRol(rol));
 
 const base = {
   nombre_usuario: z.string().trim().min(1, 'Escribe el nombre').max(50),
@@ -43,11 +43,11 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
   const eliminarApi = useEliminar('/usuarios');
   const editar = !!registro;
   // Un SuperAdmin no puede cambiarle el rol ni el estado a un SuperAdmin Superior, ni asignar ese rol.
-  const soySuperior = yo?.nombre_rol === SUPERIOR;
-  const protegido = !soySuperior && registro?.nombre_rol === SUPERIOR;
+  const soySuperior = mismoRol(yo?.nombre_rol, SUPERIOR);
+  const protegido = !soySuperior && mismoRol(registro?.nombre_rol, SUPERIOR);
   const propio = registro?.id_usuario === yo?.id_usuario;
   const bloqueado = propio || protegido;
-  const rolesVisibles = roles.filter((r) => soySuperior || r.nombre_rol !== SUPERIOR || r.id_rol === registro?.id_rol);
+  const rolesVisibles = roles.filter((r) => soySuperior || !mismoRol(r.nombre_rol, SUPERIOR) || r.id_rol === registro?.id_rol);
   const { register, trigger, getValues, formState } = useForm<DatosCrear & DatosEditar>({
     resolver: zodResolver(editar ? esquemaEditar : esquemaCrear) as never,
     defaultValues: {
