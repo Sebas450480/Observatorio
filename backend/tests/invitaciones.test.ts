@@ -79,7 +79,7 @@ describe('Invitaciones a empresas coformadoras', () => {
   });
 
   it('solo el SuperAdmin y el Gestor Empresas gestionan invitaciones', async () => {
-    for (const rol of ['Usuario', 'Gestor Flash'] as const) {
+    for (const rol of ['Usuario', 'Gestor Flash Informativo'] as const) {
       const { agente } = await sesion(rol);
       expect((await invitar(agente)).respuesta.status).toBe(403);
       expect((await agente.get('/api/invitaciones')).status).toBe(403);

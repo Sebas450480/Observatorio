@@ -22,7 +22,7 @@ interface Ciudad {
 }
 
 const ETIQUETA_TIPO: Record<TipoContenido, { texto: string; color: string }> = {
-  Flash: { texto: 'FLASH', color: '#1c59d9' },
+  Flash: { texto: 'FLASH INFORMATIVO', color: '#1c59d9' },
   Faro: { texto: 'FARO', color: '#0a8c5c' },
   Empresa: { texto: 'EMPRESA', color: '#e07314' },
   Tendencia: { texto: 'TEND.', color: '#8c5cf5' },
@@ -121,7 +121,7 @@ export function Estadisticas() {
             titulo="Contenidos publicados"
             valor={panel.data.contenidos.total}
             pct={panel.data.contenidos.variacion_pct}
-            detalle={`Flash ${panel.data.contenidos.flash} · Faro ${panel.data.contenidos.faro} · Eventos ${panel.data.contenidos.eventos} · Tendencias ${panel.data.contenidos.tendencias}`}
+            detalle={`Flash Informativo ${panel.data.contenidos.flash} · Faro ${panel.data.contenidos.faro} · Eventos ${panel.data.contenidos.eventos} · Tendencias ${panel.data.contenidos.tendencias}`}
           />
           <Indicador titulo="Visitas a la plataforma" valor={panel.data.visitas.mes} pct={panel.data.visitas.variacion_pct} detalle={`${numero(panel.data.visitas.clics_acceder_mes)} clics en «Acceder»`} />
           <Indicador

@@ -37,7 +37,7 @@ const esquemaFiltros = z.object({
 
 export const rutasFlash = crearRecurso({
   nombre: 'flash',
-  titulo: 'Flash',
+  titulo: 'Flash Informativo',
   tabla: 'flash_informativo',
   id: 'id_fi',
   rolGestor: 'obs_gestor_flash',

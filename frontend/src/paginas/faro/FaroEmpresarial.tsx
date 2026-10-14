@@ -86,7 +86,7 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
   );
 }
 
-/** Faro Empresarial: becas, convocatorias, cursos y talleres. */
+/** Faro: becas, convocatorias, cursos y talleres. */
 const FILTROS_INICIALES = { tipo: '', modalidad: '', categoria: '', estado: '', vigentes: 'true' };
 
 export function FaroEmpresarial() {
@@ -112,7 +112,7 @@ export function FaroEmpresarial() {
 
   return (
     <>
-      <EncabezadoPagina modulo="faro" titulo="Faro Empresarial" subtitulo="Becas, convocatorias, cursos y talleres para impulsar tu crecimiento empresarial." />
+      <EncabezadoPagina modulo="faro" titulo="Faro" subtitulo="Becas, convocatorias, cursos y talleres para impulsar tu crecimiento empresarial." />
       <BarraFiltros
         activos={contarActivos(filtros, FILTROS_INICIALES)}
         onBuscar={() => { setFiltros(borrador); setPagina(1); }}

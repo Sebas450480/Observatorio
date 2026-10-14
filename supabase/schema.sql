@@ -1599,3 +1599,25 @@ create policy lectura_activos on public.glosario_termino for select
     to obs_invitado, obs_usuario, obs_gestor_faro, obs_gestor_flash, obs_gestor_empresas,
        obs_gestor_tendencias, obs_gestor_calendario
     using (estado_gt = 'Activo');
+
+
+-- >>> migrations/20261021010000_nombres_flash_faro.sql
+-- =============================================================================
+-- Nombres de los módulos: "Flash Informativo" y "Faro".
+-- Observatorio Empresarial - Uniempresarial
+--
+-- Renombra los roles gestores de esos módulos. El backend y el frontend
+-- reconocen los nombres anteriores, así que se aplica después de publicar el código.
+-- =============================================================================
+
+update public.rol
+   set nombre_rol      = 'Gestor Flash Informativo',
+       descripcion_rol = 'Administra los eventos del Flash Informativo.',
+       permisos        = 'CRUD Flash Informativo'
+ where nombre_rol = 'Gestor Flash';
+
+update public.rol
+   set nombre_rol      = 'Gestor Faro',
+       descripcion_rol = 'Administra becas, convocatorias, cursos y talleres del Faro.',
+       permisos        = 'CRUD Faro'
+ where nombre_rol = 'Gestor Faro Empresarial';

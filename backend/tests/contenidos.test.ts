@@ -15,7 +15,7 @@ const nuevoFlash = (titulo: string, extra: Record<string, unknown> = {}) => ({
 
 describe('Flash', () => {
   it('guarda el nombre del tipo cuando es "Otro" y lo borra si cambia de tipo', async () => {
-    const { agente } = await sesion('Gestor Flash');
+    const { agente } = await sesion('Gestor Flash Informativo');
     const creado = await agente.post('/api/flash').send(nuevoFlash('Feria con tipo propio', { tipo_evento: 'Otro', tipo_otro: 'Feria' }));
     expect(creado.status).toBe(201);
     expect(creado.body).toMatchObject({ tipo_evento: 'Otro', tipo_otro: 'Feria' });
@@ -36,7 +36,7 @@ describe('Flash', () => {
   });
 
   it('el gestor crea, edita y elimina; el invitado no ve los inactivos', async () => {
-    const { agente, usuario } = await sesion('Gestor Flash');
+    const { agente, usuario } = await sesion('Gestor Flash Informativo');
 
     const creado = await agente.post('/api/flash').send(nuevoFlash('Feria de prueba'));
     expect(creado.status).toBe(201);
@@ -59,7 +59,7 @@ describe('Flash', () => {
   });
 
   it('otro gestor, un usuario o un invitado no pueden crear', async () => {
-    const { agente: gestorFaro } = await sesion('Gestor Faro Empresarial');
+    const { agente: gestorFaro } = await sesion('Gestor Faro');
     const { agente: usuario } = await sesion('Usuario');
     expect((await gestorFaro.post('/api/flash').send(nuevoFlash('x'))).status).toBe(403);
     expect((await usuario.post('/api/flash').send(nuevoFlash('x'))).status).toBe(403);
@@ -73,7 +73,7 @@ describe('Flash', () => {
   });
 
   it('valida los datos y las reglas de la base de datos', async () => {
-    const { agente } = await sesion('Gestor Flash');
+    const { agente } = await sesion('Gestor Flash Informativo');
     const sinTitulo = await agente.post('/api/flash').send(nuevoFlash(''));
     expect(sinTitulo.status).toBe(400);
     const fechas = await agente.post('/api/flash').send(nuevoFlash('Fechas', { fecha_fin: '2026-11-19T08:00:00-05:00' }));
@@ -105,7 +105,7 @@ describe('Flash', () => {
   });
 
   it('sube, reemplaza y quita la imagen; rechaza archivos que no son imágenes', async () => {
-    const { agente } = await sesion('Gestor Flash');
+    const { agente } = await sesion('Gestor Flash Informativo');
     const { body } = await agente.post('/api/flash').send(nuevoFlash('Con imagen'));
 
     const subida = await agente.post(`/api/flash/${body.id_fi}/imagen/imagen`).attach('imagen', PNG_1X1, 'foto.png');
@@ -146,7 +146,7 @@ describe('Flash', () => {
   });
 
   it('descarga la ficha de un registro en PDF o Excel solo con sesión', async () => {
-    const { agente: gestor } = await sesion('Gestor Flash');
+    const { agente: gestor } = await sesion('Gestor Flash Informativo');
     const { body: flash } = await gestor.post('/api/flash').send(nuevoFlash('Feria para descargar', { descripcion: 'Una feria con descripción larga.' }));
     const ruta = `/api/flash/${flash.id_fi}/exportar`;
 
@@ -165,7 +165,7 @@ describe('Flash', () => {
     await libro.xlsx.load(excel.body as unknown as ArrayBuffer);
     const hoja = libro.worksheets[0]!;
     const filas = hoja.getSheetValues().filter(Boolean).map((f) => (f as unknown[]).filter(Boolean));
-    expect(filas).toContainEqual(['Flash', 'Feria para descargar']);
+    expect(filas).toContainEqual(['Flash Informativo', 'Feria para descargar']);
     expect(filas).toContainEqual(['Descripción', 'Una feria con descripción larga.']);
     expect(filas.some((f) => f[0] === 'Estado')).toBe(false);
 
@@ -175,7 +175,7 @@ describe('Flash', () => {
 
 describe('Faro Empresarial', () => {
   it('por defecto muestra solo convocatorias vigentes', async () => {
-    const { agente } = await sesion('Gestor Faro Empresarial');
+    const { agente } = await sesion('Gestor Faro');
     const vencida = await agente.post('/api/faro').send({ titulo: 'Beca vencida', tipo: 'Becas', fecha_cierre: '2020-01-01' });
     expect(vencida.status).toBe(201);
 
@@ -192,9 +192,9 @@ describe('Faro Empresarial', () => {
   });
 
   it('el gestor de Flash no ve los registros inactivos del Faro', async () => {
-    const { agente: gestorFaro } = await sesion('Gestor Faro Empresarial');
+    const { agente: gestorFaro } = await sesion('Gestor Faro');
     const { body } = await gestorFaro.post('/api/faro').send({ titulo: 'Taller oculto', tipo: 'Talleres', estado_fe: 'Inactivo' });
-    const { agente: gestorFlash } = await sesion('Gestor Flash');
+    const { agente: gestorFlash } = await sesion('Gestor Flash Informativo');
     expect((await gestorFlash.get(`/api/faro/${body.id_fe}`)).status).toBe(404);
     expect((await gestorFlash.patch(`/api/faro/${body.id_fe}`).send({ titulo: 'x' })).status).toBe(403);
   });

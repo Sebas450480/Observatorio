@@ -24,8 +24,8 @@ tags:
   - name: Usuarios
     description: Super Admin y Gestor Observatorio.
   - name: Catálogos
-  - name: Flash
-  - name: Faro Empresarial
+  - name: Flash Informativo
+  - name: Faro
   - name: Empresas Coformadoras
   - name: Invitaciones
     description: 'Registro de empresas coformadoras por invitación. Gestión: Super Admin, Gestor Observatorio y Gestor Empresas.'
@@ -334,7 +334,7 @@ paths:
       description: "Al iniciar sesión, una cuenta con varios roles entra con el principal; con este servicio elige con cuál seguir. La sesión actúa solo con ese rol hasta que lo cambie o cierre sesión."
       requestBody:
         required: true
-        content: { application/json: { schema: { type: object, required: [rol], properties: { rol: { type: string, example: Gestor Flash } } } } }
+        content: { application/json: { schema: { type: object, required: [rol], properties: { rol: { type: string, example: Gestor Flash Informativo } } } } }
       responses:
         '200': { description: Perfil con el rol elegido, content: { application/json: { schema: { $ref: '#/components/schemas/Perfil' } } } }
         '400': { $ref: '#/components/responses/Error' }
@@ -529,10 +529,10 @@ paths:
       summary: Eliminar categoría (Super Admin o Gestor Observatorio)
       responses: { '204': { $ref: '#/components/responses/SinContenido' } }
 
-  # ------------------------------------------------------------------ Flash
+  # ------------------------------------------------------------------ Flash Informativo
   /api/flash:
     get:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: Listar
       parameters:
         - $ref: '#/components/parameters/q'
@@ -550,53 +550,53 @@ paths:
         - $ref: '#/components/parameters/limite'
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
-      tags: [Flash]
-      summary: Crear (Gestor Flash o administración)
+      tags: [Flash Informativo]
+      summary: Crear (Gestor Flash Informativo o administración)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Flash' } } } }
       responses: { '201': { description: Creado } }
   /api/flash/exportar:
     get:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: Exportar el listado (mismos filtros; requiere sesión)
       parameters: [{ $ref: '#/components/parameters/formato' }]
       responses: { '200': { $ref: '#/components/responses/Archivo' }, '401': { description: Sin sesión } }
   /api/flash/{id}/exportar:
     get:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: 'Descargar la ficha de un registro en PDF (por defecto) o Excel; requiere sesión. También existe en /api/faro, /api/empresas, /api/tendencias y /api/calendario'
       parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/formato' }]
       responses: { '200': { $ref: '#/components/responses/Archivo' }, '401': { description: Sin sesión }, '404': { description: No existe } }
   /api/flash/{id}:
     parameters: [{ $ref: '#/components/parameters/id' }]
     get:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: Detalle
       responses: { '200': { description: Detalle }, '404': { $ref: '#/components/responses/Error' } }
     patch:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: Editar (campos parciales)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Flash' } } } }
       responses: { '200': { description: Actualizado } }
     delete:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: Eliminar
       responses: { '204': { $ref: '#/components/responses/SinContenido' } }
   /api/flash/{id}/imagen/{campo}:
     parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/campoImagen' }]
     post:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: Subir imagen (campo = imagen)
       requestBody: { $ref: '#/components/requestBodies/Imagen' }
       responses: { '201': { description: Ruta de la imagen } }
     delete:
-      tags: [Flash]
+      tags: [Flash Informativo]
       summary: Quitar imagen
       responses: { '204': { $ref: '#/components/responses/SinContenido' } }
 
-  # ------------------------------------------------------------------ Faro Empresarial
+  # ------------------------------------------------------------------ Faro
   /api/faro:
     get:
-      tags: [Faro Empresarial]
+      tags: [Faro]
       summary: Listar (por defecto solo vigentes)
       parameters:
         - $ref: '#/components/parameters/q'
@@ -611,33 +611,33 @@ paths:
         - $ref: '#/components/parameters/limite'
       responses: { '200': { $ref: '#/components/responses/Pagina' } }
     post:
-      tags: [Faro Empresarial]
-      summary: Crear (Gestor Faro Empresarial o administración)
+      tags: [Faro]
+      summary: Crear (Gestor Faro o administración)
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Faro' } } } }
       responses: { '201': { description: Creado } }
   /api/faro/exportar:
     get:
-      tags: [Faro Empresarial]
+      tags: [Faro]
       summary: Exportar
       parameters: [{ $ref: '#/components/parameters/formato' }]
       responses: { '200': { $ref: '#/components/responses/Archivo' } }
   /api/faro/{id}:
     parameters: [{ $ref: '#/components/parameters/id' }]
-    get: { tags: [Faro Empresarial], summary: Detalle, responses: { '200': { description: Detalle } } }
+    get: { tags: [Faro], summary: Detalle, responses: { '200': { description: Detalle } } }
     patch:
-      tags: [Faro Empresarial]
+      tags: [Faro]
       summary: Editar
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Faro' } } } }
       responses: { '200': { description: Actualizado } }
-    delete: { tags: [Faro Empresarial], summary: Eliminar, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+    delete: { tags: [Faro], summary: Eliminar, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
   /api/faro/{id}/imagen/{campo}:
     parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/campoImagen' }]
     post:
-      tags: [Faro Empresarial]
+      tags: [Faro]
       summary: Subir imagen (campo = imagen)
       requestBody: { $ref: '#/components/requestBodies/Imagen' }
       responses: { '201': { description: Ruta de la imagen } }
-    delete: { tags: [Faro Empresarial], summary: Quitar imagen, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
+    delete: { tags: [Faro], summary: Quitar imagen, responses: { '204': { $ref: '#/components/responses/SinContenido' } } }
 
   # ------------------------------------------------------------------ Empresas
   /api/empresas:
