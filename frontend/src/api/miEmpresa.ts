@@ -6,6 +6,8 @@ import type { Empresa } from './tipos';
 export type MiEmpresa = Omit<Empresa, 'contactos' | 'premios_recibidos' | 'tiempo_coformadora' | 'creado_por' | 'fecha_creacion'> & {
   /** Correo de la cuenta: el mismo al que llegó la invitación. */
   correo_cuenta: string;
+  /** Registrada por invitación y aún sin completar la ficha (no está publicada). */
+  pendiente: boolean;
 };
 
 const CLAVE = ['mi-empresa'] as const;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { RUTA_MODULO, rutaPermitida, useSesion } from '../../sesion/sesion';
+import { RecorridoGuiado } from '../RecorridoGuiado';
 import { BarraLateral } from './BarraLateral';
 import { BarraSuperior } from './BarraSuperior';
 import semicirculo from '../../assets/figma/decoraciones/semicirculo.svg';
@@ -49,6 +50,8 @@ export function Estructura() {
           <Outlet />
         </div>
       </main>
+      {/* Cuentas recién creadas: recorrido por la plataforma que termina en Mi perfil. */}
+      <RecorridoGuiado />
     </div>
   );
 }

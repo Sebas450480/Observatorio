@@ -9,7 +9,7 @@ import { requiereRol } from '../middlewares/sesion.js';
 import type { Sesion } from '../auth/roles.js';
 import { enviarCorreo, escaparHtml, plantillaCorreo } from '../servicios/correo.js';
 import {
-  TAMANOS_EMPRESA, contrasena, correo, idPositivo, textoObligatorio, textoOpcional,
+  contrasena, correo, idPositivo, textoObligatorio, textoOpcional,
 } from '../utilidades/esquemas.js';
 import { limiteIntentos, perfilPorId } from './auth.js';
 
@@ -192,31 +192,29 @@ rutasInvitaciones.get('/codigo/:codigo', limiteIntentos, async (req, res) => {
   res.json(invitacion);
 });
 
+/** NIT provisional de la empresa mientras completa su ficha (ver la migración del registro corto). */
+export const PREFIJO_NIT_PENDIENTE = 'PENDIENTE-';
+
 const esquemaRegistroEmpresa = z.object({
   codigo: codigoInvitacion,
   contrasena,
   acepta_tratamiento_datos: z.literal(true, { message: 'Debes aceptar el tratamiento de datos personales (Ley 1581 de 2012)' }),
-  razon_social: textoObligatorio(150),
-  nombre_comercial: textoOpcional(100),
-  nit: textoObligatorio(20),
-  sector_economico: textoObligatorio(50),
-  descripcion: textoObligatorio(5000),
-  tamano_empresa: z.enum(TAMANOS_EMPRESA),
-  anio_constitucion: z.number().int().min(1800).max(new Date().getFullYear()),
-  departamento: textoObligatorio(50),
-  municipio: textoObligatorio(60),
-  direccion: textoOpcional(150),
-  estudiantes_recibidos: z.number().int().min(0).max(1_000_000),
-  telefono: textoOpcional(20),
 });
 
+/**
+ * Registro corto: con el enlace del correo la empresa solo crea su contraseña.
+ * La ficha nace pendiente (inactiva, con NIT provisional) y la cuenta la completa
+ * desde Mi perfil; al guardar el NIT real se publica en el directorio.
+ */
 rutasInvitaciones.post('/completar', limiteIntentos, async (req, res) => {
   const datos = esquemaRegistroEmpresa.parse(req.body);
   const hash = await bcrypt.hash(datos.contrasena, config.bcryptCosto);
 
   const resultado = await conAutenticacion(async (c) => {
-    const { rows } = await c.query<{ id_invitacion: number; nombre_contacto: string; apellido_contacto: string; correo: string }>(
-      `select id_invitacion, nombre_contacto, apellido_contacto, correo from invitacion_empresa
+    const { rows } = await c.query<{
+      id_invitacion: number; nombre_contacto: string; apellido_contacto: string; correo: string; nombre_empresa: string | null;
+    }>(
+      `select id_invitacion, nombre_contacto, apellido_contacto, correo, nombre_empresa from invitacion_empresa
         where token_hash = $1 and estado = 'Pendiente' and fecha_vencimiento > now()
         for update`,
       [huellaCodigo(datos.codigo)],
@@ -226,34 +224,30 @@ rutasInvitaciones.post('/completar', limiteIntentos, async (req, res) => {
 
     const cuenta = await c.query('select 1 from usuario where correo = $1', [invitacion.correo]);
     if (cuenta.rowCount) throw new ErrorApi(409, 'Ya existe una cuenta con el correo de esta invitación. Inicia sesión o recupera tu contraseña.');
-    const nit = await c.query('select 1 from empresa_coformadora where nit = $1', [datos.nit]);
-    if (nit.rowCount) throw new ErrorApi(409, 'Ya hay una empresa registrada con ese NIT', [{ campo: 'nit', mensaje: 'Ya hay una empresa registrada con ese NIT' }]);
 
     const usuario = await c.query<{ id_usuario: number }>(
-      `insert into usuario (nombre_usuario, apellido_usuario, correo, contrasena_hash, ciudad,
+      `insert into usuario (nombre_usuario, apellido_usuario, correo, contrasena_hash,
                             acepta_tratamiento_datos, fecha_aceptacion_datos, id_rol)
-       values ($1, $2, $3, $4, $5, true, now(), (select id_rol from rol where nombre_rol = 'Empresa Coformadora'))
+       values ($1, $2, $3, $4, true, now(), (select id_rol from rol where nombre_rol = 'Empresa Coformadora'))
        returning id_usuario`,
-      [invitacion.nombre_contacto, invitacion.apellido_contacto, invitacion.correo, hash, datos.municipio],
+      [invitacion.nombre_contacto, invitacion.apellido_contacto, invitacion.correo, hash],
     );
     const idUsuario = usuario.rows[0]!.id_usuario;
 
+    const contacto = `${invitacion.nombre_contacto} ${invitacion.apellido_contacto}`;
     const empresa = await c.query<{ id_ec: number }>(
-      `insert into empresa_coformadora (razon_social, nombre_comercial, nit, sector_economico, descripcion, tamano_empresa,
-                                        anio_constitucion, departamento, municipio, direccion, estudiantes_recibidos,
-                                        telefono, correo, estado_ec, id_usuario, creado_por)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'Activo', $14, $14)
+      `insert into empresa_coformadora (razon_social, nit, sector_economico, departamento, municipio,
+                                        correo, estado_ec, id_usuario, creado_por)
+       values ($1, $2, 'Por definir', 'Por definir', 'Por definir', $3, 'Inactivo', $4, $4)
        returning id_ec`,
-      [datos.razon_social, datos.nombre_comercial ?? null, datos.nit, datos.sector_economico, datos.descripcion,
-        datos.tamano_empresa, datos.anio_constitucion, datos.departamento, datos.municipio, datos.direccion ?? null,
-        datos.estudiantes_recibidos, datos.telefono ?? null, invitacion.correo, idUsuario],
+      [(invitacion.nombre_empresa || `Empresa de ${contacto}`).slice(0, 150), `${PREFIJO_NIT_PENDIENTE}${invitacion.id_invitacion}`,
+        invitacion.correo, idUsuario],
     );
     const idEc = empresa.rows[0]!.id_ec;
 
     await c.query(
-      `insert into contacto_empresa (id_ec, nombre, correo, telefono, es_principal)
-       values ($1, $2, $3, $4, true)`,
-      [idEc, `${invitacion.nombre_contacto} ${invitacion.apellido_contacto}`.slice(0, 100), invitacion.correo, datos.telefono ?? null],
+      `insert into contacto_empresa (id_ec, nombre, correo, es_principal) values ($1, $2, $3, true)`,
+      [idEc, contacto.slice(0, 100), invitacion.correo],
     );
     await c.query(
       `update invitacion_empresa set estado = 'Completada', id_ec = $2, id_usuario = $3, fecha_completada = now()

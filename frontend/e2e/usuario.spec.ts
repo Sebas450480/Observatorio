@@ -108,3 +108,50 @@ test.describe('Perfil de empresa', () => {
     await expect(page.getByText('Activo', { exact: true })).toBeVisible();
   });
 });
+
+test.describe('Registro', () => {
+  test('al crear la cuenta hace el recorrido por la plataforma y termina en Mi perfil', async ({ page }) => {
+    await page.goto('/registro');
+    await page.getByLabel('Nombre').fill('Sara');
+    await page.getByLabel('Apellido').fill('Recorrido');
+    await page.getByLabel('Correo electrónico').fill(`sara.${Date.now()}@test.co`);
+    await page.getByLabel('Contraseña', { exact: true }).fill('Clave-segura-123');
+    await page.getByLabel('Confirmar contraseña').fill('Clave-segura-123');
+    await page.getByRole('button', { name: /Siguiente/ }).click();
+    await page.getByLabel(/Autorizo el tratamiento/).check();
+    await page.getByRole('button', { name: 'Crear mi cuenta' }).click();
+
+    const guia = page.getByRole('dialog');
+    await expect(guia.getByRole('heading', { name: '¡Te damos la bienvenida al Observatorio Empresarial!' })).toBeVisible();
+    await guia.getByRole('button', { name: 'Empezar' }).click();
+    await expect(guia.getByText('Paso 2 de 11')).toBeVisible();
+    await guia.getByRole('button', { name: 'Siguiente' }).click();
+    await expect(guia.getByRole('heading', { name: 'Flash Informativo' })).toBeVisible();
+    await guia.getByRole('button', { name: 'Anterior' }).click();
+    await expect(guia.getByRole('heading', { name: 'Menú principal' })).toBeVisible();
+    for (let i = 0; i < 9; i++) await guia.getByRole('button', { name: 'Siguiente' }).click();
+    await expect(page).toHaveURL(/\/mi-perfil$/);
+    await expect(guia.getByRole('heading', { name: 'Completa tu perfil' })).toBeVisible();
+    await guia.getByRole('button', { name: 'Completar mi perfil' }).click();
+    await expect(page.getByRole('heading', { name: 'Mis intereses' })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Mis intereses' })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
+  test('el recorrido se puede omitir', async ({ page }) => {
+    await page.goto('/registro');
+    await page.getByLabel('Nombre').fill('Omar');
+    await page.getByLabel('Apellido').fill('Omite');
+    await page.getByLabel('Correo electrónico').fill(`omar.${Date.now()}@test.co`);
+    await page.getByLabel('Contraseña', { exact: true }).fill('Clave-segura-123');
+    await page.getByLabel('Confirmar contraseña').fill('Clave-segura-123');
+    await page.getByRole('button', { name: /Siguiente/ }).click();
+    await page.getByLabel(/Autorizo el tratamiento/).check();
+    await page.getByRole('button', { name: 'Crear mi cuenta' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Omitir recorrido' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Bienvenido al Observatorio Empresarial' })).toBeVisible();
+  });
+});

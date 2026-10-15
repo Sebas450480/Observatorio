@@ -9,6 +9,7 @@ import { useCategorias } from '../../api/consultas';
 import type { Perfil } from '../../api/tipos';
 import { SelectorIntereses } from '../../componentes/SelectorIntereses';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
+import { iniciarRecorrido } from '../../componentes/RecorridoGuiado';
 import { useSesion } from '../../sesion/sesion';
 import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
 
@@ -79,6 +80,7 @@ export function Registro() {
         },
       });
       establecerUsuario(perfil);
+      iniciarRecorrido();
       navegar('/inicio', { replace: true });
     } catch (err) {
       // Un correo repetido o un dato inválido se corrige en el paso 1.

@@ -15,10 +15,11 @@ function codigoDelCorreo(correo: string) {
 
 const nuevoCorreo = () => `empresa.${randomUUID().slice(0, 8)}@test.co`;
 
-const datosEmpresa = (codigo: string, nit = `NIT-${randomUUID().slice(0, 8)}`) => ({
-  codigo,
-  contrasena: 'Clave-empresa-123',
-  acepta_tratamiento_datos: true,
+/** Registro corto: con el enlace solo se crea la contraseña. */
+const datosEmpresa = (codigo: string) => ({ codigo, contrasena: 'Clave-empresa-123', acepta_tratamiento_datos: true });
+
+/** Ficha que la empresa completa después, desde Mi perfil. */
+const fichaEmpresa = (nit = `NIT-${randomUUID().slice(0, 8)}`) => ({
   razon_social: 'Invitada S.A.S.',
   nombre_comercial: 'Invitada',
   nit,
@@ -61,15 +62,26 @@ describe('Invitaciones a empresas coformadoras', () => {
     // Sesión iniciada con la cuenta nueva.
     expect((await empresa.get('/api/auth/yo')).body.correo).toBe(correo);
 
-    // Publicada en el directorio, ligada a la cuenta y con el contacto principal.
+    // La ficha nace pendiente: ligada a la cuenta, con el contacto principal, sin publicar.
+    const { rows } = await db().query('select id_usuario, estado_ec, nit, razon_social from empresa_coformadora where id_ec = $1', [idEc]);
+    expect(rows[0]).toMatchObject({ estado_ec: 'Inactivo', razon_social: 'Invitada', id_usuario: registro.body.usuario.id_usuario });
+    expect(rows[0].nit).toMatch(/^PENDIENTE-/);
+    expect((await invitado().get(`/api/empresas/${idEc}`)).status).toBe(404);
+    expect((await empresa.get('/api/mi-empresa')).body).toMatchObject({ id_ec: idEc, pendiente: true });
+
+    // Debe completar los datos obligatorios; al guardar el NIT real se publica.
+    const incompleta = await empresa.patch('/api/mi-empresa').send({ descripcion: 'Solo la descripción' });
+    expect(incompleta.status).toBe(400);
+    expect((await empresa.patch('/api/mi-empresa').send({ ...fichaEmpresa(), nit: 'PENDIENTE-99' })).status).toBe(400);
+    const completa = await empresa.patch('/api/mi-empresa').send(fichaEmpresa());
+    expect(completa.status).toBe(200);
+    expect(completa.body).toMatchObject({ pendiente: false, estado_ec: 'Activo' });
+
     const publica = await invitado().get(`/api/empresas/${idEc}`);
     expect(publica.status).toBe(200);
     expect(publica.body).toMatchObject({ razon_social: 'Invitada S.A.S.', estudiantes_recibidos: 12 });
     expect(publica.body).not.toHaveProperty('id_usuario');
     expect(publica.body.contactos).toEqual([expect.objectContaining({ nombre: 'Ana Pérez', correo, es_principal: true })]);
-    const { rows } = await db().query('select id_usuario, estado_ec from empresa_coformadora where id_ec = $1', [idEc]);
-    expect(rows[0].estado_ec).toBe('Activo');
-    expect(rows[0].id_usuario).toBe(registro.body.usuario.id_usuario);
 
     // La invitación queda completada y el enlace ya no sirve.
     const lista = (await agente.get('/api/invitaciones')).body as { correo: string; estado: string; id_ec: number }[];
@@ -131,24 +143,27 @@ describe('Invitaciones a empresas coformadoras', () => {
     expect(lista.find((i) => i.correo === correo)?.estado).toBe('Vencida');
   });
 
-  it('valida los datos y un NIT repetido no deja nada a medias', async () => {
+  it('valida la contraseña y la autorización; un NIT repetido no publica la empresa', async () => {
     const { agente } = await sesion('Gestor Observatorio');
     const { correo } = await invitar(agente);
     const codigo = codigoDelCorreo(correo);
 
-    const sinDatos = await invitado().post('/api/invitaciones/completar').send({ codigo, contrasena: 'corta' });
-    expect(sinDatos.status).toBe(400);
+    expect((await invitado().post('/api/invitaciones/completar').send({ codigo, contrasena: 'corta', acepta_tratamiento_datos: true })).status).toBe(400);
+    expect((await invitado().post('/api/invitaciones/completar').send({ codigo, contrasena: 'Clave-empresa-123' })).status).toBe(400);
+    const cuenta = await db().query('select 1 from usuario where correo = $1', [correo]);
+    expect(cuenta.rowCount).toBe(0);
 
+    const empresa = request.agent(app);
+    expect((await empresa.post('/api/invitaciones/completar').send(datosEmpresa(codigo))).status).toBe(201);
     const { rows } = await db().query<{ nit: string }>(
       `insert into empresa_coformadora (nit, razon_social, sector_economico, departamento, municipio)
        values ('NIT-' || floor(random() * 1e9)::text, 'Ya existe', 'Comercio', 'Bogotá D.C.', 'Bogotá') returning nit`,
     );
-    const repetido = await invitado().post('/api/invitaciones/completar').send(datosEmpresa(codigo, rows[0]!.nit));
+    const repetido = await empresa.patch('/api/mi-empresa').send(fichaEmpresa(rows[0]!.nit));
     expect(repetido.status).toBe(409);
-    const cuenta = await db().query('select 1 from usuario where correo = $1', [correo]);
-    expect(cuenta.rowCount).toBe(0);
-    // El enlace sigue sirviendo para corregir el dato.
-    expect((await invitado().post('/api/invitaciones/completar').send(datosEmpresa(codigo))).status).toBe(201);
+    expect((await empresa.get('/api/mi-empresa')).body).toMatchObject({ pendiente: true, estado_ec: 'Inactivo' });
+    // Con un NIT válido se publica.
+    expect((await empresa.patch('/api/mi-empresa').send(fichaEmpresa())).body.estado_ec).toBe('Activo');
   });
 });
 
@@ -184,6 +199,7 @@ describe('Mi empresa (rol Empresa Coformadora)', () => {
     const { correo } = await invitar(gestor);
     const empresa = request.agent(app);
     const registro = await empresa.post('/api/invitaciones/completar').send(datosEmpresa(codigoDelCorreo(correo)));
+    await empresa.patch('/api/mi-empresa').send(fichaEmpresa());
     return { empresa, correo, idEc: registro.body.id_ec as number };
   }
 
