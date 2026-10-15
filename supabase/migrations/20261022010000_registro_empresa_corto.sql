@@ -10,9 +10,7 @@
 -- =============================================================================
 
 -- La empresa por invitación puede nacer activa (registro anterior) o pendiente.
-drop policy autenticacion_registro on public.empresa_coformadora;
-create policy autenticacion_registro on public.empresa_coformadora for insert
-    to obs_autenticacion
+alter policy autenticacion_registro on public.empresa_coformadora
     with check (id_usuario is not null and (estado_ec = 'Activo' or nit like 'PENDIENTE-%'));
 
 -- Al reemplazar el NIT provisional por el real, la empresa se publica.
