@@ -79,7 +79,7 @@ function BuscadorGlobal() {
   };
 
   return (
-    <div ref={contenedor} className="relative min-w-0 flex-1">
+    <div ref={contenedor} className="relative min-w-0 flex-1" data-recorrido="buscador">
       <img src={iconoBuscar} alt="" aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 sm:left-3.5 sm:size-[25px]" />
       <input
         type="search"
@@ -178,7 +178,7 @@ function MenuSesion() {
   }
 
   return (
-    <div ref={contenedor} className="relative">
+    <div ref={contenedor} className="relative" data-recorrido="sesion">
       <button type="button" className={claseBoton} onClick={() => setAbierto((a) => !a)} aria-expanded={abierto} aria-haspopup="menu">
         <span className="hidden sm:inline">{etiquetaRol(rolActivo ?? usuario.nombre_rol)}</span>
         <img src={iconoUsuario} alt={`Sesión de ${usuario.nombre_usuario}`} className="size-8 sm:size-10" />

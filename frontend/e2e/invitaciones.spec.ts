@@ -42,56 +42,55 @@ test.describe('Empresas por invitación', () => {
     await expect(fila.getByText('Anulada')).toBeVisible();
   });
 
-  test('la empresa completa el registro con el enlace del correo y queda publicada', async ({ page }) => {
+  test('con el enlace solo crea la contraseña, hace el recorrido y publica su empresa desde Mi perfil', async ({ page }) => {
     await page.goto(`/registro-empresa?codigo=${CODIGO_INVITACION}`);
     await expect(page.getByRole('heading', { name: 'Estás a un paso de ser parte de nuestra familia' })).toBeVisible();
     await expect(page.getByText('empresa.invitada.e2e@empresa.co')).toBeVisible();
-    await expect(page.getByLabel('Razón social')).toHaveValue('Invitada E2E S.A.S.');
+    // El formulario es corto: no pide los datos de la empresa.
+    await expect(page.getByLabel('NIT')).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Completar registro' }).click();
-    await expect(page.getByText('Escribe el NIT')).toBeVisible();
-
-    await page.getByLabel('Contraseña').first().fill('Empresa-E2E-2026');
+    await page.getByRole('button', { name: 'Crear contraseña y entrar' }).click();
+    await expect(page.getByText('Mínimo 8 caracteres').first()).toBeVisible();
+    await page.getByRole('textbox', { name: 'Contraseña', exact: true }).fill('Empresa-E2E-2026');
     await page.getByLabel('Confirmar contraseña').fill('Empresa-E2E-2026');
-    await page.getByLabel('NIT').fill('901.234.567-8');
-    await page.getByLabel('Sector').fill('Tecnología');
-    await page.getByLabel('Descripción').fill('Empresa de software registrada por invitación.');
-    await page.getByLabel('Tamaño').selectOption('Mediana');
-    await page.getByLabel('Año de constitución').fill('2012');
-    await page.getByLabel('Estudiantes recibidos').fill('8');
-    await page.getByLabel('Departamento').selectOption('Antioquia');
-    await page.getByLabel('Municipio').fill('Medellín');
-    await page.getByLabel('Dirección').fill('Cra 43A # 5-10');
-    await expect(page.getByTitle('Vista previa de la ubicación en Google Maps')).toBeVisible();
-
-    await page.getByRole('button', { name: 'Completar registro' }).click();
+    await page.getByRole('button', { name: 'Crear contraseña y entrar' }).click();
     await expect(page.getByText(/Debes autorizar el tratamiento/)).toBeVisible();
     await page.getByLabel(/Autorizo el tratamiento/).check();
-    await page.getByRole('button', { name: 'Completar registro' }).click();
+    await page.getByRole('button', { name: 'Crear contraseña y entrar' }).click();
 
-    const modal = page.getByRole('dialog', { name: 'Registro completado' });
-    await expect(modal.getByText('¡Ya perteneces a la familia Observatorio Empresarial!')).toBeVisible();
-    await modal.getByRole('button', { name: 'Aceptar' }).click();
-    await expect(page.getByRole('heading', { name: 'Invitada E2E S.A.S.' })).toBeVisible();
+    // Entra a la plataforma con el recorrido guiado, que termina en la ficha de su empresa.
+    const guia = page.getByRole('dialog');
+    await expect(guia.getByRole('heading', { name: '¡Te damos la bienvenida al Observatorio Empresarial!' })).toBeVisible();
+    await guia.getByRole('button', { name: 'Empezar' }).click();
+    await expect(guia.getByRole('heading', { name: 'Menú principal' })).toBeVisible();
+    for (let i = 0; i < 9; i++) await guia.getByRole('button', { name: 'Siguiente' }).click();
+    await expect(page).toHaveURL(/\/mi-perfil$/);
+    await expect(guia.getByRole('heading', { name: 'Completa la ficha de tu empresa' })).toBeVisible();
+    await guia.getByRole('button', { name: 'Completar mi perfil' }).click();
+    await expect(guia).toHaveCount(0);
 
-    // Aparece en el directorio público.
-    await page.goto('/empresas');
-    await expect(page.getByRole('link', { name: /Invitada E2E S\.A\.S\./ })).toBeVisible();
-
-    // Mi perfil muestra la ficha de su empresa para editarla en cualquier momento.
-    await page.getByRole('button', { name: 'Sesión de Mateo' }).click();
-    await expect(page.getByText('Ver y editar mis datos y mi empresa')).toBeVisible();
-    await page.getByRole('menuitem', { name: /Mi perfil/ }).click();
+    // La ficha está pendiente: aún no se publica.
     const miEmpresa = page.getByRole('form', { name: /Mi empresa/ });
-    await expect(miEmpresa.getByText('empresa.invitada.e2e@empresa.co')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Mis intereses' })).toHaveCount(0);
+    await expect(miEmpresa.getByText('Completa la ficha de tu empresa.')).toBeVisible();
+    await expect(miEmpresa.getByRole('link', { name: 'Ver ficha pública' })).toHaveCount(0);
+    await expect(miEmpresa.getByLabel('Razón social')).toHaveValue('Invitada E2E S.A.S.');
+    await miEmpresa.getByLabel('NIT').fill('901.234.567-8');
+    await miEmpresa.getByLabel('Sector').fill('Tecnología');
+    await miEmpresa.getByLabel('Descripción').fill('Empresa de software registrada por invitación.');
     await miEmpresa.getByLabel('Estudiantes recibidos').fill('15');
-    await miEmpresa.getByLabel('Sitio web').fill('www.invitada-e2e.co');
-    await miEmpresa.getByRole('button', { name: 'Guardar empresa' }).click();
-    await expect(page.getByRole('dialog', { name: 'Empresa actualizada' })).toBeVisible();
+    await miEmpresa.getByLabel('Departamento').selectOption('Antioquia');
+    await miEmpresa.getByLabel('Municipio').fill('Medellín');
+    await miEmpresa.getByRole('button', { name: 'Guardar y publicar' }).click();
+    await expect(page.getByRole('dialog', { name: '¡Ya perteneces a la familia Observatorio Empresarial!' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
     await miEmpresa.getByRole('link', { name: 'Ver ficha pública' }).click();
+    await expect(page.getByRole('heading', { name: 'Invitada E2E S.A.S.' })).toBeVisible();
     await expect(page.getByText('15 estudiantes')).toBeVisible();
+
+    // Al volver a entrar ya no ve el recorrido.
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Invitada E2E S.A.S.' })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     // El enlace ya no sirve.
     await page.goto(`/registro-empresa?codigo=${CODIGO_INVITACION}`);

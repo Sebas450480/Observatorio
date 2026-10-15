@@ -172,7 +172,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
       <div className={`grid items-start gap-6 ${panelUsuario ? 'xl:grid-cols-[900fr_580fr]' : ''}`}>
         {/* Columna izquierda: mis datos y, debajo, mis favoritos (junto a intereses y alertas). */}
         <div className="flex min-w-0 flex-col gap-6">
-        <section className={TARJETA}>
+        <section className={TARJETA} data-recorrido="mis-datos">
           <EncabezadoTarjeta
             titulo="Mis datos"
             detalle={
@@ -231,7 +231,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
 
         {panelUsuario && (
           <div className="flex flex-col gap-6">
-            <section className={TARJETA}>
+            <section className={TARJETA} data-recorrido="intereses">
               <EncabezadoTarjeta titulo="Mis intereses" detalle="Recibirás alertas solo de lo que marques." />
               <SelectorIntereses categorias={categorias} seleccion={intereses} onCambiar={setIntereses} />
             </section>
