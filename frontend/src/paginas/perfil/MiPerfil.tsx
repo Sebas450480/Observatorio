@@ -170,6 +170,8 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
       )}
 
       <div className={`grid items-start gap-6 ${panelUsuario ? 'xl:grid-cols-[900fr_580fr]' : ''}`}>
+        {/* Columna izquierda: mis datos y, debajo, mis favoritos (junto a intereses y alertas). */}
+        <div className="flex min-w-0 flex-col gap-6">
         <section className={TARJETA}>
           <EncabezadoTarjeta
             titulo="Mis datos"
@@ -223,6 +225,9 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
             </button>
           </div>
         </section>
+        {/* Los filtros y la banderita son botones type="button": no envían el formulario. */}
+        {panelUsuario && <MisFavoritos intereses={usuario.intereses} />}
+        </div>
 
         {panelUsuario && (
           <div className="flex flex-col gap-6">
@@ -297,11 +302,6 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
       {esEmpresa && (
         <div className="mt-6">
           <MiEmpresa />
-        </div>
-      )}
-      {panelUsuario && (
-        <div className="mt-6">
-          <MisFavoritos intereses={usuario.intereses} />
         </div>
       )}
 
