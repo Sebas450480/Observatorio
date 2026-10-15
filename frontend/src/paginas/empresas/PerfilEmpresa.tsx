@@ -63,6 +63,7 @@ export function Dato({ icono, etiqueta, children }: { icono: string; etiqueta: s
 }
 
 export const TARJETA = 'rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.02)]';
+const BOTON_ENCABEZADO = 'inline-flex h-[42px] cursor-pointer items-center justify-center gap-2 rounded-full px-5 text-small';
 const BOTON_ACCION = 'inline-flex h-[43px] w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] px-4 text-small';
 
 /** Perfil de una empresa coformadora (Figma: "Empresas coformadoras — Ver perfil"). */
@@ -125,10 +126,10 @@ export function PerfilEmpresa() {
   return (
     <>
       <Migas actual="Ver perfil" />
-      {/* Todo el perfil en un solo marco: encabezado, información, acciones y ubicación. */}
-      <section className={`overflow-hidden ${TARJETA}`}>
-        <Portada empresa={empresa} className="h-[150px] w-full sm:h-[185px]" />
-        <div className={`flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-8 ${gestiona ? 'sm:min-h-[153px]' : ''}`}>
+      {/* La portada va aparte; debajo, todo el perfil en un solo marco. */}
+      <Portada empresa={empresa} className="h-[160px] w-full rounded-2xl border border-[#e2e8f0] sm:h-[220px]" />
+      <section className={`mt-6 overflow-hidden ${TARJETA}`}>
+        <div className="flex flex-col gap-5 px-5 py-6 sm:px-8 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex items-start gap-6">
             {empresa.logo_ec && <img src={empresa.logo_ec} alt={`Logo de ${nombre}`} className="size-16 rounded-lg border border-borde bg-white object-contain p-1" />}
             <div className="flex flex-col gap-2">
@@ -152,34 +153,54 @@ export function PerfilEmpresa() {
               </p>
             </div>
           </div>
-          {gestiona && (
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => navegar(`/empresas/${empresa.id_ec}/editar`)}
-                className="inline-flex h-[42px] cursor-pointer items-center gap-2 rounded-full border border-[#e2e8f0] bg-white px-5 text-body font-semibold text-[#64748b] hover:bg-fondo"
+          {/* Acciones de la empresa; el estado solo lo ven el gestor y la administración. */}
+          <div className="flex flex-col gap-3 sm:items-end">
+            {gestiona && (
+              <span
+                className={`self-start rounded-full px-3 py-1 text-caption font-bold sm:self-end ${
+                  (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
+                }`}
               >
-                <img src={editar} alt="" aria-hidden className="size-3.5" /> Editar
+                {empresa.estado_ec ?? 'Activo'}
+              </span>
+            )}
+            <div className="flex flex-wrap gap-2.5 sm:justify-end">
+              <button type="button" onClick={() => setModal('contacto')} className={`${BOTON_ENCABEZADO} bg-[#0a3eb3] font-bold text-white hover:bg-azul`}>
+                <img src={contacto14} alt="" aria-hidden className="size-3.5" /> Ver contacto principal
               </button>
-              <button
-                type="button"
-                onClick={() => setModal('eliminar')}
-                className="inline-flex h-[42px] cursor-pointer items-center rounded-full border border-rojo-activo bg-[#fff2f2] px-5 text-body font-semibold text-rojo-activo hover:bg-rojo-claro"
-              >
-                Eliminar
+              <button type="button" onClick={() => setModal('compartir')} className={`${BOTON_ENCABEZADO} border border-[#e2e8f0] bg-white font-semibold text-[#64748b] hover:bg-fondo`}>
+                <img src={compartir14} alt="" aria-hidden className="size-3.5" /> Compartir
               </button>
+              {gestiona && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => navegar(`/empresas/${empresa.id_ec}/editar`)}
+                    className={`${BOTON_ENCABEZADO} border border-[#e2e8f0] bg-white font-semibold text-[#64748b] hover:bg-fondo`}
+                  >
+                    <img src={editar} alt="" aria-hidden className="size-3.5" /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModal('eliminar')}
+                    className={`${BOTON_ENCABEZADO} border border-rojo-activo bg-[#fff2f2] font-semibold text-rojo-activo hover:bg-rojo-claro`}
+                  >
+                    Eliminar
+                  </button>
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-      <div className="grid border-t border-[#e2e8f0] lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_400px]">
+      <div className="grid border-t border-[#e2e8f0] lg:grid-cols-[1fr_340px] 2xl:grid-cols-[1fr_420px]">
         <section className="flex flex-col gap-6 p-5 sm:p-8">
           <h2 className="flex items-center gap-2.5 text-subtitle font-extrabold text-[#0a1c40]">
             <img src={documento} alt="" aria-hidden className="size-[18px]" /> Información de la empresa
           </h2>
           {empresa.descripcion && <p className="whitespace-pre-line text-small text-[#1e293b] sm:text-body">{empresa.descripcion}</p>}
           <hr className="border-[#e2e8f0]" />
-          <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 2xl:grid-cols-3">
             <Dato icono={premio16} etiqueta="Nombre comercial">{empresa.nombre_comercial}</Dato>
             <Dato icono={actividad16} etiqueta="Sector">{empresa.sector_economico}</Dato>
             <Dato icono={mapa16} etiqueta="Departamento">{empresa.departamento}</Dato>
@@ -196,7 +217,7 @@ export function PerfilEmpresa() {
                 </a>
               )}
             </Dato>
-            {empresa.codigo_ciiu ? <Dato icono={maletin16} etiqueta="Código CIIU">{empresa.codigo_ciiu}</Dato> : <span aria-hidden className="hidden xl:block" />}
+            {empresa.codigo_ciiu && <Dato icono={maletin16} etiqueta="Código CIIU">{empresa.codigo_ciiu}</Dato>}
             <Dato icono={maletin16} etiqueta="Tipo de empresa">{empresa.naturaleza_juridica}</Dato>
             <Dato icono={personas16} etiqueta="Tamaño">{empresa.tamano_empresa}</Dato>
             <Dato icono={calendario16} etiqueta="Año de constitución">{empresa.anio_constitucion}</Dato>
@@ -206,30 +227,7 @@ export function PerfilEmpresa() {
           </div>
         </section>
 
-        <div className="flex flex-col gap-6 border-t border-[#e2e8f0] p-5 sm:p-8 lg:border-l lg:border-t-0">
-          <section className="flex flex-col gap-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-body font-extrabold text-[#0a1c40]">{gestiona ? 'Estado y acciones' : 'Acciones'}</h2>
-              {gestiona && (
-                <span
-                  className={`rounded-full px-2 py-1 text-caption font-bold ${
-                    (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
-                  }`}
-                >
-                  {empresa.estado_ec ?? 'Activo'}
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col gap-2.5">
-              <button type="button" onClick={() => setModal('contacto')} className={`${BOTON_ACCION} bg-[#0a3eb3] font-bold text-white hover:bg-azul`}>
-                <img src={contacto14} alt="" aria-hidden className="size-3.5" /> Ver contacto principal
-              </button>
-              <button type="button" onClick={() => setModal('compartir')} className={`${BOTON_ACCION} border border-[#e2e8f0] font-semibold text-[#64748b] hover:bg-fondo`}>
-                <img src={compartir14} alt="" aria-hidden className="size-3.5" /> Compartir
-              </button>
-            </div>
-          </section>
-          <hr className="border-[#e2e8f0]" />
+        <div className="border-t border-[#e2e8f0] p-5 sm:p-8 lg:border-l lg:border-t-0">
           <MapaEmpresa empresa={empresa} nombre={nombre} sinMarco />
         </div>
       </div>
