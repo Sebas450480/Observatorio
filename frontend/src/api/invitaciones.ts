@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './cliente';
-import type { Perfil, TamanoEmpresa } from './tipos';
+import type { Perfil } from './tipos';
 
 export type EstadoInvitacion = 'Pendiente' | 'Vencida' | 'Completada' | 'Anulada';
 
@@ -35,21 +35,11 @@ export interface DatosInvitacion {
   nombre_empresa: string | null;
 }
 
+/** Registro corto: con el enlace solo se crea la contraseña; la ficha se completa en Mi perfil. */
 export interface RegistroEmpresa {
   codigo: string;
   contrasena: string;
   acepta_tratamiento_datos: true;
-  razon_social: string;
-  nombre_comercial: string;
-  nit: string;
-  sector_economico: string;
-  descripcion: string;
-  tamano_empresa: TamanoEmpresa;
-  anio_constitucion: number;
-  departamento: string;
-  municipio: string;
-  direccion: string;
-  estudiantes_recibidos: number;
 }
 
 const CLAVE = ['invitaciones'] as const;

@@ -28,7 +28,12 @@ const SIN_EMPRESA = 'Tu cuenta aún no está ligada a una empresa. Escribe al Ob
 const COLUMNAS = `e.id_ec, e.razon_social, e.nombre_comercial, e.nit, e.sector_economico, e.descripcion, e.tamano_empresa,
   e.naturaleza_juridica, e.codigo_ciiu, e.link, e.estudiantes_recibidos, e.departamento, e.municipio, e.direccion,
   e.telefono, e.correo, e.anio_constitucion, e.logo_ec, e.imagen_portada, e.estado_ec, e.fecha_actualizacion,
-  (select u.correo from usuario u where u.id_usuario = e.id_usuario) as correo_cuenta`;
+  (select u.correo from usuario u where u.id_usuario = e.id_usuario) as correo_cuenta,
+  e.nit like 'PENDIENTE-%' as pendiente`;
+
+/** Valor provisional de los campos obligatorios mientras la empresa completa su ficha. */
+const POR_DEFINIR = 'Por definir';
+const esPendiente = (nit: unknown) => typeof nit === 'string' && nit.toUpperCase().startsWith('PENDIENTE-');
 
 rutasMiEmpresa.get('/', async (req, res) => {
   const empresa = await conRol(req.sesion, async (c) => {
@@ -60,8 +65,25 @@ const esquema = z.object({
 
 rutasMiEmpresa.patch('/', async (req, res) => {
   const datos = esquema.parse(req.body);
+  if (esPendiente(datos.nit)) {
+    throw new ErrorApi(400, 'Escribe el NIT real de la empresa', [{ campo: 'nit', mensaje: 'Escribe el NIT real de la empresa' }]);
+  }
   const entradas = Object.entries(datos).filter(([, v]) => v !== undefined);
   const empresa = await conRol(req.sesion, async (c) => {
+    // Al completar el registro corto, los datos obligatorios deben quedar con valores reales.
+    const actual = await c.query<{ nit: string; sector_economico: string; departamento: string; municipio: string }>(
+      'select nit, sector_economico, departamento, municipio from empresa_coformadora where id_usuario = $1',
+      [req.sesion.idUsuario],
+    );
+    if (!actual.rows[0]) throw new ErrorApi(404, SIN_EMPRESA);
+    if (esPendiente(actual.rows[0].nit)) {
+      const final = { ...actual.rows[0], ...datos };
+      const faltan = (['nit', 'sector_economico', 'departamento', 'municipio'] as const)
+        .filter((campo) => !final[campo] || final[campo] === POR_DEFINIR || (campo === 'nit' && esPendiente(final.nit)));
+      if (faltan.length) {
+        throw new ErrorApi(400, 'Completa los datos obligatorios de la empresa para publicarla', faltan.map((campo) => ({ campo, mensaje: 'Campo obligatorio' })));
+      }
+    }
     if (entradas.length) {
       const asignaciones = entradas.map(([col], i) => `${col} = $${i + 2}`);
       const { rowCount } = await c.query(

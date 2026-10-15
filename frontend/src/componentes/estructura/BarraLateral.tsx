@@ -54,11 +54,12 @@ export function BarraLateral({ abierto, onCerrar }: { abierto: boolean; onCerrar
           <img src={circuloRojo} alt="" aria-hidden width={76} height={155} className="pointer-events-none absolute bottom-[26px] left-0" />
           <img src={circuloAzul} alt="" aria-hidden width={400} height={414} className="pointer-events-none absolute bottom-[39px] left-[125px] max-w-none" />
           <p className="relative mb-4 px-[22px] text-subtitle font-bold tracking-[0.02em] text-menu-tenue">Menú principal</p>
-          <ul className="relative flex flex-col gap-2.5">
+          <ul className="relative flex flex-col gap-2.5" data-recorrido="menu">
             {opciones.map((o) => (
               <li key={o.ruta}>
                 <NavLink
                   to={o.ruta}
+                  data-recorrido={o.icono}
                   className={({ isActive }) =>
                     `flex h-[52px] items-center gap-3.5 rounded-xl px-4 text-body font-bold text-white transition-colors ${
                       isActive ? 'bg-rojo-activo' : 'hover:bg-white/10'

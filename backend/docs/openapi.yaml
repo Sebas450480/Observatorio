@@ -782,7 +782,11 @@ paths:
   /api/invitaciones/completar:
     post:
       tags: [Invitaciones]
-      summary: La empresa completa su registro (crea la cuenta, publica la empresa e inicia sesión)
+      summary: La empresa crea su contraseña (crea la cuenta y la empresa pendiente e inicia sesión)
+      description: >
+        Registro corto: solo la contraseña. La empresa queda Inactiva con NIT provisional
+        (PENDIENTE-<id_invitacion>) hasta que complete su ficha en PATCH /api/mi-empresa;
+        al guardar el NIT real queda publicada (Activo).
       security: []
       requestBody:
         required: true
@@ -790,33 +794,21 @@ paths:
           application/json:
             schema:
               type: object
-              required: [codigo, contrasena, acepta_tratamiento_datos, razon_social, nit, sector_economico, descripcion,
-                         tamano_empresa, anio_constitucion, departamento, municipio, estudiantes_recibidos]
+              required: [codigo, contrasena, acepta_tratamiento_datos]
               properties:
                 codigo: { type: string }
                 contrasena: { type: string, minLength: 8, maxLength: 72 }
                 acepta_tratamiento_datos: { type: boolean, enum: [true] }
-                razon_social: { type: string, maxLength: 150 }
-                nombre_comercial: { type: string, maxLength: 100, nullable: true }
-                nit: { type: string, maxLength: 20 }
-                sector_economico: { type: string, maxLength: 50 }
-                descripcion: { type: string }
-                tamano_empresa: { type: string, enum: [Micro, Pequeña, Mediana, Grande] }
-                anio_constitucion: { type: integer }
-                departamento: { type: string }
-                municipio: { type: string }
-                direccion: { type: string, nullable: true }
-                estudiantes_recibidos: { type: integer, minimum: 0 }
       responses:
         '201': { description: '{ id_ec, usuario } y cookie de sesión' }
         '400': { description: Datos inválidos o enlace vencido }
-        '409': { description: NIT o correo ya registrados }
+        '409': { description: Correo ya registrado }
 
   # ------------------------------------------------------------------ Mi empresa
   /api/mi-empresa:
     get:
       tags: [Mi empresa]
-      summary: Ficha de mi empresa (incluye correo_cuenta, el correo de la invitación)
+      summary: Ficha de mi empresa (incluye correo_cuenta, el correo de la invitación, y pendiente si aún no completa la ficha)
       responses:
         '200': { description: Empresa }
         '403': { description: La cuenta no tiene el rol Empresa Coformadora }
@@ -845,7 +837,10 @@ paths:
                 departamento: { type: string }
                 municipio: { type: string }
                 direccion: { type: string, nullable: true }
-      responses: { '200': { description: Empresa actualizada } }
+      responses:
+        '200': { description: Empresa actualizada (si estaba pendiente y se guarda la ficha completa, queda publicada) }
+        '400': { description: Datos inválidos o faltan los obligatorios de una ficha pendiente }
+        '409': { description: NIT ya registrado }
   /api/mi-empresa/imagen/{campo}:
     parameters: [{ name: campo, in: path, required: true, schema: { type: string, enum: [logo_ec, imagen_portada] } }]
     post:
