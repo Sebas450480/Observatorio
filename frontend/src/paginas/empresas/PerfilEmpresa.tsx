@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { mensajeDeError, urlDescarga } from '../../api/cliente';
+import { mensajeDeError } from '../../api/cliente';
 import { registrarActividad, useDetalle, useEliminar } from '../../api/consultas';
 import type { Empresa } from '../../api/tipos';
 import actividad14 from '../../assets/figma/perfil/actividad-14.svg';
@@ -9,7 +9,6 @@ import calendario16 from '../../assets/figma/perfil/calendario-16.svg';
 import compartir14 from '../../assets/figma/perfil/compartir-14.svg';
 import contacto14 from '../../assets/figma/perfil/contacto-14.svg';
 import correo16 from '../../assets/figma/perfil/correo-16.svg';
-import descargar14 from '../../assets/figma/perfil/descargar-14.svg';
 import direccion16 from '../../assets/figma/perfil/direccion-16.svg';
 import documento from '../../assets/figma/perfil/documento.svg';
 import editar from '../../assets/figma/perfil/editar.svg';
@@ -33,7 +32,6 @@ import { Cargando, MensajeError } from '../../componentes/ui/Elementos';
 import { Aviso, Confirmacion, Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
 import { nombreEmpresa, Portada } from './DirectorioEmpresas';
-import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 
 /** Migas de pan: "← Empresas coformadoras / Ver perfil". */
@@ -135,7 +133,6 @@ export function PerfilEmpresa() {
             <div className="flex flex-col gap-2">
               <div className="flex items-start gap-2">
                 <h1 className="text-titulo font-extrabold text-[#0a1c40]">{nombre}</h1>
-                <BotonDescargar ruta="/empresas" id={empresa.id_ec} titulo={nombre} />
                 <BotonFavorito tipo="Empresa" id={empresa.id_ec} titulo={nombre} />
               </div>
               <p className="flex items-center gap-1.5 text-small text-[#64748b] sm:text-body">
@@ -227,9 +224,6 @@ export function PerfilEmpresa() {
               <button type="button" onClick={() => setModal('contacto')} className={`${BOTON_ACCION} bg-[#0a3eb3] font-bold text-white hover:bg-azul`}>
                 <img src={contacto14} alt="" aria-hidden className="size-3.5" /> Ver contacto principal
               </button>
-              <a href={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })} className={`${BOTON_ACCION} bg-[#f1f5f9] font-semibold text-[#1e293b] hover:bg-[#e2e8f0]`}>
-                <img src={descargar14} alt="" aria-hidden className="size-3.5" /> Descargar información
-              </a>
               <button type="button" onClick={() => setModal('compartir')} className={`${BOTON_ACCION} border border-[#e2e8f0] font-semibold text-[#64748b] hover:bg-fondo`}>
                 <img src={compartir14} alt="" aria-hidden className="size-3.5" /> Compartir
               </button>
@@ -298,7 +292,7 @@ export function PerfilEmpresa() {
           <p className="text-small text-texto-suave">Esta empresa todavía no tiene un contacto registrado.</p>
         )}
       </Modal>
-      <ModalCompartir abierto={modal === 'compartir'} onCerrar={() => setModal(null)} titulo={nombre} ruta={`/empresas/${empresa.id_ec}`} tipo="Empresa" id={empresa.id_ec} nombreTipo="empresa" descarga={urlDescarga('/empresas/exportar', { formato: 'pdf', q: empresa.nit })} />
+      <ModalCompartir abierto={modal === 'compartir'} onCerrar={() => setModal(null)} titulo={nombre} ruta={`/empresas/${empresa.id_ec}`} tipo="Empresa" id={empresa.id_ec} nombreTipo="empresa" />
       <Confirmacion
         abierto={modal === 'eliminar'}
         titulo="Eliminar empresa"

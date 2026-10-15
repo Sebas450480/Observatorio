@@ -669,9 +669,8 @@ paths:
   /api/empresas/exportar:
     get:
       tags: [Empresas Coformadoras]
-      summary: Exportar
-      parameters: [{ $ref: '#/components/parameters/formato' }]
-      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+      summary: "No disponible: la información de las empresas es sensible y no se descarga (también /api/empresas/{id}/exportar)"
+      responses: { '403': { $ref: '#/components/responses/Error' } }
   /api/empresas/{id}:
     parameters: [{ $ref: '#/components/parameters/id' }]
     get: { tags: [Empresas Coformadoras], summary: Detalle, responses: { '200': { description: Detalle } } }

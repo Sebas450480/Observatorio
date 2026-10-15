@@ -49,7 +49,7 @@ export function BarraLateral({ abierto, onCerrar }: { abierto: boolean; onCerrar
             <X className="size-5" />
           </button>
         </div>
-        <nav className="relative flex-1 overflow-hidden rounded-tr-[25px] bg-azul px-[14px] pt-[29px]">
+        <nav className="relative flex flex-1 flex-col overflow-hidden rounded-tr-[25px] bg-azul px-[14px] pt-[29px]">
           {/* Medios círculos decorativos de la barra lateral (Figma) */}
           <img src={circuloRojo} alt="" aria-hidden width={76} height={155} className="pointer-events-none absolute bottom-[26px] left-0" />
           <img src={circuloAzul} alt="" aria-hidden width={400} height={414} className="pointer-events-none absolute bottom-[39px] left-[125px] max-w-none" />
@@ -71,7 +71,8 @@ export function BarraLateral({ abierto, onCerrar }: { abierto: boolean; onCerrar
               </li>
             ))}
           </ul>
-          <NavLink to="/politica-de-datos" className="relative mt-6 block px-[22px] text-caption font-semibold text-menu-tenue underline-offset-2 hover:underline">
+          {/* Al pie del menú, sobre el medio círculo rojo. */}
+          <NavLink to="/politica-de-datos" className="relative mt-auto mb-12 block px-[22px] pt-6 text-caption font-semibold text-white underline-offset-2 hover:underline">
             Política de tratamiento de datos
           </NavLink>
         </nav>
