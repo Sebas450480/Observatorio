@@ -91,3 +91,14 @@ test.describe('Favoritos', () => {
     await expect(page.getByRole('button', { name: /favoritos/ })).toHaveCount(0);
   });
 });
+
+test.describe('Perfil de empresa', () => {
+  test('el usuario no ve el estado de la empresa; el administrador sí', async ({ page }) => {
+    await iniciarSesion(page, 'usuario');
+    await page.goto('/empresas');
+    await page.getByRole('link', { name: /AgroAndes/ }).first().click();
+    await expect(page.getByRole('heading', { name: 'Acciones' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Estado y acciones' })).toHaveCount(0);
+    await expect(page.getByText('Activo', { exact: true })).toHaveCount(0);
+  });
+});

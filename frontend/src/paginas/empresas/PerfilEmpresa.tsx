@@ -70,11 +70,11 @@ const BOTON_ACCION = 'inline-flex h-[43px] w-full cursor-pointer items-center ju
  * Mapa de Google Maps con la dirección de la empresa (inserción sin clave de API).
  * Si no hay dirección se muestra el municipio, con menos acercamiento.
  */
-export function MapaEmpresa({ empresa, nombre }: { empresa: Empresa; nombre: string }) {
+export function MapaEmpresa({ empresa, nombre, sinMarco = false }: { empresa: Empresa; nombre: string; sinMarco?: boolean }) {
   const lugar = [empresa.direccion, empresa.municipio, empresa.departamento, 'Colombia'].filter(Boolean).join(', ');
   const consulta = encodeURIComponent(lugar);
   return (
-    <section className={`flex flex-col gap-4 p-6 ${TARJETA}`}>
+    <section className={`flex flex-col gap-4 ${sinMarco ? '' : `p-6 ${TARJETA}`}`}>
       <h2 className="flex items-center gap-2.5 text-body font-extrabold text-[#0a1c40]">
         <img src={ubicacion16} alt="" aria-hidden className="size-4" /> Ubicación
       </h2>
@@ -125,6 +125,7 @@ export function PerfilEmpresa() {
   return (
     <>
       <Migas actual="Ver perfil" />
+      {/* Todo el perfil en un solo marco: encabezado, información, acciones y ubicación. */}
       <section className={`overflow-hidden ${TARJETA}`}>
         <Portada empresa={empresa} className="h-[150px] w-full sm:h-[185px]" />
         <div className={`flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-8 ${gestiona ? 'sm:min-h-[153px]' : ''}`}>
@@ -170,10 +171,9 @@ export function PerfilEmpresa() {
             </div>
           )}
         </div>
-      </section>
 
-      <div className={`mt-6 grid items-start gap-4 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_400px] ${gestiona ? 'xl:mt-[43px]' : 'xl:mt-[15px]'}`}>
-        <section className={`flex flex-col gap-6 p-5 sm:p-8 ${TARJETA}`}>
+      <div className="grid border-t border-[#e2e8f0] lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_400px]">
+        <section className="flex flex-col gap-6 p-5 sm:p-8">
           <h2 className="flex items-center gap-2.5 text-subtitle font-extrabold text-[#0a1c40]">
             <img src={documento} alt="" aria-hidden className="size-[18px]" /> Información de la empresa
           </h2>
@@ -206,8 +206,8 @@ export function PerfilEmpresa() {
           </div>
         </section>
 
-        <div className="flex flex-col gap-4">
-          <section className={`flex flex-col gap-5 p-6 ${TARJETA}`}>
+        <div className="flex flex-col gap-6 border-t border-[#e2e8f0] p-5 sm:p-8 lg:border-l lg:border-t-0">
+          <section className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <h2 className="text-body font-extrabold text-[#0a1c40]">{gestiona ? 'Estado y acciones' : 'Acciones'}</h2>
               {gestiona && (
@@ -229,9 +229,11 @@ export function PerfilEmpresa() {
               </button>
             </div>
           </section>
-          <MapaEmpresa empresa={empresa} nombre={nombre} />
+          <hr className="border-[#e2e8f0]" />
+          <MapaEmpresa empresa={empresa} nombre={nombre} sinMarco />
         </div>
       </div>
+      </section>
 
       <Modal
         abierto={modal === 'contacto'}

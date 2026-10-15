@@ -43,7 +43,7 @@ test.describe('Descargas', () => {
     await page.goto('/empresas');
     await expect(page.getByRole('heading', { name: 'Empresas Coformadoras' })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Descargar: / })).toHaveCount(0);
-    await page.getByRole('link', { name: /TecnoSoluciones/ }).first().click();
+    await page.getByRole('link', { name: /AgroAndes/ }).first().click();
     await expect(page.getByRole('button', { name: 'Compartir' })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Descargar/ })).toHaveCount(0);
     await expect(page.getByRole('link', { name: /Descargar/ })).toHaveCount(0);
