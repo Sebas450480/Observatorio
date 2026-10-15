@@ -1,8 +1,8 @@
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
 import type { RolBD, Sesion } from '../auth/roles.js';
 import { conRol, type Cliente } from '../db/contexto.js';
-import { ErrorApi, noEncontrado } from '../errores.js';
+import { ErrorApi, noEncontrado, prohibido } from '../errores.js';
 import { requiereRol, requiereSesion, usarRol } from '../middlewares/sesion.js';
 import { borrarImagen, guardarImagen, recibirArchivo } from '../servicios/archivos.js';
 import { generarExcel, generarFichaExcel, generarFichaPdf, generarPdf, type ColumnaExportar } from '../servicios/exportar.js';
@@ -54,6 +54,8 @@ export interface OpcionesRecurso {
   /** Columnas que guardan rutas de imágenes. */
   camposImagen?: string[];
   columnasExportar: ColumnaExportar[];
+  /** Información sensible: el módulo no ofrece descargas (listado ni ficha). */
+  sinDescargas?: boolean;
   /** Guarda los campos especiales (p. ej. las fuentes de una tendencia). */
   guardarEspeciales?: (cliente: Cliente, id: number, datos: Record<string, unknown>) => Promise<void>;
   /** Rutas adicionales; se registran antes de las rutas con /:id. */
@@ -173,6 +175,12 @@ export function crearRecurso(op: OpcionesRecurso): Router {
   });
 
   // ---------------------------------------------------------------- Exportar
+  if (op.sinDescargas) {
+    const sinDescarga: RequestHandler = (_req, _res, next) => next(prohibido('La información de este módulo no se puede descargar'));
+    router.get('/exportar', sinDescarga);
+    router.get('/:id/exportar', sinDescarga);
+  }
+
   router.get('/exportar', requiereSesion, async (req, res) => {
     const formato = z.enum(['xlsx', 'pdf']).default('xlsx').parse(req.query.formato);
     const valores = esquemaListado.parse({ ...req.query, pagina: 1, limite: 1 }) as Record<string, unknown>;
