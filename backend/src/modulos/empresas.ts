@@ -71,6 +71,8 @@ export const rutasEmpresas = crearRecurso({
   ordenes: { nombre: 'coalesce(t.nombre_comercial, t.razon_social)', creacion: 't.fecha_creacion', estudiantes: 't.estudiantes_recibidos' },
   ordenDefecto: 'nombre',
   camposImagen: ['logo_ec', 'imagen_portada'],
+  // Datos sensibles de las empresas y sus contactos: no se descargan.
+  sinDescargas: true,
   columnasExportar: [
     { campo: 'id_ec', titulo: 'ID', ancho: 0.4 },
     { campo: 'razon_social', titulo: 'Razón social', ancho: 1.6 },

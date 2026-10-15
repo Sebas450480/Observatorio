@@ -13,6 +13,16 @@ const nuevaEmpresa = (nit: string, extra: Record<string, unknown> = {}) => ({
 });
 
 describe('Empresas Coformadoras', () => {
+  it('no permite descargar la información de las empresas (es sensible)', async () => {
+    for (const rol of ['Super Admin', 'Usuario'] as const) {
+      const { agente } = await sesion(rol);
+      const lista = await agente.get('/api/empresas?limite=1');
+      const id = lista.body.datos[0].id_ec;
+      expect((await agente.get('/api/empresas/exportar?formato=xlsx')).status).toBe(403);
+      expect((await agente.get(`/api/empresas/${id}/exportar?formato=pdf`)).status).toBe(403);
+    }
+  });
+
   it('lista las empresas con sus contactos', async () => {
     const r = await invitado().get('/api/empresas?q=TecnoSoluciones');
     expect(r.status).toBe(200);

@@ -8,7 +8,6 @@ import iconoNit from '../../assets/figma/iconos/nit.svg';
 import iconoSector from '../../assets/figma/iconos/sector.svg';
 import { useListado } from '../../api/consultas';
 import type { Empresa } from '../../api/tipos';
-import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Filtro } from '../../componentes/ui/Campos';
@@ -77,7 +76,6 @@ function TarjetaEmpresa({ empresa }: { empresa: Empresa }) {
         </div>
       </Link>
       <div className="absolute right-2.5 top-2.5 flex gap-2">
-        <BotonDescargar ruta="/empresas" id={empresa.id_ec} titulo={nombreEmpresa(empresa)} variante="imagen" />
         <BotonFavorito tipo="Empresa" id={empresa.id_ec} titulo={nombreEmpresa(empresa)} variante="imagen" />
       </div>
     </div>
