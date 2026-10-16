@@ -60,8 +60,7 @@ end;
 $$;
 comment on function public.fn_empresa_completar_registro() is
     'Publica la empresa registrada o precargada por invitación cuando completa su ficha desde Mi perfil.';
-drop trigger empresa_completar_registro on public.empresa_coformadora;
-create trigger empresa_completar_registro before update on public.empresa_coformadora
+create or replace trigger empresa_completar_registro before update on public.empresa_coformadora
     for each row execute function public.fn_empresa_completar_registro();
 
 -- -----------------------------------------------------------------------------
