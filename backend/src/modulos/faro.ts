@@ -79,6 +79,7 @@ export const rutasFaro = crearRecurso({
       { clave: 'es_gratuito', titulo: 'Gratuito', tipo: 'sino', ayuda: 'Si no tiene costo para quien participa.', ejemplo: 'Sí' },
       { clave: 'costo', titulo: 'Costo (COP)', tipo: 'numero', ayuda: 'Valor en pesos, si no es gratuito.', ejemplo: '' },
       { clave: 'categorias', titulo: 'Categorías', tipo: 'categorias', ayuda: 'Temas o etiquetas del registro.', ejemplo: 'Educación, Internacional' },
+      { clave: 'imagen', titulo: 'Imagen', tipo: 'imagen', campoImagen: 'imagen', ayuda: 'Imagen de la oportunidad.', ejemplo: 'beca-suecia.png' },
       { clave: 'estado_fe', titulo: 'Estado', tipo: 'lista', opciones: ESTADOS, ayuda: 'Activo se publica de inmediato; Inactivo queda oculto. Por defecto, Activo.', ejemplo: 'Activo' },
     ],
     armar: (f) => ({ ...f, ...gratuitoYCosto(f) }),

@@ -4,7 +4,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { correosDePrueba } from '../src/servicios/correo.js';
 import { ASUNTO_INVITACION } from '../src/modulos/invitaciones.js';
-import { app, binario, db, invitado, sesion } from './ayudas.js';
+import { PNG_1X1, app, binario, db, invitado, sesion } from './ayudas.js';
 
 async function excel(hoja: string, encabezados: string[], filas: unknown[][]): Promise<Buffer> {
   const libro = new ExcelJS.Workbook();
@@ -77,11 +77,34 @@ describe('Carga masiva desde Excel', () => {
     expect(vista.body).toMatchObject({ total: 1, validos: 1, errores: [], registros: [{ fila: 2, resumen: `${titulo} · 2026-11-20` }] });
     const guardado = await agente.post('/api/flash/importar').attach('archivo', valido, 'flash.xlsx');
     expect(guardado.status).toBe(201);
-    expect(guardado.body).toEqual({ importados: 1 });
+    expect(guardado.body).toMatchObject({ importados: 1 });
     const creado = (await invitado().get(`/api/flash?q=${encodeURIComponent(titulo)}`)).body.datos[0];
     expect(creado).toMatchObject({ tipo_evento: 'Feria', modalidad: 'Hibrido', costo: 150000, es_gratuito: false });
     expect(new Date(creado.fecha_inicio).toISOString()).toBe('2026-11-20T13:30:00.000Z');
     expect(creado.categorias).toHaveLength(1);
+  });
+
+  it('las imágenes son opcionales: la fila nombra el archivo y la respuesta indica dónde subirla', async () => {
+    const { agente } = await sesion('Gestor Faro');
+    const titulo = `Convocatoria con imagen ${unico()}`;
+    const malo = await excel('Faro', ['Título', 'Tipo', 'Imagen'], [[titulo, 'Convocatorias', 'foto.gif']]);
+    const revisionMala = await agente.post('/api/faro/importar?validar=1').attach('archivo', malo, 'f.xlsx');
+    expect(revisionMala.body.errores).toEqual([{ fila: 2, columna: 'Imagen', mensaje: expect.stringContaining('.jpg o .png') }]);
+
+    const archivo = await excel('Faro', ['Título', 'Tipo', 'Imagen'], [
+      [titulo, 'Convocatorias', 'C:\\fotos\\convocatoria.PNG'],
+      [`${titulo} sin imagen`, 'Cursos', ''],
+    ]);
+    const revision = await agente.post('/api/faro/importar?validar=1').attach('archivo', archivo, 'f.xlsx');
+    expect(revision.body.registros.map((r: { imagenes: object }) => r.imagenes)).toEqual([{ imagen: 'convocatoria.PNG' }, {}]);
+    const r = await agente.post('/api/faro/importar').attach('archivo', archivo, 'f.xlsx');
+    expect(r.status).toBe(201);
+    expect(r.body.creados).toEqual([
+      { fila: 2, id: expect.any(Number), imagenes: { imagen: 'convocatoria.PNG' } },
+      { fila: 3, id: expect.any(Number), imagenes: {} },
+    ]);
+    const subida = await agente.post(`/api/faro/${r.body.creados[0].id}/imagen/imagen`).attach('imagen', PNG_1X1, 'convocatoria.PNG');
+    expect(subida.status).toBe(201);
   });
 
   it('rechaza más de 50 registros y archivos sin la estructura de la plantilla', async () => {

@@ -73,6 +73,23 @@ describe('Registro', () => {
     expect(campos).toEqual(expect.arrayContaining(['contrasena', 'acepta_tratamiento_datos']));
   });
 
+  it('exige contraseña segura: mayúscula, minúscula, número y carácter especial', async () => {
+    const base = { nombre_usuario: 'X', apellido_usuario: 'Y', acepta_tratamiento_datos: true };
+    const casos = {
+      'clave-segura-123': 'mayúscula',
+      'CLAVE-SEGURA-123': 'minúscula',
+      'Clave-segura': 'número',
+      'ClaveSegura123': 'carácter especial',
+    };
+    for (const [clave, falta] of Object.entries(casos)) {
+      const r = await invitado().post('/api/auth/registro').send({ ...base, correo: `debil.${falta.length}@test.co`, contrasena: clave });
+      expect(r.status, clave).toBe(400);
+      expect(r.body.detalles.find((d: { campo: string }) => d.campo === 'contrasena').mensaje, clave).toContain(falta);
+    }
+    const ok = await invitado().post('/api/auth/registro').send({ ...base, correo: `fuerte.${Date.now()}@test.co`, contrasena: 'Clave#Segura9' });
+    expect(ok.status).toBe(201);
+  });
+
   it('no permite elegir el rol al registrarse', async () => {
     const r = await invitado().post('/api/auth/registro').send({
       nombre_usuario: 'X', apellido_usuario: 'Y', correo: 'intruso@test.co', contrasena: 'Clave-segura-1',

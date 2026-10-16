@@ -135,7 +135,7 @@ export function FlashInformativo() {
         extra={
           gestiona && (
             <div className="flex flex-col gap-3 sm:flex-row">
-              <CargaMasiva ruta="/flash" modulo="Flash Informativo" />
+              <CargaMasiva ruta="/flash" modulo="Flash Informativo" conImagenes />
               <Boton pildora onClick={() => setFormulario({})}>
                 Crear Flash Informativo
               </Boton>
