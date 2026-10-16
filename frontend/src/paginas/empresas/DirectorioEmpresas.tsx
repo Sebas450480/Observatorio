@@ -14,6 +14,7 @@ import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
 import { DEPARTAMENTOS } from '../../utilidades/colombia';
+import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
 
 export interface ResumenEmpresas {
   total: number;
@@ -118,6 +119,7 @@ export function DirectorioEmpresas() {
         extra={
           gestiona && (
             <div className="flex flex-col gap-3 sm:flex-row">
+              <CargaMasiva ruta="/empresas" modulo="Empresas Coformadoras" refrescar={['/invitaciones']} conInvitaciones className="h-[42px]!" />
               <Link to="/empresas/invitaciones" className="inline-flex h-[42px] items-center justify-center rounded-full border border-[#d1d9e3] bg-white px-5 text-body font-semibold text-azul-marino hover:bg-fondo">
                 Invitar empresa
               </Link>

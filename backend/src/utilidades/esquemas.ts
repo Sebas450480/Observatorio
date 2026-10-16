@@ -3,7 +3,7 @@ import { z } from 'zod';
 /** Valores de los tipos ENUM de la base de datos (Fase 1, paso 1). */
 export const MODALIDADES = ['Virtual', 'Presencial', 'Hibrido'] as const;
 export const ESTADOS = ['Activo', 'Inactivo'] as const;
-export const TIPOS_EVENTO = ['Congreso', 'Hackathon', 'Foro', 'Cumbre', 'Seminario', 'Taller', 'Otro'] as const;
+export const TIPOS_EVENTO = ['Congreso', 'Hackathon', 'Foro', 'Cumbre', 'Seminario', 'Taller', 'Feria', 'Otro'] as const;
 export const TIPOS_FARO = ['Becas', 'Convocatorias', 'Cursos', 'Talleres'] as const;
 export const TAMANOS_EMPRESA = ['Micro', 'Pequeña', 'Mediana', 'Grande'] as const;
 export const FRECUENCIAS_ALERTA = ['Inmediata', 'Diaria', 'Semanal', 'Ninguna'] as const;
