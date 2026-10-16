@@ -23,6 +23,7 @@ import { Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
 import { costo, fechaLarga, modalidadTexto, nombreTipoEvento, rangoHoras } from '../../utilidades/formato';
 import { FormularioEvento } from './FormularioEvento';
+import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
 
 /** Color de cada tipo de evento (Figma: texto del color y fondo al 12 %). */
 const COLOR_TIPO: Record<TipoEvento, { color: string }> = {
@@ -32,6 +33,7 @@ const COLOR_TIPO: Record<TipoEvento, { color: string }> = {
   Seminario: { color: '#e4002b' },
   Taller: { color: '#a32afa' },
   Hackathon: { color: '#e07314' },
+  Feria: { color: '#0b7a8f' },
   Otro: { color: '#69788c' },
 };
 const fondoTipo = (tipo: TipoEvento) => `${COLOR_TIPO[tipo].color}1f`;
@@ -267,6 +269,7 @@ export function Eventos() {
         acciones={
           // En celular cada control ocupa su propia fila a lo ancho; desde sm van en una sola fila.
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+            {gestiona && <CargaMasiva ruta="/calendario" modulo="Eventos institucionales" />}
             {gestiona && (
               <Boton pildora className="px-5!" onClick={() => setFormulario({})}>
                 Crear evento

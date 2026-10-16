@@ -23,6 +23,7 @@ import { DEPARTAMENTOS, opcionesAnios } from '../../utilidades/colombia';
 import { costo, fechaLarga, modalidadTexto } from '../../utilidades/formato';
 import { DetalleFlash } from './DetalleFlash';
 import { FormularioFlash } from './FormularioFlash';
+import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
 
 /** Fondo e ilustración de cada tarjeta (los 6 estilos del Figma, en rotación). */
 const ESTILOS_TARJETA = [
@@ -133,9 +134,12 @@ export function FlashInformativo() {
         onLimpiar={() => { setBorrador(FILTROS_INICIALES); setFiltros(FILTROS_INICIALES); setPagina(1); }}
         extra={
           gestiona && (
-            <Boton pildora onClick={() => setFormulario({})}>
-              Crear Flash Informativo
-            </Boton>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <CargaMasiva ruta="/flash" modulo="Flash Informativo" />
+              <Boton pildora onClick={() => setFormulario({})}>
+                Crear Flash Informativo
+              </Boton>
+            </div>
           )
         }
       >

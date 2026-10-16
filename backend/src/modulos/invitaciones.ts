@@ -21,7 +21,7 @@ import { limiteIntentos, perfilPorId } from './auth.js';
  */
 export const rutasInvitaciones = Router();
 
-const VIGENCIA_DIAS = 7;
+export const VIGENCIA_DIAS = 7;
 export const ASUNTO_INVITACION = 'Estás a un paso de ser parte de nuestra familia Observatorio Empresarial';
 
 const soloGestor = requiereRol('obs_gestor_empresas');
@@ -36,7 +36,7 @@ interface DatosCorreo {
   nombre_empresa: string | null;
 }
 
-async function enviarInvitacion(datos: DatosCorreo, codigo: string): Promise<boolean> {
+export async function enviarInvitacion(datos: DatosCorreo, codigo: string): Promise<boolean> {
   const enlace = `${config.frontendUrl}/registro-empresa?codigo=${encodeURIComponent(codigo)}`;
   const empresa = datos.nombre_empresa ? ` de ${datos.nombre_empresa}` : '';
   try {
@@ -213,8 +213,9 @@ rutasInvitaciones.post('/completar', limiteIntentos, async (req, res) => {
   const resultado = await conAutenticacion(async (c) => {
     const { rows } = await c.query<{
       id_invitacion: number; nombre_contacto: string; apellido_contacto: string; correo: string; nombre_empresa: string | null;
+      id_ec: number | null;
     }>(
-      `select id_invitacion, nombre_contacto, apellido_contacto, correo, nombre_empresa from invitacion_empresa
+      `select id_invitacion, nombre_contacto, apellido_contacto, correo, nombre_empresa, id_ec from invitacion_empresa
         where token_hash = $1 and estado = 'Pendiente' and fecha_vencimiento > now()
         for update`,
       [huellaCodigo(datos.codigo)],
@@ -233,6 +234,21 @@ rutasInvitaciones.post('/completar', limiteIntentos, async (req, res) => {
       [invitacion.nombre_contacto, invitacion.apellido_contacto, invitacion.correo, hash],
     );
     const idUsuario = usuario.rows[0]!.id_usuario;
+
+    // Empresa precargada por el gestor (carga masiva): la cuenta nueva queda ligada a ella.
+    if (invitacion.id_ec !== null) {
+      const ligada = await c.query('update empresa_coformadora set id_usuario = $2 where id_ec = $1 and id_usuario is null', [
+        invitacion.id_ec, idUsuario,
+      ]);
+      if (ligada.rowCount) {
+        await c.query(
+          `update invitacion_empresa set estado = 'Completada', id_usuario = $2, fecha_completada = now()
+            where id_invitacion = $1`,
+          [invitacion.id_invitacion, idUsuario],
+        );
+        return { idUsuario, idEc: invitacion.id_ec };
+      }
+    }
 
     const contacto = `${invitacion.nombre_contacto} ${invitacion.apellido_contacto}`;
     const empresa = await c.query<{ id_ec: number }>(

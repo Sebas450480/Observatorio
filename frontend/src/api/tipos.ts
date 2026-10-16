@@ -2,14 +2,14 @@
 
 export type Estado = 'Activo' | 'Inactivo';
 export type Modalidad = 'Virtual' | 'Presencial' | 'Hibrido';
-export type TipoEvento = 'Congreso' | 'Hackathon' | 'Foro' | 'Cumbre' | 'Seminario' | 'Taller' | 'Otro';
+export type TipoEvento = 'Congreso' | 'Hackathon' | 'Foro' | 'Cumbre' | 'Seminario' | 'Taller' | 'Feria' | 'Otro';
 export type TipoFaro = 'Becas' | 'Convocatorias' | 'Cursos' | 'Talleres';
 export type TamanoEmpresa = 'Micro' | 'Pequeña' | 'Mediana' | 'Grande';
 export type FrecuenciaAlertas = 'Inmediata' | 'Diaria' | 'Semanal' | 'Ninguna';
 export type TipoContenido = 'Flash' | 'Faro' | 'Empresa' | 'Tendencia' | 'Evento';
 
 export const MODALIDADES: Modalidad[] = ['Virtual', 'Presencial', 'Hibrido'];
-export const TIPOS_EVENTO: TipoEvento[] = ['Congreso', 'Hackathon', 'Foro', 'Cumbre', 'Seminario', 'Taller', 'Otro'];
+export const TIPOS_EVENTO: TipoEvento[] = ['Congreso', 'Hackathon', 'Foro', 'Cumbre', 'Seminario', 'Taller', 'Feria', 'Otro'];
 export const TIPOS_FARO: TipoFaro[] = ['Becas', 'Convocatorias', 'Cursos', 'Talleres'];
 export const TAMANOS: TamanoEmpresa[] = ['Micro', 'Pequeña', 'Mediana', 'Grande'];
 export const ESTADOS: Estado[] = ['Activo', 'Inactivo'];
@@ -102,6 +102,7 @@ export interface Faro extends Auditoria {
   fecha_inicio: string | null;
   fecha_cierre: string | null;
   entidad: string | null;
+  dirigida_a: string | null;
   imagen: string | null;
   link: string | null;
   modalidad: Modalidad | null;

@@ -83,6 +83,11 @@ export function DetalleFaro({ id, onCerrar, onEditar }: { id: number; onCerrar: 
               <TextoDetalle>{faro.descripcion}</TextoDetalle>
             </SeccionDetalle>
           )}
+          {faro.dirigida_a && (
+            <SeccionDetalle titulo="Dirigida a">
+              <TextoDetalle>{faro.dirigida_a}</TextoDetalle>
+            </SeccionDetalle>
+          )}
           {(faro.entidad || faro.lugar) && (
             <SeccionDetalle titulo="Lugar de referencia">
               <CajaDetalle>{[faro.entidad, faro.lugar].filter(Boolean).join(' — ')}</CajaDetalle>

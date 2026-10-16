@@ -5,12 +5,15 @@ import { binario, invitado, sesion } from './ayudas.js';
 const ENCABEZADOS = [
   'Megatendencia',
   'Tendencia',
+  'Sector / categorías',
   'Descripción',
   'Comportamiento en el mundo',
   'Comportamiento en Colombia',
-  'Fecha de publicación (AAAA-MM-DD)',
-  'Fuentes (Nombre | enlace; separadas por punto y coma)',
-  'Categorías (separadas por coma)',
+  'Fecha de publicación',
+  'Fuente 1',
+  'Enlace fuente 1',
+  'Fuente 2',
+  'Enlace fuente 2',
 ];
 
 async function excel(filas: unknown[][], encabezados = ENCABEZADOS): Promise<Buffer> {
@@ -82,19 +85,22 @@ describe('Tendencias', () => {
     expect(r.status).toBe(200);
     const libro = new ExcelJS.Workbook();
     await libro.xlsx.load(r.body as unknown as ArrayBuffer);
-    expect((libro.getWorksheet('Tendencias')!.getRow(1).values as unknown[]).filter(Boolean)).toEqual(ENCABEZADOS);
+    const encabezados = (libro.getWorksheet('Tendencias')!.getRow(1).values as unknown[]).filter(Boolean);
+    expect(encabezados.slice(0, 3)).toEqual(['Megatendencia *', 'Tendencia *', 'Sector / categorías']);
+    expect(encabezados).toContain('Enlace fuente 5');
+    expect(libro.getWorksheet('Instrucciones')).toBeDefined();
   });
 
   it('importa un Excel válido completo', async () => {
     const { agente } = await sesion('Gestor Tendencias');
     const archivo = await excel([
-      ['Economía y trabajo', 'Semana laboral de 4 días', 'Pilotos de reducción de jornada', 'Crece en Europa', 'Debate en Colombia',
-        '2026-10-01', 'OIT | https://www.ilo.org; Prensa', 'Empresarial, Talento humano'],
-      ['Medio ambiente y sostenibilidad', 'Hidrógeno verde', '', '', '', '', '', ''],
+      ['Economía y trabajo', 'Semana laboral de 4 días', 'Empresarial, Talento humano', 'Pilotos de reducción de jornada', 'Crece en Europa',
+        'Debate en Colombia', '01/10/2026', 'OIT', 'https://www.ilo.org', 'Prensa', ''],
+      ['Medio ambiente y sostenibilidad', 'Hidrógeno verde'],
     ]);
     const r = await agente.post('/api/tendencias/importar').attach('archivo', archivo, 'tendencias.xlsx');
     expect(r.status).toBe(201);
-    expect(r.body).toEqual({ importadas: 2 });
+    expect(r.body).toEqual({ importados: 2 });
 
     const busqueda = await invitado().get('/api/tendencias?q=Semana laboral');
     const t = busqueda.body.datos[0];
@@ -105,9 +111,9 @@ describe('Tendencias', () => {
   it('une las megatendencias escritas con otras mayúsculas o sin tildes', async () => {
     const { agente } = await sesion('Gestor Tendencias');
     const archivo = await excel([
-      ['ECONOMIA Y TRABAJO', 'Trabajo por proyectos', '', '', '', '', '', 'empresarial'],
-      ['Nueva megatendencia', 'Primera', '', '', '', '', '', ''],
-      ['nueva megatendéncia', 'Segunda', '', '', '', '', '', ''],
+      ['ECONOMIA Y TRABAJO', 'Trabajo por proyectos', 'empresarial'],
+      ['Nueva megatendencia', 'Primera'],
+      ['nueva megatendéncia', 'Segunda'],
     ]);
     const r = await agente.post('/api/tendencias/importar').attach('archivo', archivo, 'tendencias.xlsx');
     expect(r.status).toBe(201);
@@ -120,11 +126,11 @@ describe('Tendencias', () => {
   it('rechaza todo el archivo si una fila tiene errores', async () => {
     const { agente } = await sesion('Gestor Tendencias');
     const archivo = await excel([
-      ['Economía y trabajo', 'Tendencia válida que no debe quedar', '', '', '', '', '', ''],
-      ['', 'Sin megatendencia', '', '', '', '', '', ''],
-      ['Tecnología y sociedad', 'IA generativa', '', '', '', '', '', ''],
-      ['Economía y trabajo', 'Con categoría falsa', '', '', '', '', '', 'Categoría inventada'],
-      ['Economía y trabajo', 'Fecha mala', '', '', '', '2026-13-45', '', ''],
+      ['Economía y trabajo', 'Tendencia válida que no debe quedar'],
+      ['', 'Sin megatendencia'],
+      ['Tecnología y sociedad', 'IA generativa'],
+      ['Economía y trabajo', 'Con categoría falsa', 'Categoría inventada'],
+      ['Economía y trabajo', 'Fecha mala', '', '', '', '', '45/13/2026'],
     ]);
     const r = await agente.post('/api/tendencias/importar').attach('archivo', archivo, 'tendencias.xlsx');
     expect(r.status).toBe(422);

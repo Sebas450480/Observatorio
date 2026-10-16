@@ -22,6 +22,7 @@ const esquema = z
     es_gratuito: z.boolean(),
     costo: z.string().regex(/^\d*$/, 'Escribe solo números'),
     descripcion: z.string().trim(),
+    dirigida_a: z.string().trim().max(1000),
     link: z.string().refine((v) => !v.trim() || enlaceValido(v), 'Escribe un enlace válido, por ejemplo www.sitio.com'),
     estado_fe: z.enum(['Activo', 'Inactivo']),
   })
@@ -51,6 +52,7 @@ export function FormularioFaro({ registro, onCerrar }: { registro?: Faro; onCerr
       es_gratuito: registro?.es_gratuito ?? false,
       costo: registro?.costo ? String(Math.round(registro.costo)) : '',
       descripcion: registro?.descripcion ?? '',
+      dirigida_a: registro?.dirigida_a ?? '',
       link: registro?.link ?? '',
       estado_fe: registro?.estado_fe ?? 'Activo',
     },
@@ -72,6 +74,7 @@ export function FormularioFaro({ registro, onCerrar }: { registro?: Faro; onCerr
       es_gratuito: d.es_gratuito,
       costo: d.es_gratuito || !d.costo ? null : Number(d.costo),
       descripcion: d.descripcion,
+      dirigida_a: d.dirigida_a,
       link: normalizarEnlace(d.link),
       estado_fe: d.estado_fe,
       categorias: seleccion,
@@ -120,6 +123,7 @@ export function FormularioFaro({ registro, onCerrar }: { registro?: Faro; onCerr
         </div>
       </div>
       <AreaTexto etiqueta="Descripción" rows={3} placeholder="Escribe una descripción breve de la oportunidad" {...register('descripcion')} />
+      <AreaTexto etiqueta="Dirigida a" rows={2} placeholder="Ej. Profesionales con experiencia laboral y liderazgo comprobado" {...register('dirigida_a')} />
       <Entrada etiqueta="Link de referencia" placeholder="https://" error={e.link?.message} {...register('link')} />
       <div className="grid items-start gap-5 sm:grid-cols-2">
         <CampoImagen actual={registro?.imagen} archivo={imagen} onCambiar={setImagen} />

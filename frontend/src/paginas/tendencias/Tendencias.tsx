@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { FileUp } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { api, mensajeDeError } from '../../api/cliente';
@@ -14,9 +13,9 @@ import vistaLista from '../../assets/figma/tendencias/vista-lista.svg';
 import { useListado } from '../../api/consultas';
 import type { Tendencia } from '../../api/tipos';
 import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
+import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
-import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { BotonOrden, ariaOrden, consultaOrden, type Orden } from '../../componentes/ui/Orden';
@@ -25,7 +24,6 @@ import { fechaCorta, numero } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 import { DetalleTendencia } from './DetalleTendencia';
 import { FormularioTendencia } from './FormularioTendencia';
-import { ImportarTendencias } from './ImportarTendencias';
 import { MapaTendencias } from './MapaTendencias';
 
 type VistaLista = 'tarjetas' | 'compactas' | 'tabla';
@@ -237,7 +235,6 @@ export function Tendencias() {
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const [formulario, setFormulario] = useState<{ registro?: Tendencia } | null>(null);
-  const [importar, setImportar] = useState(false);
 
   const { data: megatendencias = [] } = useQuery({
     queryKey: ['/tendencias', 'megatendencias'],
@@ -310,9 +307,7 @@ export function Tendencias() {
         claseSubtitulo="text-body font-bold tracking-[-0.5px] text-[#0d2375] sm:text-subtitle"
         acciones={
           pestana === 'lista' && gestiona ? (
-            <Boton variante="secundario" pildora icono={<FileUp className="size-4" />} onClick={() => setImportar(true)}>
-              Importar Excel
-            </Boton>
+            <CargaMasiva ruta="/tendencias" modulo="Tendencias" />
           ) : undefined
         }
         className="mb-6"
@@ -457,7 +452,6 @@ export function Tendencias() {
         />
       )}
       {formulario && <FormularioTendencia registro={formulario.registro} megatendencias={megatendencias} onCerrar={() => setFormulario(null)} />}
-      {importar && <ImportarTendencias onCerrar={() => setImportar(false)} />}
     </>
   );
 }

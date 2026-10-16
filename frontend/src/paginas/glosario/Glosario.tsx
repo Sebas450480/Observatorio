@@ -11,6 +11,7 @@ import { Boton } from '../../componentes/ui/Boton';
 import { AreaTexto, Entrada, Selector } from '../../componentes/ui/Campos';
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { useSesion } from '../../sesion/sesion';
+import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
 
 export interface Termino {
   id_termino: number;
@@ -93,9 +94,12 @@ export function Glosario() {
         subtitulo="Términos y conceptos clave del Observatorio Empresarial."
         acciones={
           gestiona && (
-            <Boton pildora className="px-5! font-semibold" onClick={() => setFormulario({})}>
-              Agregar término
-            </Boton>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <CargaMasiva ruta="/glosario" modulo="Glosario" />
+              <Boton pildora className="px-5! font-semibold" onClick={() => setFormulario({})}>
+                Agregar término
+              </Boton>
+            </div>
           )
         }
         className="mb-6"

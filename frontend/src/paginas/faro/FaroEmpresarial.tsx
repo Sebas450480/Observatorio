@@ -21,6 +21,7 @@ import { costo, fechaMedia, modalidadTexto } from '../../utilidades/formato';
 import { DatoTarjeta } from '../flash/FlashInformativo';
 import { DetalleFaro } from './DetalleFaro';
 import { FormularioFaro } from './FormularioFaro';
+import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
 
 /** Estilo de cada tipo de registro (Figma: Beca verde, Convocatoria azul, Curso morado). */
 export const ESTILO_TIPO: Record<TipoFaro, { singular: string; tono: 'verde' | 'azul' | 'morado' | 'naranja'; fondo: string; icono: string }> = {
@@ -119,9 +120,12 @@ export function FaroEmpresarial() {
         onLimpiar={() => { setBorrador(FILTROS_INICIALES); setFiltros(FILTROS_INICIALES); setPagina(1); }}
         extra={
           gestiona && (
-            <Boton pildora onClick={() => setFormulario({})}>
-              Crear registro
-            </Boton>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <CargaMasiva ruta="/faro" modulo="Faro" />
+              <Boton pildora onClick={() => setFormulario({})}>
+                Crear registro
+              </Boton>
+            </div>
           )
         }
       >
