@@ -112,6 +112,8 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
     { clave: 'telefono', titulo: 'Teléfono de la empresa', ayuda: 'Teléfono general.', ejemplo: '6017654321' },
     { clave: 'correo', titulo: 'Correo de la empresa', ayuda: 'Correo general. Vacío = el del contacto.', ejemplo: 'info@empresa.com' },
     { clave: 'link', titulo: 'Página web', tipo: 'enlace', ayuda: 'Sitio web de la empresa.', ejemplo: 'https://www.meltec.com.co' },
+    { clave: 'logo', titulo: 'Logo', tipo: 'imagen', campoImagen: 'logo_ec', ayuda: 'Logo de la empresa.', ejemplo: 'logo-meltec.png' },
+    { clave: 'portada', titulo: 'Portada', tipo: 'imagen', campoImagen: 'imagen_portada', ayuda: 'Imagen de portada del perfil.', ejemplo: 'portada-meltec.jpg' },
     { clave: 'estudiantes_recibidos', titulo: 'Estudiantes recibidos', tipo: 'entero', ayuda: 'Estudiantes de Uniempresarial que ha recibido. Vacío = 0.', ejemplo: '4' },
   ],
   armar: (f) => ({ ...f, anio_constitucion: f.anio_constitucion ?? null }),
@@ -154,6 +156,7 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
   },
   guardar: async (c, filas, sesion) => {
     const envios: { nombre_contacto: string; correo: string; nombre_empresa: string | null; codigo: string }[] = [];
+    const creados: { fila: number; id: number }[] = [];
     for (const { fila, datos } of filas) {
       try {
         const codigo = generarCodigoRecuperacion();
@@ -190,6 +193,7 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
           [idEc, contacto.slice(0, 100), datos.contacto_cargo ?? null, datos.contacto_correo, datos.contacto_celular],
         );
         await c.query('update invitacion_empresa set id_ec = $2 where id_invitacion = $1', [idInvitacion, idEc]);
+        creados.push({ fila, id: idEc });
         envios.push({ nombre_contacto: datos.contacto_nombre, correo: datos.contacto_correo, nombre_empresa: nombreEmpresa, codigo });
       } catch (error) {
         const codigo = (error as { code?: string }).code;
@@ -198,11 +202,11 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
         throw new ErrorApi(422, 'El archivo tiene errores. No se guardó ningún registro.', { errores: [{ fila, mensaje }] });
       }
     }
-    return { envios };
+    return { creados, envios };
   },
   // Los correos se envían después de guardar (si uno falla, la invitación se puede reenviar).
   despues: async (resultado) => {
-    const envios = (resultado as { envios: { nombre_contacto: string; correo: string; nombre_empresa: string | null; codigo: string }[] }).envios;
+    const envios = (resultado as unknown as { envios: { nombre_contacto: string; correo: string; nombre_empresa: string | null; codigo: string }[] }).envios;
     const fallidos: string[] = [];
     for (const { codigo, ...datos } of envios) {
       if (!(await enviarInvitacion(datos, codigo))) fallidos.push(datos.correo);

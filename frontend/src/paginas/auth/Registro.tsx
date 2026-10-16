@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { ErrorApi, api, mensajeDeError } from '../../api/cliente';
@@ -12,6 +12,8 @@ import { Casilla, Entrada } from '../../componentes/ui/Campos';
 import { iniciarRecorrido } from '../../componentes/RecorridoGuiado';
 import { useSesion } from '../../sesion/sesion';
 import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
+import { esquemaContrasena as reglaContrasena } from '../../utilidades/contrasena';
+import { RequisitosContrasena } from '../../componentes/ui/RequisitosContrasena';
 
 const esquemaDatos = z
   .object({
@@ -20,7 +22,7 @@ const esquemaDatos = z
     correo: z.email('Escribe un correo válido'),
     apodo_usuario: z.string().trim().max(20, 'Máximo 20 caracteres'),
     ciudad: z.string().trim().max(60),
-    contrasena: z.string().min(8, 'Mínimo 8 caracteres').max(72),
+    contrasena: reglaContrasena,
     confirmar: z.string(),
   })
   .refine((d) => d.contrasena === d.confirmar, { message: 'Las contraseñas no coinciden', path: ['confirmar'] });
@@ -53,7 +55,8 @@ export function Registro() {
     resolver: zodResolver(esquemaDatos),
     defaultValues: { nombre_usuario: '', apellido_usuario: '', correo: '', apodo_usuario: '', ciudad: '', contrasena: '', confirmar: '' },
   });
-  const { register, formState, handleSubmit, setError: marcarError } = formulario;
+  const { register, formState, handleSubmit, setError: marcarError, control } = formulario;
+  const clave = useWatch({ control, name: 'contrasena' }) ?? '';
   const e = formState.errors;
 
   const crearCuenta = async () => {
@@ -118,6 +121,7 @@ export function Registro() {
             <Entrada variante="perfil" className="sm:col-span-2" etiqueta="Ciudad" placeholder="Ej. Bogotá" autoComplete="address-level2" {...register('ciudad')} />
             <Entrada variante="perfil" etiqueta="Contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
             <Entrada variante="perfil" etiqueta="Confirmar contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.confirmar?.message} {...register('confirmar')} />
+            <RequisitosContrasena valor={clave} className="sm:col-span-2" />
           </div>
           {error && <ErrorAuth>{error}</ErrorAuth>}
           <div className="flex justify-between gap-3">

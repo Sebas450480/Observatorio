@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, FileUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, FileUp, ImagePlus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { ErrorApi, api, mensajeDeError, urlDescarga } from '../../api/cliente';
 import { Boton } from '../ui/Boton';
@@ -26,11 +26,12 @@ interface Revision {
   total: number;
   validos: number;
   errores: ErrorCarga[];
-  registros: { fila: number; resumen: string }[];
+  registros: { fila: number; resumen: string; imagenes: Record<string, string> }[];
 }
 
 interface Resultado {
   importados: number;
+  creados: { fila: number; id: number; imagenes: Record<string, string> }[];
   invitaciones_enviadas?: number;
   correos_fallidos?: string[];
 }
@@ -44,14 +45,19 @@ interface Props {
   refrescar?: string[];
   /** Empresas: cada fila crea la empresa y envía la invitación. */
   conInvitaciones?: boolean;
+  /** El módulo tiene imágenes: se pueden adjuntar (opcionales) junto con el Excel. */
+  conImagenes?: boolean;
   className?: string;
 }
+
+/** Busca la imagen adjunta por su nombre (sin importar mayúsculas). */
+const buscarImagen = (imagenes: File[], nombre: string) => imagenes.find((f) => f.name.toLowerCase() === nombre.toLowerCase());
 
 /**
  * Carga masiva desde Excel (máximo 50 registros): descargar la plantilla, subir el
  * archivo, revisar los errores por fila y columna y guardar todo junto.
  */
-export function CargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, className }: Props) {
+export function CargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conImagenes, className }: Props) {
   const [abierto, setAbierto] = useState(false);
   return (
     <>
@@ -59,13 +65,13 @@ export function CargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, cla
         Carga masiva
       </Boton>
       {abierto && (
-        <ModalCargaMasiva ruta={ruta} modulo={modulo} refrescar={refrescar} conInvitaciones={conInvitaciones} onCerrar={() => setAbierto(false)} />
+        <ModalCargaMasiva ruta={ruta} modulo={modulo} refrescar={refrescar} conInvitaciones={conInvitaciones} conImagenes={conImagenes} onCerrar={() => setAbierto(false)} />
       )}
     </>
   );
 }
 
-function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, onCerrar }: Omit<Props, 'className'> & { onCerrar: () => void }) {
+function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conImagenes, onCerrar }: Omit<Props, 'className'> & { onCerrar: () => void }) {
   const cliente = useQueryClient();
   const entrada = useRef<HTMLInputElement>(null);
   const [archivo, setArchivo] = useState<File | null>(null);
@@ -73,6 +79,31 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, onCer
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [trabajando, setTrabajando] = useState(false);
+  const [imagenes, setImagenes] = useState<File[]>([]);
+  const [imagenesSubidas, setImagenesSubidas] = useState(0);
+  const [imagenesFallidas, setImagenesFallidas] = useState<string[]>([]);
+
+  /** Sube las imágenes adjuntas a los registros recién creados (una por una; si alguna falla, se sube después). */
+  const subirImagenes = async (creados: Resultado['creados']) => {
+    let subidas = 0;
+    const fallidas: string[] = [];
+    for (const { id, imagenes: pedidas } of creados) {
+      for (const [campo, nombre] of Object.entries(pedidas)) {
+        const archivoImagen = buscarImagen(imagenes, nombre);
+        if (!archivoImagen) continue;
+        try {
+          const formulario = new FormData();
+          formulario.append('imagen', archivoImagen);
+          await api(`${ruta}/${id}/imagen/${campo}`, { metodo: 'POST', formulario });
+          subidas++;
+        } catch (e) {
+          fallidas.push(`${nombre} (${mensajeDeError(e)})`);
+        }
+      }
+    }
+    setImagenesSubidas(subidas);
+    setImagenesFallidas(fallidas);
+  };
 
   const enviar = async <T,>(elegido: File, validar: boolean) => {
     const formulario = new FormData();
@@ -100,7 +131,9 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, onCer
     setTrabajando(true);
     setError(null);
     try {
-      setResultado(await enviar<Resultado>(archivo, false));
+      const guardado = await enviar<Resultado>(archivo, false);
+      if (conImagenes && imagenes.length) await subirImagenes(guardado.creados);
+      setResultado(guardado);
       const prefijos = [ruta, ...refrescar];
       await cliente.invalidateQueries({ predicate: (q) => prefijos.some((p) => String(q.queryKey[0]).startsWith(p)) });
     } catch (e) {
@@ -128,6 +161,14 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, onCer
                 ? 'Se guardó 1 registro correctamente.'
                 : `Se guardaron ${resultado.importados} registros correctamente.`}
           </p>
+          {imagenesSubidas > 0 && (
+            <p className="text-small text-texto">{imagenesSubidas === 1 ? 'Se subió 1 imagen.' : `Se subieron ${imagenesSubidas} imágenes.`}</p>
+          )}
+          {imagenesFallidas.length > 0 && (
+            <p className="rounded-lg bg-[#fff8e1] px-4 py-2 text-caption text-[#7a5a00]">
+              No se pudieron subir: {imagenesFallidas.join('; ')}. Puedes subirlas desde el formulario de edición.
+            </p>
+          )}
           {conInvitaciones && (
             <p className="text-small text-texto">
               Se {resultado.invitaciones_enviadas === 1 ? 'envió 1 invitación' : `enviaron ${resultado.invitaciones_enviadas ?? 0} invitaciones`} por correo.
@@ -173,6 +214,24 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, onCer
               />
             </label>
           </div>
+          {conImagenes && (
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-[20px] border border-dashed border-borde bg-[#f9fafb] px-4 py-2 hover:border-azul-oscuro">
+              <ImagePlus className="size-5 shrink-0 text-azul-titulo" aria-hidden />
+              <span className="text-small text-texto-suave">
+                {imagenes.length
+                  ? `${imagenes.length} ${imagenes.length === 1 ? 'imagen adjunta' : 'imágenes adjuntas'} (opcional)`
+                  : 'Imágenes (opcional): adjunta los JPG o PNG que nombraste en la columna de imagen'}
+              </span>
+              <input
+                type="file"
+                multiple
+                accept="image/jpeg,image/png"
+                className="sr-only"
+                aria-label="Imágenes (opcional)"
+                onChange={(e) => setImagenes(Array.from(e.target.files ?? []))}
+              />
+            </label>
+          )}
 
           {trabajando && !revision && <p className="text-small text-texto-suave" role="status">Revisando el archivo…</p>}
           {error && (
@@ -216,7 +275,12 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, onCer
                   {revision.registros.map((r) => (
                     <li key={r.fila} className="flex gap-3 border-t border-[#eef1f5] px-3 py-1.5 first:border-t-0">
                       <span className="w-12 shrink-0 text-texto-suave">Fila {r.fila}</span>
-                      <span className="text-texto">{r.resumen}</span>
+                      <span className="flex-1 text-texto">{r.resumen}</span>
+                      {Object.values(r.imagenes ?? {}).map((nombre) => (
+                        <span key={nombre} className={`shrink-0 ${buscarImagen(imagenes, nombre) ? 'text-exito' : 'text-texto-suave'}`}>
+                          {buscarImagen(imagenes, nombre) ? `Imagen: ${nombre}` : `${nombre}: sin adjuntar (puedes subirla después)`}
+                        </span>
+                      ))}
                     </li>
                   ))}
                 </ul>

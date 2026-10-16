@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 import { mensajeDeError } from '../../api/cliente';
@@ -11,11 +11,13 @@ import { iniciarRecorrido } from '../../componentes/RecorridoGuiado';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
 import { CLAVE_SESION, useSesion } from '../../sesion/sesion';
 import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from '../auth/PantallaAuth';
+import { esquemaContrasena as reglaContrasena } from '../../utilidades/contrasena';
+import { RequisitosContrasena } from '../../componentes/ui/RequisitosContrasena';
 
 /** Registro corto: solo la contraseña. La ficha de la empresa se completa después, en Mi perfil. */
 const esquema = z
   .object({
-    contrasena: z.string().min(8, 'Mínimo 8 caracteres').max(72),
+    contrasena: reglaContrasena,
     confirmar: z.string(),
   })
   .refine((d) => d.contrasena === d.confirmar, { message: 'Las contraseñas no coinciden', path: ['confirmar'] });
@@ -91,10 +93,11 @@ function Formulario({ codigo, contacto, correo, nombreEmpresa }: { codigo: strin
   const [errorAutoriza, setErrorAutoriza] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState } = useForm<Datos>({
+  const { register, handleSubmit, formState, control } = useForm<Datos>({
     resolver: zodResolver(esquema),
     defaultValues: { contrasena: '', confirmar: '' },
   });
+  const clave = useWatch({ control, name: 'contrasena' }) ?? '';
   const e = formState.errors;
 
   const enviar = handleSubmit(async (d) => {
@@ -132,7 +135,8 @@ function Formulario({ codigo, contacto, correo, nombreEmpresa }: { codigo: strin
 
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-3 text-body font-bold text-azul-marino">Crea tu contraseña</legend>
-        <Entrada etiqueta="Contraseña" obligatorio type="password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" error={e.contrasena?.message} {...register('contrasena')} />
+        <Entrada etiqueta="Contraseña" obligatorio type="password" autoComplete="new-password" placeholder="Crea una contraseña segura" error={e.contrasena?.message} {...register('contrasena')} />
+        <RequisitosContrasena valor={clave} />
         <Entrada etiqueta="Confirmar contraseña" obligatorio type="password" autoComplete="new-password" placeholder="Repite la contraseña" error={e.confirmar?.message} {...register('confirmar')} />
       </fieldset>
 

@@ -1,17 +1,23 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch, type Control } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 import { api, mensajeDeError } from '../../api/cliente';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso } from '../../componentes/ui/Modal';
 import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
+import { esquemaContrasena as reglaContrasena } from '../../utilidades/contrasena';
+import { RequisitosContrasena } from '../../componentes/ui/RequisitosContrasena';
 
 const esquema = z
-  .object({ contrasena: z.string().min(8, 'Mínimo 8 caracteres').max(72), confirmar: z.string() })
+  .object({ contrasena: reglaContrasena, confirmar: z.string() })
   .refine((d) => d.contrasena === d.confirmar, { message: 'Las contraseñas no coinciden', path: ['confirmar'] });
+
+function Requisitos({ control }: { control: Control<z.infer<typeof esquema>> }) {
+  return <RequisitosContrasena valor={useWatch({ control, name: 'contrasena' }) ?? ''} />;
+}
 
 /** Página del enlace que llega por correo: /restablecer-contrasena?codigo=... */
 export function RestablecerContrasena() {
@@ -20,7 +26,7 @@ export function RestablecerContrasena() {
   const [listo, setListo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navegar = useNavigate();
-  const { register, handleSubmit, formState } = useForm<z.infer<typeof esquema>>({
+  const { register, handleSubmit, formState, control } = useForm<z.infer<typeof esquema>>({
     resolver: zodResolver(esquema),
     defaultValues: { contrasena: '', confirmar: '' },
   });
@@ -50,10 +56,11 @@ export function RestablecerContrasena() {
               etiqueta="Nueva contraseña"
               type="password"
               autoComplete="new-password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Crea una contraseña segura"
               error={formState.errors.contrasena?.message}
               {...register('contrasena')}
             />
+            <Requisitos control={control} />
             <Entrada
               variante="acceso"
               etiqueta="Confirmar contraseña"
