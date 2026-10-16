@@ -176,9 +176,10 @@ export function crearRecurso(op: OpcionesRecurso): Router {
   if (op.cargaMasiva) {
     rutasCargaMasiva(router, {
       guardar: async (c, filas) => {
+        const creados: { fila: number; id: number }[] = [];
         for (const { fila, datos } of filas) {
           try {
-            await insertar(c, datos);
+            creados.push({ fila, id: await insertar(c, datos) });
           } catch (error) {
             const codigo = (error as { code?: string }).code;
             const mensaje = codigo === '23505' ? 'Ya existe un registro con esos datos en el Observatorio'
@@ -186,6 +187,7 @@ export function crearRecurso(op: OpcionesRecurso): Router {
             throw new ErrorApi(422, 'El archivo tiene errores. No se guardó ningún registro.', { errores: [{ fila, mensaje }] });
           }
         }
+        return { creados };
       },
       ...op.cargaMasiva,
     }, op.rolGestor);

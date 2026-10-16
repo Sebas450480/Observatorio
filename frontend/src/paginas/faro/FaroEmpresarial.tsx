@@ -121,7 +121,7 @@ export function FaroEmpresarial() {
         extra={
           gestiona && (
             <div className="flex flex-col gap-3 sm:flex-row">
-              <CargaMasiva ruta="/faro" modulo="Faro" />
+              <CargaMasiva ruta="/faro" modulo="Faro" conImagenes />
               <Boton pildora onClick={() => setFormulario({})}>
                 Crear registro
               </Boton>

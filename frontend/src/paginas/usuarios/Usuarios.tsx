@@ -14,6 +14,7 @@ import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos'
 import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
 import { BotonOrden, ariaOrden, consultaOrden, type Orden } from '../../componentes/ui/Orden';
 import { SUPER_ADMIN, descripcionRol, descripcionRoles, mismoRol, rolesDe, useSesion } from '../../sesion/sesion';
+import { esquemaContrasena as reglaContrasena } from '../../utilidades/contrasena';
 
 const esSuperAdminDe = (perfil?: Pick<Perfil, 'nombre_rol' | 'roles'> | null) => rolesDe(perfil).some((r) => mismoRol(r, SUPER_ADMIN));
 
@@ -27,7 +28,7 @@ const base = {
 const esquemaCrear = z.object({
   ...base,
   correo: z.email('Escribe un correo válido'),
-  contrasena: z.string().min(8, 'Mínimo 8 caracteres').max(72),
+  contrasena: reglaContrasena,
   acepta: z.literal(true, { message: 'Confirma la autorización de tratamiento de datos' }),
 });
 const esquemaEditar = z.object({ ...base, estado_usuario: z.enum(['Activo', 'Inactivo']) });
@@ -108,7 +109,7 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
         )}
         <Entrada etiqueta="Ciudad" placeholder="Ej. Bogotá" {...register('ciudad')} />
         {!editar && (
-          <Entrada etiqueta="Contraseña inicial" type="password" placeholder="Mínimo 8 caracteres" obligatorio autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
+          <Entrada etiqueta="Contraseña inicial" type="password" placeholder="Contraseña segura" ayuda="Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial." obligatorio autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
         )}
       </div>
       <fieldset className="flex flex-col gap-3" disabled={bloqueado}>

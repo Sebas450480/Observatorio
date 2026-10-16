@@ -43,11 +43,19 @@ export const booleanoConsulta = z.enum(['true', 'false']).transform((v) => v ===
 
 export const correo = z.email({ message: 'Correo inválido' }).max(100).transform((v) => v.trim().toLowerCase());
 
-/** Reglas mínimas de contraseña. */
+/**
+ * Contraseña segura para cuentas nuevas y cambios de contraseña: mínimo 8 caracteres,
+ * con mayúscula, minúscula, número y carácter especial. (El inicio de sesión no la
+ * revisa, para que las cuentas con contraseñas anteriores puedan entrar.)
+ */
 export const contrasena = z
   .string()
   .min(8, 'La contraseña debe tener al menos 8 caracteres')
-  .max(72, 'La contraseña no puede superar 72 caracteres');
+  .max(72, 'La contraseña no puede superar 72 caracteres')
+  .regex(/\p{Lu}/u, 'La contraseña debe tener al menos una mayúscula')
+  .regex(/\p{Ll}/u, 'La contraseña debe tener al menos una minúscula')
+  .regex(/\d/, 'La contraseña debe tener al menos un número')
+  .regex(/[^\p{L}\d\s]/u, 'La contraseña debe tener al menos un carácter especial (p. ej. ! # $ % - _ .)');
 
 /** Nombre para comparar duplicados: sin tildes, en minúsculas y sin espacios repetidos. */
 export const normalizarNombre = (texto: string) =>

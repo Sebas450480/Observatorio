@@ -115,7 +115,12 @@ test.describe('Registro', () => {
     await page.getByLabel('Nombre').fill('Sara');
     await page.getByLabel('Apellido').fill('Recorrido');
     await page.getByLabel('Correo electrónico').fill(`sara.${Date.now()}@test.co`);
+    const requisitos = page.getByRole('list', { name: 'Requisitos de la contraseña' });
+    await page.getByLabel('Contraseña', { exact: true }).fill('clavesegura');
+    await expect(requisitos.getByText('Una mayúscula (falta)')).toBeVisible();
+    await expect(requisitos.getByText('Una minúscula (cumple)')).toBeVisible();
     await page.getByLabel('Contraseña', { exact: true }).fill('Clave-segura-123');
+    await expect(requisitos.getByText('(falta)')).toHaveCount(0);
     await page.getByLabel('Confirmar contraseña').fill('Clave-segura-123');
     await page.getByRole('button', { name: /Siguiente/ }).click();
     await page.getByLabel(/Autorizo el tratamiento/).check();

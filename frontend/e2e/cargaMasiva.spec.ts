@@ -59,6 +59,45 @@ test.describe('Carga masiva desde Excel', () => {
     await expect(page.getByRole('term').filter({ hasText: termino })).toBeVisible();
   });
 
+  test('las imágenes son opcionales: se adjuntan con el Excel y se suben al guardar', async ({ page }) => {
+    await iniciarSesion(page, 'superadmin');
+    await irA(page, 'Flash Informativo');
+    await page.getByRole('button', { name: 'Carga masiva' }).click();
+    const modal = page.getByRole('dialog', { name: 'Carga masiva · Flash Informativo' });
+    const [descarga] = await Promise.all([page.waitForEvent('download'), modal.getByRole('link', { name: 'Descargar plantilla' }).click()]);
+    const sufijo = Date.now();
+    const plantilla = await descarga.path();
+    // Columnas de la plantilla: Título, Tipo, Otro tipo, Descripción, Fecha inicio, Hora, Fecha fin, Hora fin, Modalidad, ... Imagen.
+    const libro = new ExcelJS.Workbook();
+    await libro.xlsx.readFile(plantilla);
+    const hoja = libro.getWorksheet('Flash Informativo')!;
+    const columna = (titulo: string) => {
+      for (let i = 1; i <= 30; i++) if (String(hoja.getRow(1).getCell(i).value).replace(' *', '') === titulo) return i;
+      throw new Error(titulo);
+    };
+    const fila = hoja.getRow(2);
+    fila.getCell(columna('Título')).value = `Feria con imagen ${sufijo}`;
+    fila.getCell(columna('Tipo de evento')).value = 'Feria';
+    fila.getCell(columna('Fecha de inicio')).value = '20/11/2030';
+    fila.getCell(columna('Modalidad')).value = 'Presencial';
+    fila.getCell(columna('Imagen')).value = 'feria.png';
+    const fila3 = hoja.getRow(3);
+    fila3.getCell(columna('Título')).value = `Feria sin imagen ${sufijo}`;
+    fila3.getCell(columna('Tipo de evento')).value = 'Feria';
+    fila3.getCell(columna('Fecha de inicio')).value = '21/11/2030';
+    fila3.getCell(columna('Modalidad')).value = 'Virtual';
+    const archivo = Buffer.from(await libro.xlsx.writeBuffer());
+
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    await modal.getByLabel('Imágenes (opcional)').setInputFiles({ name: 'feria.png', mimeType: 'image/png', buffer: png });
+    await modal.getByLabel('Archivo de Excel').setInputFiles({ name: 'flash.xlsx', mimeType: XLSX, buffer: archivo });
+    await expect(modal.getByText('2 registros listos para guardar.')).toBeVisible();
+    await expect(modal.getByText('Imagen: feria.png')).toBeVisible();
+    await modal.getByRole('button', { name: 'Guardar 2 registros' }).click();
+    await expect(modal.getByText('Se guardaron 2 registros correctamente.')).toBeVisible();
+    await expect(modal.getByText('Se subió 1 imagen.')).toBeVisible();
+  });
+
   test('las empresas cargadas quedan inactivas y su contacto recibe la invitación', async ({ page }) => {
     await iniciarSesion(page, 'superadmin');
     await irA(page, 'Empresas Coformadoras');

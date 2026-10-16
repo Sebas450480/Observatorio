@@ -35,7 +35,7 @@ export const gratuitoYCosto = (fila: Record<string, unknown>) => ({
   costo: fila.es_gratuito === true ? null : (fila.costo as number | undefined) ?? null,
 });
 
-export type TipoColumna = 'texto' | 'fecha' | 'hora' | 'numero' | 'entero' | 'sino' | 'lista' | 'categorias' | 'enlace';
+export type TipoColumna = 'texto' | 'fecha' | 'hora' | 'numero' | 'entero' | 'sino' | 'lista' | 'categorias' | 'enlace' | 'imagen';
 
 export interface Opcion {
   /** Lo que se escribe en el Excel. */
@@ -58,6 +58,8 @@ export interface ColumnaCarga {
   ejemplo?: string;
   /** Campos del esquema que reportan sus errores en esta columna. */
   campos?: string[];
+  /** Columnas de tipo imagen: campo de la tabla donde se guarda la imagen (p. ej. "imagen", "logo_ec"). */
+  campoImagen?: string;
   ancho?: number;
 }
 
@@ -70,6 +72,14 @@ export interface ErrorCarga {
 export interface FilaValida<T> {
   fila: number;
   datos: T;
+  /** Imágenes opcionales de la fila: campo de la tabla -> nombre del archivo. */
+  imagenes: Record<string, string>;
+}
+
+/** Registros creados por la carga (para subir después sus imágenes). */
+export interface ResultadoGuardado {
+  creados: { fila: number; id: number }[];
+  [extra: string]: unknown;
 }
 
 export interface DefinicionCarga<T = Record<string, unknown>> {
@@ -91,9 +101,9 @@ export interface DefinicionCarga<T = Record<string, unknown>> {
   /** Revisiones contra la base de datos (p. ej. registros que ya existen). */
   revisar?: (cliente: Cliente, filas: FilaValida<T>[]) => Promise<ErrorCarga[]>;
   /** Guarda todas las filas dentro de la transacción. */
-  guardar: (cliente: Cliente, filas: FilaValida<T>[], sesion: Sesion) => Promise<Record<string, unknown> | void>;
-  /** Trabajo después de guardar (fuera de la transacción), p. ej. enviar correos. */
-  despues?: (resultado: Record<string, unknown> | void) => Promise<Record<string, unknown> | void>;
+  guardar: (cliente: Cliente, filas: FilaValida<T>[], sesion: Sesion) => Promise<ResultadoGuardado>;
+  /** Trabajo después de guardar (fuera de la transacción), p. ej. enviar correos. Lo que devuelve se suma a la respuesta. */
+  despues?: (resultado: ResultadoGuardado) => Promise<Record<string, unknown>>;
 }
 
 /** Carga masiva de un módulo de crearRecurso (el guardado por defecto es el mismo del formulario). */
@@ -123,6 +133,7 @@ const AYUDA_TIPO: Partial<Record<TipoColumna, string>> = {
   sino: 'Sí o No.',
   categorias: 'Nombres de categorías existentes separados por coma (ver hoja "Listas").',
   enlace: 'Enlace completo que empiece por https://',
+  imagen: 'Opcional. Nombre del archivo JPG o PNG (p. ej. feria-2026.jpg); adjunta la imagen al subir el Excel o súbela después desde el formulario.',
   numero: 'Solo números, sin puntos de miles.',
   entero: 'Número entero.',
 };
@@ -180,7 +191,7 @@ export async function generarPlantilla(def: DefinicionCarga<unknown>, categorias
         celda.numFmt = 'dd/mm/yyyy';
       } else if (col.tipo === 'hora') {
         celda.numFmt = 'hh:mm';
-      } else if (col.tipo === 'texto' || col.tipo === 'enlace' || col.tipo === 'categorias' || !col.tipo) {
+      } else if (col.tipo === 'texto' || col.tipo === 'enlace' || col.tipo === 'categorias' || col.tipo === 'imagen' || !col.tipo) {
         celda.numFmt = '@';
       }
     }
@@ -210,7 +221,9 @@ export async function generarPlantilla(def: DefinicionCarga<unknown>, categorias
     'Las columnas en rojo y con * son obligatorias. No cambies los encabezados.',
     'Antes de guardar, la plataforma revisa el archivo y te muestra los errores por fila y columna.',
     'Si alguna fila tiene errores, no se guarda ninguna: corrige el archivo y vuelve a subirlo.',
-    'Las imágenes no se cargan por Excel: agrégalas después desde el formulario de edición.',
+    def.columnas.some((c) => c.tipo === 'imagen')
+      ? 'Imágenes (opcional): escribe el nombre del archivo en la columna de imagen y adjunta las imágenes al subir el Excel. También puedes subirlas después desde el formulario de edición.'
+      : 'Este módulo no tiene imágenes.',
     ...(def.instrucciones ?? []),
   ];
   for (const texto of generales) {
@@ -392,6 +405,13 @@ async function leerArchivo(def: DefinicionCarga<unknown>, archivo: Buffer, categ
           else valores[col.clave] = [...new Set(nombres.map((n) => categorias.get(normalizarNombre(n))!))];
           break;
         }
+        case 'imagen': {
+          // Solo el nombre del archivo (sin carpetas), con extensión de imagen.
+          const nombre = texto.split(/[\\/]/).at(-1)!.trim();
+          if (/\.(jpe?g|png)$/i.test(nombre)) valores[col.clave] = nombre;
+          else error(col, 'Escribe el nombre del archivo con su extensión .jpg o .png (p. ej. feria.jpg)');
+          break;
+        }
         default:
           valores[col.clave] = texto;
       }
@@ -440,7 +460,11 @@ async function revisarArchivo<T>(def: DefinicionCarga<T>, cliente: Cliente, arch
       }
       vistas.set(clave, fila);
     }
-    validas.push({ fila, datos: resultado.data });
+    const imagenes: Record<string, string> = {};
+    for (const col of def.columnas) {
+      if (col.tipo === 'imagen' && col.campoImagen && typeof valores[col.clave] === 'string') imagenes[col.campoImagen] = valores[col.clave] as string;
+    }
+    validas.push({ fila, datos: resultado.data, imagenes });
   }
   if (def.revisar && validas.length) errores.push(...(await def.revisar(cliente, validas)));
   errores.sort((a, b) => a.fila - b.fila);
@@ -484,11 +508,18 @@ export function rutasCargaMasiva<T>(router: Router, def: DefinicionCarga<T>, rol
         total: revision.total,
         validos: revision.total - new Set(revision.errores.map((e) => e.fila)).size,
         errores: revision.errores,
-        registros: revision.validas.map((v) => ({ fila: v.fila, resumen: def.resumen(v.datos) })),
+        registros: revision.validas.map((v) => ({ fila: v.fila, resumen: def.resumen(v.datos), imagenes: v.imagenes })),
       });
       return;
     }
-    const extra = (await def.despues?.(resultado.guardado)) ?? resultado.guardado ?? {};
-    res.status(201).json({ importados: resultado.revision.validas.length, ...extra });
+    const guardado = resultado.guardado!;
+    const extra = def.despues ? await def.despues(guardado) : {};
+    const imagenesDe = new Map(resultado.revision.validas.map((v) => [v.fila, v.imagenes]));
+    res.status(201).json({
+      importados: resultado.revision.validas.length,
+      // Registros creados con las imágenes que la fila nombra, para subirlas a continuación.
+      creados: guardado.creados.map((c) => ({ ...c, imagenes: imagenesDe.get(c.fila) ?? {} })),
+      ...extra,
+    });
   });
 }

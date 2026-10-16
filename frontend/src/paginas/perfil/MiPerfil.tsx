@@ -15,6 +15,8 @@ import { MiEmpresa } from './MiEmpresa';
 import { iniciales } from '../../utilidades/formato';
 import { MisFavoritos } from './MisFavoritos';
 import { EncabezadoTarjeta, TARJETA } from './TarjetaPerfil';
+import { esquemaContrasena as reglaContrasena } from '../../utilidades/contrasena';
+import { RequisitosContrasena } from '../../componentes/ui/RequisitosContrasena';
 
 const esquema = z.object({
   nombre_usuario: z.string().trim().min(1, 'Escribe tu nombre').max(50),
@@ -30,7 +32,7 @@ type Datos = z.infer<typeof esquema>;
 const esquemaContrasena = z
   .object({
     actual: z.string().min(1, 'Escribe tu contraseña actual'),
-    nueva: z.string().min(8, 'Mínimo 8 caracteres').max(72),
+    nueva: reglaContrasena,
     confirmar: z.string(),
   })
   .refine((d) => d.nueva === d.confirmar, { message: 'Las contraseñas no coinciden', path: ['confirmar'] });
@@ -44,7 +46,8 @@ const FRECUENCIAS: { valor: FrecuenciaAlertas; titulo: string; detalle: string }
 ];
 
 function CambiarContrasena({ onCerrar, onListo }: { onCerrar: () => void; onListo: () => void }) {
-  const { register, handleSubmit, setError, formState } = useForm<DatosContrasena>({ resolver: zodResolver(esquemaContrasena) });
+  const { register, handleSubmit, setError, formState, control } = useForm<DatosContrasena>({ resolver: zodResolver(esquemaContrasena) });
+  const nueva = useWatch({ control, name: 'nueva' }) ?? '';
   const cambiar = useMutation({
     mutationFn: (d: DatosContrasena) => api('/perfil/contrasena', { metodo: 'PUT', cuerpo: { actual: d.actual, nueva: d.nueva } }),
     onSuccess: onListo,
@@ -72,7 +75,8 @@ function CambiarContrasena({ onCerrar, onListo }: { onCerrar: () => void; onList
     >
       <form id="formulario-contrasena" noValidate className="flex flex-col gap-4" onSubmit={handleSubmit((d) => cambiar.mutate(d))}>
         <Entrada etiqueta="Contraseña actual" type="password" autoComplete="current-password" error={e.actual?.message} {...register('actual')} />
-        <Entrada etiqueta="Nueva contraseña" type="password" autoComplete="new-password" ayuda="Mínimo 8 caracteres." error={e.nueva?.message} {...register('nueva')} />
+        <Entrada etiqueta="Nueva contraseña" type="password" autoComplete="new-password" error={e.nueva?.message} {...register('nueva')} />
+        <RequisitosContrasena valor={nueva} />
         <Entrada etiqueta="Confirmar nueva contraseña" type="password" autoComplete="new-password" error={e.confirmar?.message} {...register('confirmar')} />
         {cambiar.error && !e.actual && (
           <p role="alert" className="rounded-lg bg-rojo-claro px-4 py-3 text-caption text-rojo">

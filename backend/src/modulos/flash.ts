@@ -78,6 +78,7 @@ export const rutasFlash = crearRecurso({
       { clave: 'costo', titulo: 'Costo (COP)', tipo: 'numero', ayuda: 'Valor en pesos, si no es gratuito.', ejemplo: '150000' },
       { clave: 'categorias', titulo: 'Categorías', tipo: 'categorias', ayuda: 'Temas o etiquetas del registro.', ejemplo: 'Tecnología, Innovación' },
       { clave: 'info_adicional', titulo: 'Información adicional', ayuda: 'Datos clave en viñetas o líneas.', ejemplo: 'Networking internacional', ancho: 40 },
+      { clave: 'imagen', titulo: 'Imagen', tipo: 'imagen', campoImagen: 'imagen', ayuda: 'Imagen del evento.', ejemplo: 'hannover-messe.jpg' },
       { clave: 'estado_fi', titulo: 'Estado', tipo: 'lista', opciones: ESTADOS, ayuda: 'Activo se publica de inmediato; Inactivo queda oculto. Por defecto, Activo.', ejemplo: 'Activo' },
     ],
     armar: (f) => ({

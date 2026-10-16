@@ -100,7 +100,7 @@ describe('Tendencias', () => {
     ]);
     const r = await agente.post('/api/tendencias/importar').attach('archivo', archivo, 'tendencias.xlsx');
     expect(r.status).toBe(201);
-    expect(r.body).toEqual({ importados: 2 });
+    expect(r.body).toMatchObject({ importados: 2 });
 
     const busqueda = await invitado().get('/api/tendencias?q=Semana laboral');
     const t = busqueda.body.datos[0];
