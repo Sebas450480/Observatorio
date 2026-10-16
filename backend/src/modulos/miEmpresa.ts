@@ -29,7 +29,7 @@ const COLUMNAS = `e.id_ec, e.razon_social, e.nombre_comercial, e.nit, e.sector_e
   e.naturaleza_juridica, e.codigo_ciiu, e.link, e.estudiantes_recibidos, e.departamento, e.municipio, e.direccion,
   e.telefono, e.correo, e.anio_constitucion, e.logo_ec, e.imagen_portada, e.estado_ec, e.fecha_actualizacion,
   (select u.correo from usuario u where u.id_usuario = e.id_usuario) as correo_cuenta,
-  e.nit like 'PENDIENTE-%' as pendiente`;
+  e.ficha_pendiente as pendiente`;
 
 /** Valor provisional de los campos obligatorios mientras la empresa completa su ficha. */
 const POR_DEFINIR = 'Por definir';
@@ -71,12 +71,12 @@ rutasMiEmpresa.patch('/', async (req, res) => {
   const entradas = Object.entries(datos).filter(([, v]) => v !== undefined);
   const empresa = await conRol(req.sesion, async (c) => {
     // Al completar el registro corto, los datos obligatorios deben quedar con valores reales.
-    const actual = await c.query<{ nit: string; sector_economico: string; departamento: string; municipio: string }>(
-      'select nit, sector_economico, departamento, municipio from empresa_coformadora where id_usuario = $1',
+    const actual = await c.query<{ nit: string; sector_economico: string; departamento: string; municipio: string; ficha_pendiente: boolean }>(
+      'select nit, sector_economico, departamento, municipio, ficha_pendiente from empresa_coformadora where id_usuario = $1',
       [req.sesion.idUsuario],
     );
     if (!actual.rows[0]) throw new ErrorApi(404, SIN_EMPRESA);
-    if (esPendiente(actual.rows[0].nit)) {
+    if (actual.rows[0].ficha_pendiente) {
       const final = { ...actual.rows[0], ...datos };
       const faltan = (['nit', 'sector_economico', 'departamento', 'municipio'] as const)
         .filter((campo) => !final[campo] || final[campo] === POR_DEFINIR || (campo === 'nit' && esPendiente(final.nit)));

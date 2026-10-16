@@ -1,7 +1,10 @@
 import { z } from 'zod';
 import { crearRecurso } from './recurso.js';
-import { conRol } from '../db/contexto.js';
-import { noEncontrado } from '../errores.js';
+import { PREFIJO_NIT_PENDIENTE, VIGENCIA_DIAS, enviarInvitacion } from './invitaciones.js';
+import { generarCodigoRecuperacion, huellaCodigo } from '../auth/tokens.js';
+import { conAutenticacion, conRol } from '../db/contexto.js';
+import { ErrorApi, noEncontrado } from '../errores.js';
+import { cargaRecurso, type ErrorCarga } from '../servicios/cargaMasiva.js';
 import { requiereRol } from '../middlewares/sesion.js';
 import {
   ESTADOS, TAMANOS_EMPRESA, correo, enlace, idPositivo, textoObligatorio, textoOpcional,
@@ -48,6 +51,166 @@ const esquemaFiltros = z.object({
 
 const soloGestor = requiereRol('obs_gestor_empresas');
 
+// ----------------------------------------------------------------------------------
+// Carga masiva: cada fila crea la empresa (inactiva, con la ficha pendiente), su contacto
+// principal y la invitación al contacto. La empresa se publica cuando su cuenta completa
+// la ficha desde Mi perfil. Solo los datos de contacto son obligatorios.
+// ----------------------------------------------------------------------------------
+const esquemaCarga = z.object({
+  razon_social: textoOpcional(150),
+  nombre_comercial: textoOpcional(100),
+  nit: textoOpcional(20),
+  descripcion: textoOpcional(),
+  sector_economico: textoOpcional(50),
+  codigo_ciiu: textoOpcional(30),
+  naturaleza_juridica: textoOpcional(50),
+  tamano_empresa: z.enum(TAMANOS_EMPRESA).nullish(),
+  anio_constitucion: z.number().int().min(1800, 'Año inválido').max(2100, 'Año inválido').nullish(),
+  departamento: textoOpcional(50),
+  municipio: textoOpcional(60),
+  direccion: textoOpcional(150),
+  telefono: textoOpcional(20),
+  correo: correo.nullish(),
+  link: enlace.nullish(),
+  estudiantes_recibidos: z.number().int().min(0).optional(),
+  contacto_nombre: textoObligatorio(50),
+  contacto_apellido: textoObligatorio(50),
+  contacto_cargo: textoOpcional(100),
+  contacto_celular: textoObligatorio(20),
+  contacto_correo: correo,
+});
+type FilaEmpresa = z.infer<typeof esquemaCarga>;
+
+const POR_DEFINIR = 'Por definir';
+
+const cargaEmpresas = cargaRecurso<FilaEmpresa>({
+  archivo: 'plantilla-empresas-coformadoras',
+  hoja: 'Empresas',
+  instrucciones: [
+    'Cada fila crea la empresa (inactiva) y envía la invitación al correo del contacto para que cree su contraseña.',
+    'Solo los datos del contacto son obligatorios. La empresa completa el resto de su ficha y, al guardarla, queda publicada.',
+    'El correo del contacto no puede tener ya una cuenta ni una invitación pendiente.',
+  ],
+  columnas: [
+    { clave: 'contacto_nombre', titulo: 'Nombres del contacto', obligatoria: true, ayuda: 'Nombres de la persona que recibirá la invitación.', ejemplo: 'Sandra Milena', ancho: 22 },
+    { clave: 'contacto_apellido', titulo: 'Apellidos del contacto', obligatoria: true, ayuda: 'Apellidos de la persona.', ejemplo: 'Guerrero Rojas', ancho: 22 },
+    { clave: 'contacto_correo', titulo: 'Correo del contacto', obligatoria: true, ayuda: 'Correo al que se envía la invitación; será el usuario de la cuenta.', ejemplo: 'contacto@empresa.com', ancho: 28 },
+    { clave: 'contacto_celular', titulo: 'Celular del contacto', obligatoria: true, ayuda: 'Celular o teléfono de la persona.', ejemplo: '3001234567', ancho: 18 },
+    { clave: 'contacto_cargo', titulo: 'Cargo del contacto', ayuda: 'Cargo o área de la persona.', ejemplo: 'Jefe de Gestión Humana', ancho: 24 },
+    { clave: 'razon_social', titulo: 'Razón social', ayuda: 'Nombre legal de la empresa.', ejemplo: 'Meltec Comunicaciones S.A.', ancho: 30 },
+    { clave: 'nombre_comercial', titulo: 'Nombre comercial', ayuda: 'Nombre con el que se conoce.', ejemplo: 'Meltec' },
+    { clave: 'nit', titulo: 'NIT', ayuda: 'Sin dígito de verificación ni puntos.', ejemplo: '830079015' },
+    { clave: 'descripcion', titulo: 'Actividad económica', ayuda: 'A qué se dedica la empresa.', ejemplo: 'Comercio al por mayor de equipos de telecomunicaciones.', ancho: 40 },
+    { clave: 'sector_economico', titulo: 'Sector económico', ayuda: 'Sector o clúster (máx. 50 caracteres).', ejemplo: 'Software y TI' },
+    { clave: 'codigo_ciiu', titulo: 'Código CIIU', ayuda: 'Código de la actividad económica.', ejemplo: '4652' },
+    { clave: 'naturaleza_juridica', titulo: 'Tipo de sociedad', ayuda: 'Privada, Pública, Mixta, S.A.S., etc.', ejemplo: 'Privada' },
+    { clave: 'tamano_empresa', titulo: 'Tamaño', tipo: 'lista', opciones: [...TAMANOS_EMPRESA.map((t) => ({ texto: t })), { texto: 'Microempresa', valor: 'Micro' }], ayuda: 'Tamaño de la empresa.', ejemplo: 'Grande' },
+    { clave: 'anio_constitucion', titulo: 'Año de constitución', tipo: 'entero', ayuda: 'Año en que se constituyó.', ejemplo: '2001' },
+    { clave: 'departamento', titulo: 'Departamento', ayuda: 'Departamento de la sede principal.', ejemplo: 'Cundinamarca' },
+    { clave: 'municipio', titulo: 'Municipio', ayuda: 'Municipio de la sede principal.', ejemplo: 'Bogotá' },
+    { clave: 'direccion', titulo: 'Dirección', ayuda: 'Dirección de la sede principal.', ejemplo: 'Cl. 130a #58a-29' },
+    { clave: 'telefono', titulo: 'Teléfono de la empresa', ayuda: 'Teléfono general.', ejemplo: '6017654321' },
+    { clave: 'correo', titulo: 'Correo de la empresa', ayuda: 'Correo general. Vacío = el del contacto.', ejemplo: 'info@empresa.com' },
+    { clave: 'link', titulo: 'Página web', tipo: 'enlace', ayuda: 'Sitio web de la empresa.', ejemplo: 'https://www.meltec.com.co' },
+    { clave: 'estudiantes_recibidos', titulo: 'Estudiantes recibidos', tipo: 'entero', ayuda: 'Estudiantes de Uniempresarial que ha recibido. Vacío = 0.', ejemplo: '4' },
+  ],
+  armar: (f) => ({ ...f, anio_constitucion: f.anio_constitucion ?? null }),
+  esquema: esquemaCarga,
+  resumen: (d) => `${d.razon_social ?? d.nombre_comercial ?? 'Sin razón social'} · ${d.contacto_nombre} ${d.contacto_apellido} (${d.contacto_correo})`,
+  clave: (d) => d.contacto_correo,
+  mensajeRepetido: 'Correo del contacto repetido en el archivo',
+  revisar: async (c, filas) => {
+    const errores: ErrorCarga[] = [];
+    const nits = filas.filter((f) => f.datos.nit).map((f) => f.datos.nit!);
+    const nitsExistentes = new Set(
+      (await c.query<{ nit: string }>('select nit from empresa_coformadora where nit = any($1::text[])', [nits])).rows.map((r) => r.nit),
+    );
+    const nitsVistos = new Map<string, number>();
+    for (const { fila, datos } of filas) {
+      if (!datos.nit) continue;
+      if (nitsExistentes.has(datos.nit)) errores.push({ fila, columna: 'NIT', mensaje: 'Ya existe una empresa con ese NIT' });
+      else if (nitsVistos.has(datos.nit)) errores.push({ fila, columna: 'NIT', mensaje: `NIT repetido en el archivo (igual a la fila ${nitsVistos.get(datos.nit)})` });
+      else nitsVistos.set(datos.nit, fila);
+    }
+    const correos = filas.map((f) => f.datos.contacto_correo);
+    const conCuenta = new Set(
+      (await conAutenticacion((a) => a.query<{ correo: string }>('select lower(correo::text) as correo from usuario where lower(correo::text) = any($1::text[])', [correos])))
+        .rows.map((r) => r.correo),
+    );
+    const invitados = new Set(
+      (await c.query<{ correo: string }>(
+        "select lower(correo::text) as correo from invitacion_empresa where estado = 'Pendiente' and lower(correo::text) = any($1::text[])",
+        [correos],
+      )).rows.map((r) => r.correo),
+    );
+    for (const { fila, datos } of filas) {
+      if (conCuenta.has(datos.contacto_correo)) {
+        errores.push({ fila, columna: 'Correo del contacto', mensaje: 'Ya existe una cuenta con ese correo' });
+      } else if (invitados.has(datos.contacto_correo)) {
+        errores.push({ fila, columna: 'Correo del contacto', mensaje: 'Ese correo ya tiene una invitación pendiente' });
+      }
+    }
+    return errores;
+  },
+  guardar: async (c, filas, sesion) => {
+    const envios: { nombre_contacto: string; correo: string; nombre_empresa: string | null; codigo: string }[] = [];
+    for (const { fila, datos } of filas) {
+      try {
+        const codigo = generarCodigoRecuperacion();
+        const nombreEmpresa = datos.razon_social ?? datos.nombre_comercial ?? null;
+        const invitacion = await c.query<{ id_invitacion: number }>(
+          `insert into invitacion_empresa (nombre_contacto, apellido_contacto, correo, nombre_empresa, token_hash,
+                                           fecha_vencimiento, creado_por)
+           values ($1, $2, $3, $4, $5, now() + make_interval(days => $6), $7)
+           returning id_invitacion`,
+          [datos.contacto_nombre, datos.contacto_apellido, datos.contacto_correo, nombreEmpresa, huellaCodigo(codigo),
+            VIGENCIA_DIAS, sesion.idUsuario],
+        );
+        const idInvitacion = invitacion.rows[0]!.id_invitacion;
+        const contacto = `${datos.contacto_nombre} ${datos.contacto_apellido}`;
+        const empresa = await c.query<{ id_ec: number }>(
+          `insert into empresa_coformadora (razon_social, nombre_comercial, nit, descripcion, sector_economico, codigo_ciiu,
+                                            naturaleza_juridica, tamano_empresa, anio_constitucion, departamento, municipio,
+                                            direccion, telefono, correo, link, estudiantes_recibidos, estado_ec, ficha_pendiente)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'Inactivo', true)
+           returning id_ec`,
+          [
+            (nombreEmpresa ?? `Empresa de ${contacto}`).slice(0, 150), datos.nombre_comercial ?? null,
+            datos.nit ?? `${PREFIJO_NIT_PENDIENTE}${idInvitacion}`, datos.descripcion ?? null,
+            datos.sector_economico ?? POR_DEFINIR, datos.codigo_ciiu ?? null, datos.naturaleza_juridica ?? null,
+            datos.tamano_empresa ?? null, datos.anio_constitucion ?? null, datos.departamento ?? POR_DEFINIR,
+            datos.municipio ?? POR_DEFINIR, datos.direccion ?? null, datos.telefono ?? null,
+            datos.correo ?? datos.contacto_correo, datos.link ?? null, datos.estudiantes_recibidos ?? 0,
+          ],
+        );
+        const idEc = empresa.rows[0]!.id_ec;
+        await c.query(
+          `insert into contacto_empresa (id_ec, nombre, cargo, correo, telefono, es_principal)
+           values ($1, $2, $3, $4, $5, true)`,
+          [idEc, contacto.slice(0, 100), datos.contacto_cargo ?? null, datos.contacto_correo, datos.contacto_celular],
+        );
+        await c.query('update invitacion_empresa set id_ec = $2 where id_invitacion = $1', [idInvitacion, idEc]);
+        envios.push({ nombre_contacto: datos.contacto_nombre, correo: datos.contacto_correo, nombre_empresa: nombreEmpresa, codigo });
+      } catch (error) {
+        const codigo = (error as { code?: string }).code;
+        const mensaje = codigo === '23505' ? 'Ya existe una empresa o una invitación con esos datos' : 'No se pudo guardar esta empresa';
+        if (!codigo && !(error instanceof ErrorApi)) throw error;
+        throw new ErrorApi(422, 'El archivo tiene errores. No se guardó ningún registro.', { errores: [{ fila, mensaje }] });
+      }
+    }
+    return { envios };
+  },
+  // Los correos se envían después de guardar (si uno falla, la invitación se puede reenviar).
+  despues: async (resultado) => {
+    const envios = (resultado as { envios: { nombre_contacto: string; correo: string; nombre_empresa: string | null; codigo: string }[] }).envios;
+    const fallidos: string[] = [];
+    for (const { codigo, ...datos } of envios) {
+      if (!(await enviarInvitacion(datos, codigo))) fallidos.push(datos.correo);
+    }
+    return { invitaciones_enviadas: envios.length - fallidos.length, correos_fallidos: fallidos };
+  },
+});
+
 export const rutasEmpresas = crearRecurso({
   nombre: 'empresas',
   titulo: 'Empresas Coformadoras',
@@ -73,6 +236,7 @@ export const rutasEmpresas = crearRecurso({
   camposImagen: ['logo_ec', 'imagen_portada'],
   // Datos sensibles de las empresas y sus contactos: no se descargan.
   sinDescargas: true,
+  cargaMasiva: cargaEmpresas,
   columnasExportar: [
     { campo: 'id_ec', titulo: 'ID', ancho: 0.4 },
     { campo: 'razon_social', titulo: 'Razón social', ancho: 1.6 },

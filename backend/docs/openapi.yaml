@@ -146,7 +146,7 @@ components:
         lugar: { type: string, nullable: true }
         link: { type: string, format: uri, nullable: true }
         info_adicional: { type: string, nullable: true, description: Información clave en viñetas. }
-        tipo_evento: { type: string, enum: [Congreso, Hackathon, Foro, Cumbre, Seminario, Taller, Otro] }
+        tipo_evento: { type: string, enum: [Congreso, Hackathon, Foro, Cumbre, Seminario, Taller, Feria, Otro] }
         departamento: { type: string, nullable: true }
         estado_fi: { type: string, enum: [Activo, Inactivo] }
         categorias: { type: array, items: { type: integer } }
@@ -161,6 +161,7 @@ components:
         fecha_inicio: { type: string, format: date, nullable: true }
         fecha_cierre: { type: string, format: date, nullable: true }
         entidad: { type: string, nullable: true }
+        dirigida_a: { type: string, nullable: true }
         link: { type: string, format: uri, nullable: true }
         modalidad: { type: string, enum: [Virtual, Presencial, Hibrido], nullable: true }
         lugar: { type: string, nullable: true }
@@ -231,7 +232,7 @@ components:
         modalidad: { type: string, enum: [Virtual, Presencial, Hibrido] }
         lugar: { type: string, nullable: true }
         link_externo: { type: string, format: uri, nullable: true }
-        tipo_evento: { type: string, enum: [Congreso, Hackathon, Foro, Cumbre, Seminario, Taller, Otro] }
+        tipo_evento: { type: string, enum: [Congreso, Hackathon, Foro, Cumbre, Seminario, Taller, Feria, Otro] }
         costo: { type: number, nullable: true }
         es_gratuito: { type: boolean }
   requestBodies:
@@ -928,23 +929,144 @@ paths:
       tags: [Tendencias]
       summary: Lista de megatendencias
       responses: { '200': { description: Nombres } }
-  /api/tendencias/plantilla:
+  /api/flash/plantilla:
     get:
-      tags: [Tendencias]
-      summary: Descargar la plantilla de importación (Gestor Tendencias o administración)
+      tags: [Flash Informativo]
+      summary: Plantilla de carga masiva (hojas de registros, instrucciones y listas; Gestor Flash Informativo o SuperAdmin)
       responses: { '200': { $ref: '#/components/responses/Archivo' } }
-  /api/tendencias/importar:
+  /api/flash/importar:
     post:
-      tags: [Tendencias]
-      summary: Importación masiva desde Excel (todo o nada)
+      tags: [Flash Informativo]
+      summary: Carga masiva desde Excel, máximo 50 registros, todo o nada
+      description: >
+        Con ?validar=1 solo revisa el archivo y devuelve { total, validos, errores: [{ fila, columna, mensaje }], registros: [{ fila, resumen }] }.
+        Sin ese parámetro guarda todos los registros o ninguno.
+      parameters: [{ name: validar, in: query, schema: { type: string, enum: ['1', 'true'] } }]
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema: { type: object, properties: { archivo: { type: string, format: binary } } }
       responses:
-        '201': { description: 'Cantidad importada: { importadas: n }' }
-        '422': { description: 'Errores por fila; no se importa nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '200': { description: 'Revisión del archivo (con ?validar=1)' }
+        '201': { description: 'Guardado: { importados: n }' }
+        '415': { description: El archivo no es un Excel (.xlsx) }
+        '422': { description: 'Errores por fila y columna, más de 50 registros o encabezados distintos a la plantilla; no se guarda nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/faro/plantilla:
+    get:
+      tags: [Faro]
+      summary: Plantilla de carga masiva (hojas de registros, instrucciones y listas; Gestor Faro o SuperAdmin)
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/faro/importar:
+    post:
+      tags: [Faro]
+      summary: Carga masiva desde Excel, máximo 50 registros, todo o nada
+      description: >
+        Con ?validar=1 solo revisa el archivo y devuelve { total, validos, errores: [{ fila, columna, mensaje }], registros: [{ fila, resumen }] }.
+        Sin ese parámetro guarda todos los registros o ninguno.
+      parameters: [{ name: validar, in: query, schema: { type: string, enum: ['1', 'true'] } }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, properties: { archivo: { type: string, format: binary } } }
+      responses:
+        '200': { description: 'Revisión del archivo (con ?validar=1)' }
+        '201': { description: 'Guardado: { importados: n }' }
+        '415': { description: El archivo no es un Excel (.xlsx) }
+        '422': { description: 'Errores por fila y columna, más de 50 registros o encabezados distintos a la plantilla; no se guarda nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/empresas/plantilla:
+    get:
+      tags: [Empresas]
+      summary: Plantilla de carga masiva (hojas de registros, instrucciones y listas; Gestor Empresas Coformadoras o SuperAdmin)
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/empresas/importar:
+    post:
+      tags: [Empresas]
+      summary: Carga masiva desde Excel, máximo 50 registros, todo o nada
+      description: >
+        Con ?validar=1 solo revisa el archivo y devuelve { total, validos, errores: [{ fila, columna, mensaje }], registros: [{ fila, resumen }] }.
+        Sin ese parámetro guarda todos los registros o ninguno. Cada fila crea la empresa inactiva (ficha pendiente), su contacto principal y la invitación; los datos del contacto son obligatorios.
+      parameters: [{ name: validar, in: query, schema: { type: string, enum: ['1', 'true'] } }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, properties: { archivo: { type: string, format: binary } } }
+      responses:
+        '200': { description: 'Revisión del archivo (con ?validar=1)' }
+        '201': { description: 'Guardado: { importados: n, invitaciones_enviadas: n, correos_fallidos: [] }' }
+        '415': { description: El archivo no es un Excel (.xlsx) }
+        '422': { description: 'Errores por fila y columna, más de 50 registros o encabezados distintos a la plantilla; no se guarda nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/tendencias/plantilla:
+    get:
+      tags: [Tendencias]
+      summary: Plantilla de carga masiva (hojas de registros, instrucciones y listas; Gestor Tendencias o SuperAdmin)
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/tendencias/importar:
+    post:
+      tags: [Tendencias]
+      summary: Carga masiva desde Excel, máximo 50 registros, todo o nada
+      description: >
+        Con ?validar=1 solo revisa el archivo y devuelve { total, validos, errores: [{ fila, columna, mensaje }], registros: [{ fila, resumen }] }.
+        Sin ese parámetro guarda todos los registros o ninguno.
+      parameters: [{ name: validar, in: query, schema: { type: string, enum: ['1', 'true'] } }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, properties: { archivo: { type: string, format: binary } } }
+      responses:
+        '200': { description: 'Revisión del archivo (con ?validar=1)' }
+        '201': { description: 'Guardado: { importados: n }' }
+        '415': { description: El archivo no es un Excel (.xlsx) }
+        '422': { description: 'Errores por fila y columna, más de 50 registros o encabezados distintos a la plantilla; no se guarda nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/calendario/plantilla:
+    get:
+      tags: [Calendario]
+      summary: Plantilla de carga masiva (hojas de registros, instrucciones y listas; Gestor Calendario o SuperAdmin)
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/calendario/importar:
+    post:
+      tags: [Calendario]
+      summary: Carga masiva desde Excel, máximo 50 registros, todo o nada
+      description: >
+        Con ?validar=1 solo revisa el archivo y devuelve { total, validos, errores: [{ fila, columna, mensaje }], registros: [{ fila, resumen }] }.
+        Sin ese parámetro guarda todos los registros o ninguno.
+      parameters: [{ name: validar, in: query, schema: { type: string, enum: ['1', 'true'] } }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, properties: { archivo: { type: string, format: binary } } }
+      responses:
+        '200': { description: 'Revisión del archivo (con ?validar=1)' }
+        '201': { description: 'Guardado: { importados: n }' }
+        '415': { description: El archivo no es un Excel (.xlsx) }
+        '422': { description: 'Errores por fila y columna, más de 50 registros o encabezados distintos a la plantilla; no se guarda nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /api/glosario/plantilla:
+    get:
+      tags: [Glosario]
+      summary: Plantilla de carga masiva (hojas de registros, instrucciones y listas; Gestor Glosario o SuperAdmin)
+      responses: { '200': { $ref: '#/components/responses/Archivo' } }
+  /api/glosario/importar:
+    post:
+      tags: [Glosario]
+      summary: Carga masiva desde Excel, máximo 50 registros, todo o nada
+      description: >
+        Con ?validar=1 solo revisa el archivo y devuelve { total, validos, errores: [{ fila, columna, mensaje }], registros: [{ fila, resumen }] }.
+        Sin ese parámetro guarda todos los registros o ninguno.
+      parameters: [{ name: validar, in: query, schema: { type: string, enum: ['1', 'true'] } }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, properties: { archivo: { type: string, format: binary } } }
+      responses:
+        '200': { description: 'Revisión del archivo (con ?validar=1)' }
+        '201': { description: 'Guardado: { importados: n }' }
+        '415': { description: El archivo no es un Excel (.xlsx) }
+        '422': { description: 'Errores por fila y columna, más de 50 registros o encabezados distintos a la plantilla; no se guarda nada', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
   /api/tendencias/exportar:
     get:
       tags: [Tendencias]

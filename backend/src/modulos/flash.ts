@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { crearRecurso } from './recurso.js';
+import { OPCIONES_MODALIDAD, cargaRecurso, fechaHoraBogota, gratuitoYCosto } from '../servicios/cargaMasiva.js';
 import {
   ESTADOS, MODALIDADES, TIPOS_EVENTO, booleanoConsulta, dinero, enlace, fecha, fechaHora, listaIds,
   textoObligatorio, textoOpcional,
@@ -57,6 +58,41 @@ export const rutasFlash = crearRecurso({
   ordenes: { fecha: 't.fecha_inicio', titulo: 't.titulo', creacion: 't.fecha_creacion' },
   ordenDefecto: 'fecha',
   camposImagen: ['imagen'],
+  cargaMasiva: cargaRecurso({
+    archivo: 'plantilla-flash-informativo',
+    hoja: 'Flash Informativo',
+    columnas: [
+      { clave: 'titulo', titulo: 'Título', obligatoria: true, ayuda: 'Nombre del evento u oportunidad (máx. 150 caracteres).', ejemplo: 'Hannover Messe 2025', ancho: 34 },
+      { clave: 'tipo_evento', titulo: 'Tipo de evento', tipo: 'lista', obligatoria: true, opciones: TIPOS_EVENTO, ayuda: 'Tipo de evento.', ejemplo: 'Feria' },
+      { clave: 'tipo_otro', titulo: 'Otro tipo', ayuda: 'Solo si el tipo es "Otro": escribe cuál (máx. 40 caracteres).', ejemplo: 'Rueda de negocios' },
+      { clave: 'descripcion', titulo: 'Descripción', ayuda: 'De qué se trata.', ejemplo: 'La feria más grande del mundo dedicada a la automatización y la robótica.', ancho: 50 },
+      { clave: 'fecha_inicio', titulo: 'Fecha de inicio', tipo: 'fecha', obligatoria: true, ayuda: 'Día en que empieza.', ejemplo: '07/04/2025', campos: ['fecha_inicio'] },
+      { clave: 'hora_inicio', titulo: 'Hora de inicio', tipo: 'hora', ayuda: 'Hora en que empieza. Si no se conoce, déjala vacía (00:00).', ejemplo: '08:00' },
+      { clave: 'fecha_fin', titulo: 'Fecha de finalización', tipo: 'fecha', ayuda: 'Día en que termina, si dura varios días.', ejemplo: '11/04/2025', campos: ['fecha_fin'] },
+      { clave: 'hora_fin', titulo: 'Hora de finalización', tipo: 'hora', ayuda: 'Hora en que termina.', ejemplo: '18:00' },
+      { clave: 'modalidad', titulo: 'Modalidad', tipo: 'lista', obligatoria: true, opciones: OPCIONES_MODALIDAD, ayuda: 'Cómo se asiste.', ejemplo: 'Presencial' },
+      { clave: 'lugar', titulo: 'Lugar', ayuda: 'Ciudad, país o sede (máx. 100 caracteres).', ejemplo: 'Hannover, Alemania' },
+      { clave: 'departamento', titulo: 'Departamento', ayuda: 'Departamento de Colombia, si aplica.', ejemplo: 'Cundinamarca' },
+      { clave: 'link', titulo: 'Enlace', tipo: 'enlace', ayuda: 'Página oficial o de inscripción.', ejemplo: 'https://www.hannovermesse.de' },
+      { clave: 'es_gratuito', titulo: 'Gratuito', tipo: 'sino', ayuda: 'Si la entrada es gratis.', ejemplo: 'No' },
+      { clave: 'costo', titulo: 'Costo (COP)', tipo: 'numero', ayuda: 'Valor en pesos, si no es gratuito.', ejemplo: '150000' },
+      { clave: 'categorias', titulo: 'Categorías', tipo: 'categorias', ayuda: 'Temas o etiquetas del registro.', ejemplo: 'Tecnología, Innovación' },
+      { clave: 'info_adicional', titulo: 'Información adicional', ayuda: 'Datos clave en viñetas o líneas.', ejemplo: 'Networking internacional', ancho: 40 },
+      { clave: 'estado_fi', titulo: 'Estado', tipo: 'lista', opciones: ESTADOS, ayuda: 'Activo se publica de inmediato; Inactivo queda oculto. Por defecto, Activo.', ejemplo: 'Activo' },
+    ],
+    armar: (f) => ({
+      ...f,
+      fecha_inicio: fechaHoraBogota(f.fecha_inicio, f.hora_inicio),
+      fecha_fin: fechaHoraBogota(f.fecha_fin, f.hora_fin ?? f.hora_inicio) ?? null,
+      ...gratuitoYCosto(f),
+    }),
+    esquema: esquema.refine((d) => !d.fecha_fin || d.fecha_fin >= d.fecha_inicio, {
+      message: 'La finalización no puede ser antes del inicio', path: ['fecha_fin'],
+    }),
+    resumen: (d) => `${d.titulo} · ${d.fecha_inicio.slice(0, 10)}`,
+    clave: (d) => `${d.titulo.toLocaleLowerCase('es')}|${d.fecha_inicio.slice(0, 10)}`,
+    mensajeRepetido: 'Evento repetido en el archivo',
+  }),
   columnasExportar: [
     { campo: 'id_fi', titulo: 'ID', ancho: 0.4 },
     { campo: 'titulo', titulo: 'Título', ancho: 2 },

@@ -5,6 +5,7 @@ import { conRol, type Cliente } from '../db/contexto.js';
 import { ErrorApi, noEncontrado, prohibido } from '../errores.js';
 import { requiereRol, requiereSesion, usarRol } from '../middlewares/sesion.js';
 import { borrarImagen, guardarImagen, recibirArchivo } from '../servicios/archivos.js';
+import { rutasCargaMasiva, type CargaRecurso } from '../servicios/cargaMasiva.js';
 import { generarExcel, generarFichaExcel, generarFichaPdf, generarPdf, type ColumnaExportar } from '../servicios/exportar.js';
 import { Filtros, columnasYValores, construirPagina, esquemaPaginacion } from '../utilidades/consulta.js';
 import { ESTADOS, idPositivo, listaIdsConsulta } from '../utilidades/esquemas.js';
@@ -60,6 +61,12 @@ export interface OpcionesRecurso {
   guardarEspeciales?: (cliente: Cliente, id: number, datos: Record<string, unknown>) => Promise<void>;
   /** Rutas adicionales; se registran antes de las rutas con /:id. */
   rutasExtra?: (router: Router) => void;
+  /**
+   * Carga masiva desde Excel (plantilla e importación). Si no define `guardar`,
+   * cada fila se guarda igual que al crear un registro desde el formulario.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada módulo tipa sus datos con cargaRecurso()
+  cargaMasiva?: CargaRecurso<any>;
 }
 
 const LIMITE_EXPORTAR = 5000;
@@ -150,7 +157,39 @@ export function crearRecurso(op: OpcionesRecurso): Router {
     return columnas;
   };
 
+  /** Crea un registro con sus categorías y campos especiales (formulario y carga masiva). */
+  async function insertar(c: Cliente, datos: Record<string, unknown>): Promise<number> {
+    const { columnas, valores } = columnasYValores(separar(datos));
+    if (!columnas.length) throw new ErrorApi(400, 'No se enviaron datos');
+    const { rows } = await c.query<Record<string, number>>(
+      `insert into ${op.tabla} (${columnas.join(', ')})
+       values (${columnas.map((_, i) => `$${i + 1}`).join(', ')}) returning ${op.id}`,
+      valores,
+    );
+    const id = rows[0]![op.id]!;
+    await guardarCategorias(c, id, datos.categorias);
+    await op.guardarEspeciales?.(c, id, datos);
+    return id;
+  }
+
   op.rutasExtra?.(router);
+  if (op.cargaMasiva) {
+    rutasCargaMasiva(router, {
+      guardar: async (c, filas) => {
+        for (const { fila, datos } of filas) {
+          try {
+            await insertar(c, datos);
+          } catch (error) {
+            const codigo = (error as { code?: string }).code;
+            const mensaje = codigo === '23505' ? 'Ya existe un registro con esos datos en el Observatorio'
+              : error instanceof ErrorApi ? error.message : 'No se pudo guardar este registro';
+            throw new ErrorApi(422, 'El archivo tiene errores. No se guardó ningún registro.', { errores: [{ fila, mensaje }] });
+          }
+        }
+      },
+      ...op.cargaMasiva,
+    }, op.rolGestor);
+  }
 
   // ---------------------------------------------------------------- Listado
   router.get('/', async (req: Request, res: Response) => {
@@ -243,19 +282,7 @@ export function crearRecurso(op: OpcionesRecurso): Router {
   // ---------------------------------------------------------------- Crear
   router.post('/', soloGestor, async (req, res) => {
     const datos = op.esquema.parse(req.body) as Record<string, unknown>;
-    const fila = await conRol(req.sesion, async (c) => {
-      const { columnas, valores } = columnasYValores(separar(datos));
-      if (!columnas.length) throw new ErrorApi(400, 'No se enviaron datos');
-      const { rows } = await c.query<Record<string, number>>(
-        `insert into ${op.tabla} (${columnas.join(', ')})
-         values (${columnas.map((_, i) => `$${i + 1}`).join(', ')}) returning ${op.id}`,
-        valores,
-      );
-      const id = rows[0]![op.id]!;
-      await guardarCategorias(c, id, datos.categorias);
-      await op.guardarEspeciales?.(c, id, datos);
-      return obtener(c, id);
-    });
+    const fila = await conRol(req.sesion, async (c) => obtener(c, await insertar(c, datos)));
     res.status(201).json(fila);
   });
 

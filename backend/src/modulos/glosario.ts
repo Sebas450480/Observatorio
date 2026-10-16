@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { conRol } from '../db/contexto.js';
 import { crearRecurso } from './recurso.js';
-import { ESTADOS, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
+import { cargaRecurso } from '../servicios/cargaMasiva.js';
+import { ESTADOS, normalizarNombre, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
 
 /**
  * Glosario: términos y conceptos clave del Observatorio. Lo administran el Super Admin,
@@ -39,6 +40,29 @@ export const rutasGlosario = crearRecurso({
   },
   ordenes: { termino: 'lower(t.termino)', creacion: 't.fecha_creacion', id: 't.id_termino' },
   ordenDefecto: 'termino',
+  cargaMasiva: cargaRecurso({
+    archivo: 'plantilla-glosario',
+    hoja: 'Glosario',
+    columnas: [
+      { clave: 'termino', titulo: 'Término', obligatoria: true, ayuda: 'Palabra o concepto (máx. 120 caracteres), sin dos puntos al final.', ejemplo: 'Empresa coformadora', ancho: 30 },
+      { clave: 'definicion', titulo: 'Definición', obligatoria: true, ayuda: 'Qué significa.', ejemplo: 'Empresa que recibe estudiantes en el modelo de formación dual.', ancho: 70 },
+      { clave: 'fuente', titulo: 'Fuente', ayuda: 'Referencia o autor de la definición (máx. 300 caracteres).', ejemplo: 'Política de investigación Uniempresarial', ancho: 30 },
+      { clave: 'estado_gt', titulo: 'Estado', tipo: 'lista', opciones: ESTADOS, ayuda: 'Activo se publica de inmediato; Inactivo queda oculto. Por defecto, Activo.', ejemplo: 'Activo' },
+    ],
+    // "Autor:" -> "Autor" (los términos del Excel de la carpeta traen dos puntos al final).
+    armar: (f) => ({ ...f, termino: typeof f.termino === 'string' ? f.termino.replace(/\s*:\s*$/, '') : f.termino }),
+    esquema,
+    resumen: (d) => d.termino,
+    clave: (d) => normalizarNombre(d.termino),
+    mensajeRepetido: 'Término repetido en el archivo',
+    revisar: async (c, filas) => {
+      const { rows } = await c.query<{ termino: string }>('select termino from glosario_termino');
+      const existentes = new Set(rows.map((r) => normalizarNombre(r.termino)));
+      return filas
+        .filter((f) => existentes.has(normalizarNombre(f.datos.termino)))
+        .map((f) => ({ fila: f.fila, columna: 'Término', mensaje: 'El término ya existe en el glosario' }));
+    },
+  }),
   columnasExportar: [
     { campo: 'id_termino', titulo: 'ID', ancho: 0.4 },
     { campo: 'termino', titulo: 'Término', ancho: 1.2 },
