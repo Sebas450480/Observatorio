@@ -127,8 +127,9 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
     return [d.razon_social ?? d.nombre_comercial ?? 'Sin razón social', contacto && `${contacto}${d.contacto_correo ? ` (${d.contacto_correo})` : ''}`, d.invitar && 'con invitación']
       .filter(Boolean).join(' · ');
   },
-  clave: (d) => d.contacto_correo ?? d.nit ?? (d.razon_social ?? d.nombre_comercial ?? '').toLowerCase(),
-  mensajeRepetido: 'Empresa repetida en el archivo (mismo correo de contacto, NIT o razón social)',
+  // Con invitación, el correo del contacto identifica la cuenta; sin ella, varias empresas de un mismo grupo pueden compartir contacto.
+  clave: (d) => (d.invitar ? d.contacto_correo : null) ?? d.nit ?? (d.razon_social ?? d.nombre_comercial ?? '').toLowerCase(),
+  mensajeRepetido: 'Empresa repetida en el archivo (mismo NIT, razón social o correo del contacto invitado)',
   revisar: async (c, filas) => {
     const errores: ErrorCarga[] = [];
     for (const { fila, datos } of filas) {
