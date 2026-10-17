@@ -98,7 +98,7 @@ test.describe('Carga masiva desde Excel', () => {
     await expect(modal.getByText('Se subió 1 imagen.')).toBeVisible();
   });
 
-  test('las empresas cargadas quedan inactivas y su contacto recibe la invitación', async ({ page }) => {
+  test('las empresas cargadas quedan inactivas y, si se pide, su contacto recibe la invitación', async ({ page }) => {
     await iniciarSesion(page, 'superadmin');
     await irA(page, 'Empresas Coformadoras');
     await page.getByRole('button', { name: 'Carga masiva' }).click();
@@ -106,12 +106,12 @@ test.describe('Carga masiva desde Excel', () => {
     const [descarga] = await Promise.all([page.waitForEvent('download'), modal.getByRole('link', { name: 'Descargar plantilla' }).click()]);
     const sufijo = Date.now();
     const archivo = await llenarPlantilla(await descarga.path(), 'Empresas', [
-      ['Laura', 'Gómez', `carga.${sufijo}@test.co`, '3001112233', 'Talento humano', `Precargada E2E ${sufijo} S.A.S.`],
+      ['Sí', 'Laura', 'Gómez', `carga.${sufijo}@test.co`, '3001112233', 'Talento humano', `Precargada E2E ${sufijo} S.A.S.`],
     ]);
     await modal.getByLabel('Archivo de Excel').setInputFiles({ name: 'empresas.xlsx', mimeType: XLSX, buffer: archivo });
     await expect(modal.getByText('1 registro listo para guardar.')).toBeVisible();
-    await modal.getByRole('button', { name: 'Crear 1 empresa y enviar la invitación' }).click();
-    await expect(modal.getByText('Se creó 1 empresa (inactiva hasta que complete su ficha).')).toBeVisible();
+    await modal.getByRole('button', { name: 'Crear 1 empresa' }).click();
+    await expect(modal.getByText('Se creó 1 empresa (inactiva hasta que se active o complete su ficha).')).toBeVisible();
     await expect(modal.getByText('Se envió 1 invitación por correo.')).toBeVisible();
     await modal.getByRole('button', { name: 'Aceptar' }).click();
 
