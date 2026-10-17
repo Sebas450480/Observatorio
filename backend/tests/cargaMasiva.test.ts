@@ -154,20 +154,20 @@ describe('Carga masiva desde Excel', () => {
     expect(creado).toMatchObject({ tipo_evento: 'Feria', es_gratuito: true });
   });
 
-  it('Empresas: exige el contacto, crea la empresa inactiva, invita y la publica al completar la ficha', async () => {
+  it('Empresas: con invitación exige el contacto, crea la empresa inactiva, invita y la publica al completar la ficha', async () => {
     const { agente } = await sesion('Gestor Empresas Coformadoras');
     const correo = `precargada.${unico()}@test.co`;
     const nit = `PRE-${unico()}`;
-    const encabezados = ['Nombres del contacto', 'Apellidos del contacto', 'Correo del contacto', 'Celular del contacto', 'Cargo del contacto',
+    const encabezados = ['Enviar invitación', 'Nombres del contacto', 'Apellidos del contacto', 'Correo del contacto', 'Celular del contacto', 'Cargo del contacto',
       'Razón social', 'NIT', 'Sector económico', 'Tamaño', 'Departamento', 'Municipio'];
-    const sinContacto = await excel('Empresas', encabezados, [['', '', '', '', '', 'Sin contacto S.A.S.']]);
+    const sinContacto = await excel('Empresas', encabezados, [['Sí', '', '', '', '', '', 'Sin contacto S.A.S.']]);
     const revision = await agente.post('/api/empresas/importar?validar=1').attach('archivo', sinContacto, 'e.xlsx');
     expect(revision.body.errores.map((e: { columna: string }) => e.columna)).toEqual([
       'Nombres del contacto', 'Apellidos del contacto', 'Correo del contacto', 'Celular del contacto',
     ]);
 
     const archivo = await excel('Empresas', encabezados, [
-      ['Sandra', 'Guerrero', correo, 3001234567, 'Gestión Humana', 'Precargada S.A.S.', nit, 'Software y TI', 'Microempresa', 'Cundinamarca', 'Bogotá'],
+      ['Sí', 'Sandra', 'Guerrero', correo, 3001234567, 'Gestión Humana', 'Precargada S.A.S.', nit, 'Software y TI', 'Microempresa', 'Cundinamarca', 'Bogotá'],
     ]);
     const r = await agente.post('/api/empresas/importar').attach('archivo', archivo, 'e.xlsx');
     expect(r.status).toBe(201);
@@ -207,8 +207,8 @@ describe('Carga masiva desde Excel', () => {
   it('Empresas: sin datos de la empresa queda pendiente hasta completar los obligatorios', async () => {
     const { agente } = await sesion('Gestor Empresas Coformadoras');
     const correo = `solo.contacto.${unico()}@test.co`;
-    const archivo = await excel('Empresas', ['Nombres del contacto', 'Apellidos del contacto', 'Correo del contacto', 'Celular del contacto'], [
-      ['Luis', 'Pérez', correo, '3100000000'],
+    const archivo = await excel('Empresas', ['Enviar invitación', 'Nombres del contacto', 'Apellidos del contacto', 'Correo del contacto', 'Celular del contacto'], [
+      ['Sí', 'Luis', 'Pérez', correo, '3100000000'],
     ]);
     expect((await agente.post('/api/empresas/importar').attach('archivo', archivo, 'e.xlsx')).status).toBe(201);
     const { rows } = await db().query(

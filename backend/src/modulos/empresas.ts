@@ -52,9 +52,10 @@ const esquemaFiltros = z.object({
 const soloGestor = requiereRol('obs_gestor_empresas');
 
 // ----------------------------------------------------------------------------------
-// Carga masiva: cada fila crea la empresa (inactiva, con la ficha pendiente), su contacto
-// principal y la invitación al contacto. La empresa se publica cuando su cuenta completa
-// la ficha desde Mi perfil. Solo los datos de contacto son obligatorios.
+// Carga masiva: cada fila crea la empresa (inactiva, con la ficha pendiente) y su contacto
+// principal. Con «Enviar invitación = Sí» también invita al contacto (sus datos pasan a ser
+// obligatorios) y la empresa se publica cuando su cuenta completa la ficha desde Mi perfil.
+// Sin invitación basta con la razón social o el nombre comercial; el gestor la activa.
 // ----------------------------------------------------------------------------------
 const esquemaCarga = z.object({
   razon_social: textoOpcional(150),
@@ -73,11 +74,12 @@ const esquemaCarga = z.object({
   correo: correo.nullish(),
   link: enlace.nullish(),
   estudiantes_recibidos: z.number().int().min(0).optional(),
-  contacto_nombre: textoObligatorio(50),
-  contacto_apellido: textoObligatorio(50),
+  contacto_nombre: textoOpcional(50),
+  contacto_apellido: textoOpcional(50),
   contacto_cargo: textoOpcional(100),
-  contacto_celular: textoObligatorio(20),
-  contacto_correo: correo,
+  contacto_celular: textoOpcional(20),
+  contacto_correo: correo.nullish(),
+  invitar: z.boolean().optional(),
 });
 type FilaEmpresa = z.infer<typeof esquemaCarga>;
 
@@ -87,15 +89,17 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
   archivo: 'plantilla-empresas-coformadoras',
   hoja: 'Empresas',
   instrucciones: [
-    'Cada fila crea la empresa (inactiva) y envía la invitación al correo del contacto para que cree su contraseña.',
-    'Solo los datos del contacto son obligatorios. La empresa completa el resto de su ficha y, al guardarla, queda publicada.',
-    'El correo del contacto no puede tener ya una cuenta ni una invitación pendiente.',
+    'Cada fila crea la empresa (inactiva) con su contacto. El gestor la activa cuando su ficha esté lista.',
+    'Sin invitación, solo es obligatoria la razón social o el nombre comercial.',
+    'Con «Enviar invitación = Sí», los datos del contacto son obligatorios: el contacto recibe un correo para crear su contraseña y completar la ficha.',
+    'El correo de un contacto invitado no puede tener ya una cuenta ni una invitación pendiente.',
   ],
   columnas: [
-    { clave: 'contacto_nombre', titulo: 'Nombres del contacto', obligatoria: true, ayuda: 'Nombres de la persona que recibirá la invitación.', ejemplo: 'Sandra Milena', ancho: 22 },
-    { clave: 'contacto_apellido', titulo: 'Apellidos del contacto', obligatoria: true, ayuda: 'Apellidos de la persona.', ejemplo: 'Guerrero Rojas', ancho: 22 },
-    { clave: 'contacto_correo', titulo: 'Correo del contacto', obligatoria: true, ayuda: 'Correo al que se envía la invitación; será el usuario de la cuenta.', ejemplo: 'contacto@empresa.com', ancho: 28 },
-    { clave: 'contacto_celular', titulo: 'Celular del contacto', obligatoria: true, ayuda: 'Celular o teléfono de la persona.', ejemplo: '3001234567', ancho: 18 },
+    { clave: 'invitar', titulo: 'Enviar invitación', tipo: 'sino', ayuda: 'Sí = el contacto recibe la invitación por correo. Vacío = No.', ejemplo: 'No' },
+    { clave: 'contacto_nombre', titulo: 'Nombres del contacto', ayuda: 'Nombres de la persona de contacto. Obligatorio si se envía la invitación.', ejemplo: 'Sandra Milena', ancho: 22 },
+    { clave: 'contacto_apellido', titulo: 'Apellidos del contacto', ayuda: 'Apellidos de la persona. Obligatorio si se envía la invitación.', ejemplo: 'Guerrero Rojas', ancho: 22 },
+    { clave: 'contacto_correo', titulo: 'Correo del contacto', ayuda: 'Correo de la persona; si se invita, será el usuario de la cuenta.', ejemplo: 'contacto@empresa.com', ancho: 28 },
+    { clave: 'contacto_celular', titulo: 'Celular del contacto', ayuda: 'Celular o teléfono de la persona. Obligatorio si se envía la invitación.', ejemplo: '3001234567', ancho: 18 },
     { clave: 'contacto_cargo', titulo: 'Cargo del contacto', ayuda: 'Cargo o área de la persona.', ejemplo: 'Jefe de Gestión Humana', ancho: 24 },
     { clave: 'razon_social', titulo: 'Razón social', ayuda: 'Nombre legal de la empresa.', ejemplo: 'Meltec Comunicaciones S.A.', ancho: 30 },
     { clave: 'nombre_comercial', titulo: 'Nombre comercial', ayuda: 'Nombre con el que se conoce.', ejemplo: 'Meltec' },
@@ -118,11 +122,26 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
   ],
   armar: (f) => ({ ...f, anio_constitucion: f.anio_constitucion ?? null }),
   esquema: esquemaCarga,
-  resumen: (d) => `${d.razon_social ?? d.nombre_comercial ?? 'Sin razón social'} · ${d.contacto_nombre} ${d.contacto_apellido} (${d.contacto_correo})`,
-  clave: (d) => d.contacto_correo,
-  mensajeRepetido: 'Correo del contacto repetido en el archivo',
+  resumen: (d) => {
+    const contacto = [d.contacto_nombre, d.contacto_apellido].filter(Boolean).join(' ');
+    return [d.razon_social ?? d.nombre_comercial ?? 'Sin razón social', contacto && `${contacto}${d.contacto_correo ? ` (${d.contacto_correo})` : ''}`, d.invitar && 'con invitación']
+      .filter(Boolean).join(' · ');
+  },
+  clave: (d) => d.contacto_correo ?? d.nit ?? (d.razon_social ?? d.nombre_comercial ?? '').toLowerCase(),
+  mensajeRepetido: 'Empresa repetida en el archivo (mismo correo de contacto, NIT o razón social)',
   revisar: async (c, filas) => {
     const errores: ErrorCarga[] = [];
+    for (const { fila, datos } of filas) {
+      if (!datos.razon_social && !datos.nombre_comercial && !datos.invitar) {
+        errores.push({ fila, columna: 'Razón social', mensaje: 'Escribe la razón social o el nombre comercial' });
+      }
+      if (datos.invitar) {
+        const faltan = ([['contacto_nombre', 'Nombres del contacto'], ['contacto_apellido', 'Apellidos del contacto'],
+          ['contacto_correo', 'Correo del contacto'], ['contacto_celular', 'Celular del contacto']] as const)
+          .filter(([clave]) => !datos[clave]);
+        for (const [, columna] of faltan) errores.push({ fila, columna, mensaje: 'Es obligatorio para enviar la invitación' });
+      }
+    }
     const nits = filas.filter((f) => f.datos.nit).map((f) => f.datos.nit!);
     const nitsExistentes = new Set(
       (await c.query<{ nit: string }>('select nit from empresa_coformadora where nit = any($1::text[])', [nits])).rows.map((r) => r.nit),
@@ -134,7 +153,7 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
       else if (nitsVistos.has(datos.nit)) errores.push({ fila, columna: 'NIT', mensaje: `NIT repetido en el archivo (igual a la fila ${nitsVistos.get(datos.nit)})` });
       else nitsVistos.set(datos.nit, fila);
     }
-    const correos = filas.map((f) => f.datos.contacto_correo);
+    const correos = filas.filter((f) => f.datos.invitar && f.datos.contacto_correo).map((f) => f.datos.contacto_correo!);
     const conCuenta = new Set(
       (await conAutenticacion((a) => a.query<{ correo: string }>('select lower(correo::text) as correo from usuario where lower(correo::text) = any($1::text[])', [correos])))
         .rows.map((r) => r.correo),
@@ -146,6 +165,7 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
       )).rows.map((r) => r.correo),
     );
     for (const { fila, datos } of filas) {
+      if (!datos.invitar || !datos.contacto_correo) continue;
       if (conCuenta.has(datos.contacto_correo)) {
         errores.push({ fila, columna: 'Correo del contacto', mensaje: 'Ya existe una cuenta con ese correo' });
       } else if (invitados.has(datos.contacto_correo)) {
@@ -161,16 +181,19 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
       try {
         const codigo = generarCodigoRecuperacion();
         const nombreEmpresa = datos.razon_social ?? datos.nombre_comercial ?? null;
-        const invitacion = await c.query<{ id_invitacion: number }>(
-          `insert into invitacion_empresa (nombre_contacto, apellido_contacto, correo, nombre_empresa, token_hash,
-                                           fecha_vencimiento, creado_por)
-           values ($1, $2, $3, $4, $5, now() + make_interval(days => $6), $7)
-           returning id_invitacion`,
-          [datos.contacto_nombre, datos.contacto_apellido, datos.contacto_correo, nombreEmpresa, huellaCodigo(codigo),
-            VIGENCIA_DIAS, sesion.idUsuario],
-        );
-        const idInvitacion = invitacion.rows[0]!.id_invitacion;
-        const contacto = `${datos.contacto_nombre} ${datos.contacto_apellido}`;
+        const idInvitacion = datos.invitar
+          ? (await c.query<{ id_invitacion: number }>(
+            `insert into invitacion_empresa (nombre_contacto, apellido_contacto, correo, nombre_empresa, token_hash,
+                                             fecha_vencimiento, creado_por)
+             values ($1, $2, $3, $4, $5, now() + make_interval(days => $6), $7)
+             returning id_invitacion`,
+            [datos.contacto_nombre, datos.contacto_apellido, datos.contacto_correo, nombreEmpresa, huellaCodigo(codigo),
+              VIGENCIA_DIAS, sesion.idUsuario],
+          )).rows[0]!.id_invitacion
+          : null;
+        // Sin invitación ni NIT, un NIT provisional único (la empresa queda inactiva hasta corregirlo).
+        const nitProvisional = `${PREFIJO_NIT_PENDIENTE}${idInvitacion ?? `C${Date.now().toString(36)}${fila}`}`;
+        const contacto = [datos.contacto_nombre, datos.contacto_apellido].filter(Boolean).join(' ');
         const empresa = await c.query<{ id_ec: number }>(
           `insert into empresa_coformadora (razon_social, nombre_comercial, nit, descripcion, sector_economico, codigo_ciiu,
                                             naturaleza_juridica, tamano_empresa, anio_constitucion, departamento, municipio,
@@ -179,22 +202,26 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
            returning id_ec`,
           [
             (nombreEmpresa ?? `Empresa de ${contacto}`).slice(0, 150), datos.nombre_comercial ?? null,
-            datos.nit ?? `${PREFIJO_NIT_PENDIENTE}${idInvitacion}`, datos.descripcion ?? null,
+            datos.nit ?? nitProvisional, datos.descripcion ?? null,
             datos.sector_economico ?? POR_DEFINIR, datos.codigo_ciiu ?? null, datos.naturaleza_juridica ?? null,
             datos.tamano_empresa ?? null, datos.anio_constitucion ?? null, datos.departamento ?? POR_DEFINIR,
             datos.municipio ?? POR_DEFINIR, datos.direccion ?? null, datos.telefono ?? null,
-            datos.correo ?? datos.contacto_correo, datos.link ?? null, datos.estudiantes_recibidos ?? 0,
+            datos.correo ?? datos.contacto_correo ?? null, datos.link ?? null, datos.estudiantes_recibidos ?? 0,
           ],
         );
         const idEc = empresa.rows[0]!.id_ec;
-        await c.query(
-          `insert into contacto_empresa (id_ec, nombre, cargo, correo, telefono, es_principal)
-           values ($1, $2, $3, $4, $5, true)`,
-          [idEc, contacto.slice(0, 100), datos.contacto_cargo ?? null, datos.contacto_correo, datos.contacto_celular],
-        );
-        await c.query('update invitacion_empresa set id_ec = $2 where id_invitacion = $1', [idInvitacion, idEc]);
+        if (contacto) {
+          await c.query(
+            `insert into contacto_empresa (id_ec, nombre, cargo, correo, telefono, es_principal)
+             values ($1, $2, $3, $4, $5, true)`,
+            [idEc, contacto.slice(0, 100), datos.contacto_cargo ?? null, datos.contacto_correo ?? null, datos.contacto_celular ?? null],
+          );
+        }
         creados.push({ fila, id: idEc });
-        envios.push({ nombre_contacto: datos.contacto_nombre, correo: datos.contacto_correo, nombre_empresa: nombreEmpresa, codigo });
+        if (idInvitacion !== null) {
+          await c.query('update invitacion_empresa set id_ec = $2 where id_invitacion = $1', [idInvitacion, idEc]);
+          envios.push({ nombre_contacto: datos.contacto_nombre!, correo: datos.contacto_correo!, nombre_empresa: nombreEmpresa, codigo });
+        }
       } catch (error) {
         const codigo = (error as { code?: string }).code;
         const mensaje = codigo === '23505' ? 'Ya existe una empresa o una invitación con esos datos' : 'No se pudo guardar esta empresa';

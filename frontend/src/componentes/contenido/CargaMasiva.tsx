@@ -9,8 +9,8 @@ const MAXIMO = 50;
 
 function textoGuardar(total: number | null, conInvitaciones?: boolean) {
   if (conInvitaciones) {
-    if (total === null) return 'Crear y enviar invitaciones';
-    return total === 1 ? 'Crear 1 empresa y enviar la invitación' : `Crear ${total} empresas y enviar invitaciones`;
+    if (total === null) return 'Crear empresas';
+    return total === 1 ? 'Crear 1 empresa' : `Crear ${total} empresas`;
   }
   if (total === null) return 'Guardar';
   return total === 1 ? 'Guardar 1 registro' : `Guardar ${total} registros`;
@@ -43,7 +43,7 @@ interface Props {
   modulo: string;
   /** Rutas de consultas que se refrescan al guardar (además de `ruta`). */
   refrescar?: string[];
-  /** Empresas: cada fila crea la empresa y envía la invitación. */
+  /** Empresas: cada fila crea la empresa y, si se pide, envía la invitación. */
   conInvitaciones?: boolean;
   /** El módulo tiene imágenes: se pueden adjuntar (opcionales) junto con el Excel. */
   conImagenes?: boolean;
@@ -155,8 +155,8 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conIm
           <p className="text-body font-semibold text-azul-titulo">
             {conInvitaciones
               ? resultado.importados === 1
-                ? 'Se creó 1 empresa (inactiva hasta que complete su ficha).'
-                : `Se crearon ${resultado.importados} empresas (inactivas hasta que completen su ficha).`
+                ? 'Se creó 1 empresa (inactiva hasta que se active o complete su ficha).'
+                : `Se crearon ${resultado.importados} empresas (inactivas hasta que se activen o completen su ficha).`
               : resultado.importados === 1
                 ? 'Se guardó 1 registro correctamente.'
                 : `Se guardaron ${resultado.importados} registros correctamente.`}
@@ -169,7 +169,7 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conIm
               No se pudieron subir: {imagenesFallidas.join('; ')}. Puedes subirlas desde el formulario de edición.
             </p>
           )}
-          {conInvitaciones && (
+          {conInvitaciones && !!resultado.invitaciones_enviadas && (
             <p className="text-small text-texto">
               Se {resultado.invitaciones_enviadas === 1 ? 'envió 1 invitación' : `enviaron ${resultado.invitaciones_enviadas ?? 0} invitaciones`} por correo.
             </p>
@@ -189,7 +189,9 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conIm
             <li>Descarga la plantilla. La hoja «Instrucciones» explica cada columna; las columnas en rojo son obligatorias.</li>
             <li>Escribe un registro por fila (máximo {MAXIMO}) y guarda el archivo.</li>
             <li>Súbelo: revisamos el archivo y te mostramos los errores antes de guardar. Si alguna fila tiene errores, no se guarda ninguna.</li>
-            {conInvitaciones && <li>Cada empresa queda inactiva y su contacto recibe la invitación para crear su contraseña y completar la ficha.</li>}
+            {conInvitaciones && (
+              <li>Cada empresa queda inactiva. Si en «Enviar invitación» escribes Sí, su contacto recibe un correo para crear su contraseña y completar la ficha.</li>
+            )}
           </ol>
           <div className="flex flex-col gap-3 sm:flex-row">
             <a
