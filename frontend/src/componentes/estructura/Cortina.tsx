@@ -38,7 +38,7 @@ export function Cortina() {
   return (
     <div
       aria-hidden
-      className={`pointer-events-none fixed inset-0 z-[100] grid place-items-center bg-azul-marino transition-opacity duration-[260ms] ease-out ${
+      className={`pointer-events-none fixed inset-0 z-[100] grid place-items-center bg-azul-marino/75 backdrop-blur-sm transition-opacity duration-[260ms] ease-out ${
         mostrar ? 'pointer-events-auto opacity-100' : 'opacity-0'
       }`}
     >
