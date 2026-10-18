@@ -1,11 +1,23 @@
 import type { ReactNode } from 'react';
 import { EncabezadoPagina } from '../../componentes/ui/Elementos';
 
+const SECCIONES = [
+  'Responsable del tratamiento',
+  'Datos que recogemos',
+  'Finalidades',
+  'Derechos de los titulares',
+  'Autorización',
+  'Consultas y reclamos',
+  'Seguridad de la información',
+  'Vigencia',
+];
+const ancla = (titulo: string) => `seccion-${SECCIONES.findIndex((s) => titulo.endsWith(s)) + 1}`;
+
 function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2.5">
+    <section id={ancla(titulo)} className="flex scroll-mt-6 flex-col gap-2.5 border-t border-[#eef2f6] pt-7 first-of-type:border-t-0 first-of-type:pt-0">
       <h2 className="text-subtitle font-extrabold text-[#0a1c40]">{titulo}</h2>
-      <div className="flex flex-col gap-2.5 text-body leading-relaxed text-[#334155] [&_li]:ml-5 [&_li]:list-disc">{children}</div>
+      <div className="flex max-w-[80ch] flex-col gap-2.5 text-body leading-relaxed text-[#334155] [&_li]:ml-5 [&_li]:list-disc">{children}</div>
     </section>
   );
 }
@@ -24,7 +36,21 @@ export function PoliticaDatos() {
         subtitulo="Habeas Data · Ley 1581 de 2012 y Decreto 1377 de 2013"
         className="mb-6"
       />
-      <article className="flex max-w-[900px] flex-col gap-7 rounded-2xl border border-[#e2e8f0] bg-white p-6 sm:p-10">
+      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+        {/* En pantallas grandes, índice fijo a la izquierda para saltar entre secciones. */}
+        <nav aria-label="Contenido de la política" className="hidden rounded-2xl border border-[#e2e8f0] bg-white p-5 lg:sticky lg:top-6 lg:block">
+          <p className="mb-3 text-caption font-bold uppercase tracking-[0.5px] text-[#64748b]">Contenido</p>
+          <ol className="flex flex-col gap-1">
+            {SECCIONES.map((s, i) => (
+              <li key={s}>
+                <a href={`#seccion-${i + 1}`} className="block rounded-lg px-3 py-2 text-small font-semibold text-[#0a1c40] hover:bg-fondo">
+                  {i + 1}. {s}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        <article className="flex min-w-0 flex-col gap-7 rounded-2xl border border-[#e2e8f0] bg-white p-6 sm:p-10 xl:px-14">
         <p role="note" className="rounded-xl bg-[#fdf5e1] px-4 py-3 text-small text-[#7a5a00]">
           Versión base del Observatorio Empresarial. Se reemplazará por el texto oficial que apruebe Uniempresarial.
         </p>
@@ -96,7 +122,8 @@ export function PoliticaDatos() {
             necesario para cumplir las finalidades y las obligaciones legales.
           </p>
         </Seccion>
-      </article>
+        </article>
+      </div>
     </>
   );
 }
