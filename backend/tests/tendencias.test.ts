@@ -73,7 +73,8 @@ describe('Tendencias', () => {
     const mencion = await agente.post(`/api/tendencias/${creada.body.id_te}/menciones`).send({ fuente: 'Prensa' });
     expect(mencion.status).toBe(201);
     const detalle = await agente.get(`/api/tendencias/${creada.body.id_te}`);
-    expect(detalle.body.menciones).toBe(1);
+    // La primera mención se registra al crear la tendencia.
+    expect(detalle.body.menciones).toBe(2);
 
     const repetida = await agente.post('/api/tendencias').send({ megatendencia: 'Tecnología y sociedad', tendencia: 'Computación cuántica' });
     expect(repetida.status).toBe(409);
