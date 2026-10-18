@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { mensajeDeError } from '../../api/cliente';
+import { pasarConCortina } from '../../componentes/estructura/Cortina';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
 import { ModalElegirRol } from '../../componentes/ModalElegirRol';
 import { rolesDe, useSesion } from '../../sesion/sesion';
@@ -30,12 +31,14 @@ export function IniciarSesion() {
     defaultValues: { correo: '', contrasena: '', recordar: true },
   });
 
+  const entrar = () => pasarConCortina(() => navegar(destino, { replace: true }));
+
   const enviar = handleSubmit(async (datos) => {
     setError(null);
     try {
       const perfil = await iniciarSesion(datos.correo, datos.contrasena, datos.recordar);
       if (rolesDe(perfil).length > 1) setElegirRol(true);
-      else navegar(destino, { replace: true });
+      else await entrar();
     } catch (e) {
       setError(mensajeDeError(e));
     }
@@ -84,10 +87,17 @@ export function IniciarSesion() {
           Regístrate aquí
         </Link>
       </p>
-      <Link to="/inicio" className={`${BOTON_AUTH.secundario} h-[52px]`}>
+      <Link
+        to="/inicio"
+        onClick={(e) => {
+          e.preventDefault();
+          void pasarConCortina(() => navegar('/inicio'));
+        }}
+        className={`${BOTON_AUTH.secundario} h-[52px]`}
+      >
         Explorar como invitado
       </Link>
-      {elegirRol && <ModalElegirRol onCerrar={() => navegar(destino, { replace: true })} />}
+      {elegirRol && <ModalElegirRol onCerrar={() => void entrar()} />}
     </PantallaAuth>
   );
 }
