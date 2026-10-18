@@ -143,7 +143,7 @@ function Formulario({ codigo, contacto, correo, nombreEmpresa }: { codigo: strin
       <Casilla
         etiqueta={
           <>
-            Autorizo el tratamiento de mis datos personales y los de la empresa según la{' '}
+            Autorizo el tratamiento de mis datos personales y los de la empresa, y el uso del nombre y la marca de la empresa en el Observatorio Empresarial, según la{' '}
             <a href="/politica-de-datos" target="_blank" rel="noreferrer" className="font-semibold text-azul-marino underline" onClick={(ev) => ev.stopPropagation()}>Política de tratamiento de datos</a> (Ley 1581 de 2012)
           </>
         }
