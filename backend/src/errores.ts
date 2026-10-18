@@ -40,11 +40,6 @@ function desdePostgres(error: ErrorPostgres): ErrorApi | null {
         restriccion: error.constraint,
       });
     case '23514':
-      if (error.constraint === 'empresa_ficha_pendiente_oculta_chk') {
-        return new ErrorApi(400, 'La empresa se publica cuando acepte la invitación y complete su ficha', {
-          restriccion: error.constraint,
-        });
-      }
       return new ErrorApi(400, 'Los datos no cumplen una regla de la base de datos', { restriccion: error.constraint });
     case '23502':
       return new ErrorApi(400, 'Falta un dato obligatorio');
