@@ -33,6 +33,7 @@ import { Aviso, Confirmacion, Modal } from '../../componentes/ui/Modal';
 import { useSesion } from '../../sesion/sesion';
 import { nombreEmpresa, Portada } from './DirectorioEmpresas';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
+import { ModalInvitarEmpresa } from './InvitarEmpresa';
 
 /** Migas de pan: "← Empresas coformadoras / Ver perfil". */
 export function Migas({ actual }: { actual: string }) {
@@ -107,7 +108,7 @@ export function PerfilEmpresa() {
   const gestiona = puedeGestionar('empresas');
   const { data: empresa, isLoading, error } = useDetalle<Empresa>('/empresas', idEmpresa);
   const eliminarApi = useEliminar('/empresas');
-  const [modal, setModal] = useState<'contacto' | 'compartir' | 'eliminar' | 'eliminada' | null>(null);
+  const [modal, setModal] = useState<'contacto' | 'compartir' | 'invitar' | 'eliminar' | 'eliminada' | null>(null);
 
   useEffect(() => {
     if (idEmpresa) registrarActividad('Empresa', idEmpresa, 'Vista');
@@ -161,7 +162,7 @@ export function PerfilEmpresa() {
                   (empresa.estado_ec ?? 'Activo') === 'Activo' ? 'bg-exito-claro text-[#059669]' : 'bg-etiqueta text-texto-suave'
                 }`}
               >
-                {empresa.estado_ec ?? 'Activo'}
+                {empresa.ficha_pendiente ? 'Inactivo · espera la invitación' : (empresa.estado_ec ?? 'Activo')}
               </span>
             )}
             <div className="flex flex-wrap gap-2.5 sm:justify-end">
@@ -171,6 +172,11 @@ export function PerfilEmpresa() {
               <button type="button" onClick={() => setModal('compartir')} className={`${BOTON_ENCABEZADO} border border-[#e2e8f0] bg-white font-semibold text-[#64748b] hover:bg-fondo`}>
                 <img src={compartir14} alt="" aria-hidden className="size-3.5" /> Compartir
               </button>
+              {gestiona && empresa.ficha_pendiente && !empresa.id_usuario && (
+                <button type="button" onClick={() => setModal('invitar')} className={`${BOTON_ENCABEZADO} bg-rojo font-bold text-white hover:bg-[#c2002e]`}>
+                  Enviar invitación
+                </button>
+              )}
               {gestiona && (
                 <>
                   <button
@@ -292,6 +298,7 @@ export function PerfilEmpresa() {
           <p className="text-small text-texto-suave">Esta empresa todavía no tiene un contacto registrado.</p>
         )}
       </Modal>
+      {gestiona && <ModalInvitarEmpresa empresa={empresa} nombre={nombre} abierto={modal === 'invitar'} onCerrar={() => setModal(null)} />}
       <ModalCompartir abierto={modal === 'compartir'} onCerrar={() => setModal(null)} titulo={nombre} ruta={`/empresas/${empresa.id_ec}`} tipo="Empresa" id={empresa.id_ec} nombreTipo="empresa" />
       <Confirmacion
         abierto={modal === 'eliminar'}

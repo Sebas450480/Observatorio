@@ -25,6 +25,8 @@ export interface NuevaInvitacion {
   apellido_contacto: string;
   correo: string;
   nombre_empresa: string;
+  /** Empresa ya creada a la que se liga la invitación. */
+  id_ec?: number;
 }
 
 /** Datos de la invitación que ve la empresa al abrir el enlace del correo. */

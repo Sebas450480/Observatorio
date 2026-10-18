@@ -147,6 +147,9 @@ export interface Empresa extends Auditoria {
   logo_ec: string | null;
   imagen_portada: string | null;
   estado_ec?: Estado;
+  /** La empresa aún no acepta la invitación ni completa su ficha: no se publica. */
+  ficha_pendiente?: boolean;
+  id_usuario?: number | null;
   contactos: Contacto[];
 }
 

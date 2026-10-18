@@ -72,6 +72,8 @@ const esquemaInvitacion = z.object({
   apellido_contacto: textoObligatorio(50),
   correo,
   nombre_empresa: textoOpcional(150),
+  /** Empresa ya creada (formulario o carga masiva) a la que se liga la invitación. */
+  id_ec: idPositivo.optional(),
 });
 
 rutasInvitaciones.get('/', soloGestor, async (req, res) => {
@@ -92,12 +94,26 @@ async function crearInvitacion(sesion: Sesion, datos: DatosInvitacion) {
       [datos.correo],
     );
     if (pendiente.rowCount) throw new ErrorApi(409, 'Ese correo ya tiene una invitación pendiente. Puedes reenviarla.');
+    let nombreEmpresa = datos.nombre_empresa ?? null;
+    if (datos.id_ec !== undefined) {
+      const empresa = await c.query<{ nombre: string; id_usuario: number | null; ficha_pendiente: boolean }>(
+        `select coalesce(razon_social, nombre_comercial) as nombre, id_usuario, ficha_pendiente
+           from empresa_coformadora where id_ec = $1`,
+        [datos.id_ec],
+      );
+      const e = empresa.rows[0];
+      if (!e) throw new ErrorApi(404, 'No encontramos la empresa');
+      if (e.id_usuario !== null || !e.ficha_pendiente) throw new ErrorApi(409, 'La empresa ya tiene una cuenta ligada');
+      const abierta = await c.query("select 1 from invitacion_empresa where id_ec = $1 and estado = 'Pendiente'", [datos.id_ec]);
+      if (abierta.rowCount) throw new ErrorApi(409, 'La empresa ya tiene una invitación pendiente. Puedes reenviarla.');
+      nombreEmpresa ??= e.nombre;
+    }
     const { rows } = await c.query(
-      `insert into invitacion_empresa (nombre_contacto, apellido_contacto, correo, nombre_empresa, token_hash,
+      `insert into invitacion_empresa (nombre_contacto, apellido_contacto, correo, nombre_empresa, id_ec, token_hash,
                                        fecha_vencimiento, creado_por)
-       values ($1, $2, $3, $4, $5, now() + make_interval(days => $6), $7)
+       values ($1, $2, $3, $4, $5, $6, now() + make_interval(days => $7), $8)
        returning ${COLUMNAS}`,
-      [datos.nombre_contacto, datos.apellido_contacto, datos.correo, datos.nombre_empresa ?? null,
+      [datos.nombre_contacto, datos.apellido_contacto, datos.correo, nombreEmpresa, datos.id_ec ?? null,
         huellaCodigo(codigo), VIGENCIA_DIAS, sesion.idUsuario],
     );
     return rows[0];

@@ -71,7 +71,7 @@ function valoresIniciales(e?: Empresa): Datos {
     estudiantes_recibidos: String(e?.estudiantes_recibidos ?? 0),
     premios_recibidos: String(e?.premios_recibidos ?? 0),
     tiempo_coformadora: e?.tiempo_coformadora ?? '',
-    estado_ec: e?.estado_ec ?? 'Activo',
+    estado_ec: e?.estado_ec ?? 'Inactivo',
     contacto_nombre: c?.nombre ?? '',
     contacto_cargo: c?.cargo ?? '',
     contacto_correo: c?.correo ?? '',
@@ -102,6 +102,8 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
   const [trabajando, setTrabajando] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const editar = !!empresa;
+  // Una empresa nueva o que no ha aceptado la invitación sigue oculta: no se activa a mano.
+  const oculta = !empresa || !!empresa.ficha_pendiente;
   // Si la empresa se creó pero falló un paso posterior (contacto, imágenes), el reintento la edita.
   const [creada, setCreada] = useState<number | undefined>(undefined);
   const vistaPortada = useVistaPrevia(portada);
@@ -237,7 +239,13 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
             <Entrada etiqueta="Correo electrónico" type="email" placeholder="Ej. info@empresa.com" error={e.correo?.message} {...register('correo')} />
             <Entrada etiqueta="Sitio web" placeholder="https://www.empresa.com" error={e.link?.message} {...register('link')} />
             <Entrada etiqueta="Año de constitución" inputMode="numeric" placeholder="Ej. 2015" error={e.anio_constitucion?.message} {...register('anio_constitucion')} />
-            <Selector etiqueta="Estado de la empresa" opciones={[{ valor: 'Activo', texto: 'Activa' }, { valor: 'Inactivo', texto: 'Inactiva' }]} {...register('estado_ec')} />
+            {oculta ? (
+              <p className="self-end rounded-lg bg-[#f1f5f9] px-3 py-2.5 text-caption text-[#64748b]">
+                Estado: inactiva. Se publica cuando la empresa acepte la invitación y complete su ficha.
+              </p>
+            ) : (
+              <Selector etiqueta="Estado de la empresa" opciones={[{ valor: 'Activo', texto: 'Activa' }, { valor: 'Inactivo', texto: 'Inactiva' }]} {...register('estado_ec')} />
+            )}
             <Entrada etiqueta="Código CIIU" placeholder="Ej. 6201" {...register('codigo_ciiu')} />
             <Entrada etiqueta="Estudiantes recibidos" inputMode="numeric" placeholder="Ej. 24" error={e.estudiantes_recibidos?.message} {...register('estudiantes_recibidos')} />
             <Entrada etiqueta="Premios recibidos" inputMode="numeric" placeholder="Ej. 3" error={e.premios_recibidos?.message} {...register('premios_recibidos')} />
@@ -277,7 +285,9 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
         abierto={guardada !== null}
         titulo={editar ? 'Empresa editada' : 'Empresa creada'}
         mensaje={editar ? 'La empresa se editó correctamente.' : 'La empresa se creó correctamente.'}
-        detalle="Los cambios ya se pueden visualizar en el Observatorio Empresarial."
+        detalle={oculta
+          ? 'La empresa queda oculta hasta que acepte la invitación. Envíala desde su ficha con «Enviar invitación».'
+          : 'Los cambios ya se pueden visualizar en el Observatorio Empresarial.'}
         onCerrar={() => navegar(`/empresas/${guardada}`)}
       />
     </form>
