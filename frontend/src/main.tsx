@@ -6,6 +6,7 @@ import { ErrorApi } from './api/cliente';
 import './index.css';
 import { enrutador } from './rutas';
 import { ProveedorSesion } from './sesion/sesion';
+import { Cortina } from './componentes/estructura/Cortina';
 
 const clienteConsultas = new QueryClient({
   defaultOptions: {
@@ -23,6 +24,7 @@ createRoot(document.getElementById('raiz')!).render(
     <QueryClientProvider client={clienteConsultas}>
       <ProveedorSesion>
         <RouterProvider router={enrutador} />
+        <Cortina />
       </ProveedorSesion>
     </QueryClientProvider>
   </StrictMode>,
