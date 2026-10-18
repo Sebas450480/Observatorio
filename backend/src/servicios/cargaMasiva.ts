@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
 import type { Router } from 'express';
 import type { z } from 'zod';
 import type { RolBD, Sesion } from '../auth/roles.js';
@@ -317,13 +318,42 @@ interface ArchivoLeido {
   errores: ErrorCarga[];
 }
 
-async function leerArchivo(def: DefinicionCarga<unknown>, archivo: Buffer, categorias: Map<string, number>): Promise<ArchivoLeido> {
-  const libro = new ExcelJS.Workbook();
-  try {
-    await libro.xlsx.load(archivo as unknown as ArrayBuffer);
-  } catch {
-    throw new ErrorApi(400, 'El archivo no es un Excel (.xlsx) válido');
+/**
+ * Quita las notas de las celdas, que no se usan en la carga. Algunos programas (Google Sheets,
+ * LibreOffice, openpyxl) las guardan con rutas que ExcelJS no sabe leer y el archivo no abre.
+ */
+async function quitarNotas(archivo: Buffer): Promise<Buffer> {
+  const zip = await JSZip.loadAsync(archivo);
+  for (const ruta of Object.keys(zip.files)) {
+    if (/^xl\/worksheets\/_rels\/.+\.rels$/.test(ruta)) {
+      const xml = await zip.file(ruta)!.async('string');
+      zip.file(ruta, xml.replace(/<Relationship\b[^>]*\/(comments|vmlDrawing)"[^>]*\/>/g, ''));
+    } else if (/^xl\/worksheets\/[^/]+\.xml$/.test(ruta)) {
+      const xml = await zip.file(ruta)!.async('string');
+      zip.file(ruta, xml.replace(/<legacyDrawing\b[^>]*\/>/g, ''));
+    }
   }
+  return zip.generateAsync({ type: 'nodebuffer' });
+}
+
+async function abrirLibro(archivo: Buffer): Promise<ExcelJS.Workbook> {
+  try {
+    const libro = new ExcelJS.Workbook();
+    await libro.xlsx.load(archivo as unknown as ArrayBuffer);
+    return libro;
+  } catch {
+    try {
+      const libro = new ExcelJS.Workbook();
+      await libro.xlsx.load((await quitarNotas(archivo)) as unknown as ArrayBuffer);
+      return libro;
+    } catch {
+      throw new ErrorApi(400, 'El archivo no es un Excel (.xlsx) válido');
+    }
+  }
+}
+
+async function leerArchivo(def: DefinicionCarga<unknown>, archivo: Buffer, categorias: Map<string, number>): Promise<ArchivoLeido> {
+  const libro = await abrirLibro(archivo);
   const hoja = libro.getWorksheet(def.hoja.slice(0, 31)) ?? libro.worksheets[0];
   if (!hoja) throw new ErrorApi(400, 'El archivo no tiene hojas');
 
