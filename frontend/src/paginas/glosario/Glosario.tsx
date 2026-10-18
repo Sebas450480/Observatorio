@@ -4,7 +4,7 @@ import { Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { api, mensajeDeError } from '../../api/cliente';
+import { api, ErrorApi, mensajeDeError } from '../../api/cliente';
 import { useEliminar, useGuardar, useListado } from '../../api/consultas';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { Boton } from '../../componentes/ui/Boton';
@@ -53,7 +53,12 @@ function FormularioTermino({ registro, onCerrar }: { registro?: Termino; onCerra
       seccion="Glosario"
       validar={() => trigger()}
       guardar={async () => {
-        await guardarApi.mutateAsync({ id: registro?.id_termino, datos: getValues() });
+        try {
+          await guardarApi.mutateAsync({ id: registro?.id_termino, datos: getValues() });
+        } catch (error) {
+          if (error instanceof ErrorApi && error.estado === 409) throw new ErrorApi(409, 'Ese término ya existe en el glosario');
+          throw error;
+        }
       }}
       eliminar={registro ? () => eliminarApi.mutateAsync(registro.id_termino) : undefined}
       onCerrar={onCerrar}
