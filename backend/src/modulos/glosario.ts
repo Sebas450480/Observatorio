@@ -21,6 +21,9 @@ const esquemaFiltros = z.object({
   letra: z.string().regex(/^([A-ZÑ]|#)$/i, 'Letra inválida').optional(),
 });
 
+/** Clave para no repetir términos: sin tildes, mayúsculas ni puntuación final (igual que el índice único). */
+const claveTermino = (termino: string) => normalizarNombre(termino.replace(/[\s:.]+$/, ''));
+
 /** Inicial sin tilde, en mayúscula ("Ética" -> "E"). */
 const INICIAL = `upper(left(translate(trim(t.termino), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU'), 1))`;
 
@@ -53,13 +56,13 @@ export const rutasGlosario = crearRecurso({
     armar: (f) => ({ ...f, termino: typeof f.termino === 'string' ? f.termino.replace(/\s*:\s*$/, '') : f.termino }),
     esquema,
     resumen: (d) => d.termino,
-    clave: (d) => normalizarNombre(d.termino),
+    clave: (d) => claveTermino(d.termino),
     mensajeRepetido: 'Término repetido en el archivo',
     revisar: async (c, filas) => {
       const { rows } = await c.query<{ termino: string }>('select termino from glosario_termino');
-      const existentes = new Set(rows.map((r) => normalizarNombre(r.termino)));
+      const existentes = new Set(rows.map((r) => claveTermino(r.termino)));
       return filas
-        .filter((f) => existentes.has(normalizarNombre(f.datos.termino)))
+        .filter((f) => existentes.has(claveTermino(f.datos.termino)))
         .map((f) => ({ fila: f.fila, columna: 'Término', mensaje: 'El término ya existe en el glosario' }));
     },
   }),
