@@ -7,6 +7,7 @@ import { iconoBuscar, iconoCerrarSesion, iconoPerfil, iconoUsuario } from '../..
 import type { ResultadoBusqueda, TipoContenido } from '../../api/tipos';
 import { descripcionRoles, etiquetaRol, rutaPermitida, useSesion } from '../../sesion/sesion';
 import { ModalElegirRol } from '../ModalElegirRol';
+import { pasarConCortina } from './Cortina';
 import { fechaCorta, iniciales } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 
@@ -143,7 +144,10 @@ function BuscadorGlobal() {
   );
 }
 
-/** Botón rojo con el rol y menú desplegable (Figma: "Menú de sesión"). */
+/** Nombre corto para el botón de sesión: el apodo o el primer nombre. */
+const nombreCorto = (u: { apodo_usuario: string | null; nombre_usuario: string }) => u.apodo_usuario?.trim() || u.nombre_usuario.trim().split(/\s+/)[0];
+
+/** Botón rojo con el nombre de la persona y menú desplegable (Figma: "Menú de sesión"). */
 function MenuSesion() {
   const { usuario, cerrarSesion, esEmpresa, rolesCuenta, rolActivo } = useSesion();
   const [abierto, setAbierto] = useState(false);
@@ -170,7 +174,14 @@ function MenuSesion() {
 
   if (!usuario) {
     return (
-      <Link to="/iniciar-sesion" className={claseBoton}>
+      <Link
+        to="/iniciar-sesion"
+        className={claseBoton}
+        onClick={(e) => {
+          e.preventDefault();
+          void pasarConCortina(() => navegar('/iniciar-sesion'));
+        }}
+      >
         <span className="hidden whitespace-nowrap sm:inline">Iniciar sesión</span>
         <img src={iconoUsuario} alt="" aria-hidden className="size-8 sm:size-10" />
       </Link>
@@ -180,7 +191,10 @@ function MenuSesion() {
   return (
     <div ref={contenedor} className="relative" data-recorrido="sesion">
       <button type="button" className={claseBoton} onClick={() => setAbierto((a) => !a)} aria-expanded={abierto} aria-haspopup="menu">
-        <span className="hidden sm:inline">{etiquetaRol(rolActivo ?? usuario.nombre_rol)}</span>
+        <span className="hidden min-w-0 flex-col items-start leading-tight sm:flex">
+          <span className="max-w-[140px] truncate">{nombreCorto(usuario)}</span>
+          <span className="max-w-[140px] truncate text-caption font-semibold tracking-normal text-white/80">{etiquetaRol(rolActivo ?? usuario.nombre_rol)}</span>
+        </span>
         <img src={iconoUsuario} alt={`Sesión de ${usuario.nombre_usuario}`} className="size-8 sm:size-10" />
       </button>
       {abierto && (
@@ -238,8 +252,10 @@ function MenuSesion() {
             role="menuitem"
             onClick={async () => {
               setAbierto(false);
-              await cerrarSesion();
-              navegar('/inicio');
+              await pasarConCortina(async () => {
+                await cerrarSesion();
+                navegar('/inicio');
+              });
             }}
             className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left text-small font-semibold text-rojo-vivo hover:bg-rojo-claro"
           >
