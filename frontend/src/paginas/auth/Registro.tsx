@@ -9,6 +9,7 @@ import { useCategorias } from '../../api/consultas';
 import type { Perfil } from '../../api/tipos';
 import { SelectorIntereses } from '../../componentes/SelectorIntereses';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
+import { CampoCiudad } from '../../componentes/ui/CampoCiudad';
 import { iniciarRecorrido } from '../../componentes/RecorridoGuiado';
 import { useSesion } from '../../sesion/sesion';
 import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
@@ -118,7 +119,7 @@ export function Registro() {
               {...register('correo')}
             />
             <Entrada variante="perfil" className="sm:col-span-2" etiqueta="Apodo" placeholder="Ej. laurag" error={e.apodo_usuario?.message} {...register('apodo_usuario')} />
-            <Entrada variante="perfil" className="sm:col-span-2" etiqueta="Ciudad" placeholder="Ej. Bogotá" autoComplete="address-level2" {...register('ciudad')} />
+            <CampoCiudad variante="perfil" className="sm:col-span-2" etiqueta="Ciudad" placeholder="Escribe para buscar, ej. Bogotá" {...register('ciudad')} />
             <Entrada variante="perfil" etiqueta="Contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
             <Entrada variante="perfil" etiqueta="Confirmar contraseña" type="password" placeholder="••••••••" autoComplete="new-password" error={e.confirmar?.message} {...register('confirmar')} />
             <RequisitosContrasena valor={clave} className="sm:col-span-2" />
