@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CampoCiudad } from '../../componentes/ui/CampoCiudad';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -107,7 +108,7 @@ function FormularioUsuario({ registro, onCerrar }: { registro?: Perfil; onCerrar
         ) : (
           <Selector etiqueta="Estado" disabled opciones={[{ valor: 'Activo', texto: 'Activo' }]} value="Activo" onChange={() => {}} />
         )}
-        <Entrada etiqueta="Ciudad" placeholder="Ej. Bogotá" {...register('ciudad')} />
+        <CampoCiudad etiqueta="Ciudad" placeholder="Escribe para buscar, ej. Bogotá" {...register('ciudad')} />
         {!editar && (
           <Entrada etiqueta="Contraseña inicial" type="password" placeholder="Contraseña segura" ayuda="Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial." obligatorio autoComplete="new-password" error={e.contrasena?.message} {...register('contrasena')} />
         )}

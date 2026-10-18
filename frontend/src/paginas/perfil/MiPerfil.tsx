@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CampoCiudad } from '../../componentes/ui/CampoCiudad';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -216,7 +217,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
               error={e.correo?.message}
               {...register('correo')}
             />
-            <Entrada variante="perfil" etiqueta="Ciudad" {...register('ciudad')} />
+            <CampoCiudad variante="perfil" etiqueta="Ciudad" placeholder="Escribe para buscar" {...register('ciudad')} />
             <Entrada variante="perfil" etiqueta="Apodo" className="sm:col-span-2" error={e.apodo_usuario?.message} {...register('apodo_usuario')} />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
