@@ -35,12 +35,12 @@ select format(
  where table_schema = 'public' and is_identity = 'YES'
  order by table_name;
 
--- Las imágenes de Vercel Blob pasan a la carpeta de imágenes del servidor (/uploads/...).
+-- Las imágenes de Supabase Storage y de Vercel Blob pasan a la carpeta de imágenes del servidor (/uploads/...).
 -- exportar-datos.sh las descarga con la misma ruta.
-select $s$update public.flash_informativo   set imagen         = regexp_replace(imagen,         '^https://[^/]+\.blob\.vercel-storage\.com/', '/uploads/') where imagen         like 'https://%.blob.vercel-storage.com/%';$s$;
-select $s$update public.faro_empresarial    set imagen         = regexp_replace(imagen,         '^https://[^/]+\.blob\.vercel-storage\.com/', '/uploads/') where imagen         like 'https://%.blob.vercel-storage.com/%';$s$;
-select $s$update public.empresa_coformadora set logo_ec        = regexp_replace(logo_ec,        '^https://[^/]+\.blob\.vercel-storage\.com/', '/uploads/') where logo_ec        like 'https://%.blob.vercel-storage.com/%';$s$;
-select $s$update public.empresa_coformadora set imagen_portada = regexp_replace(imagen_portada, '^https://[^/]+\.blob\.vercel-storage\.com/', '/uploads/') where imagen_portada like 'https://%.blob.vercel-storage.com/%';$s$;
+select $s$update public.flash_informativo   set imagen         = regexp_replace(imagen,         '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/', '/uploads/') where imagen         ~ '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/';$s$;
+select $s$update public.faro_empresarial    set imagen         = regexp_replace(imagen,         '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/', '/uploads/') where imagen         ~ '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/';$s$;
+select $s$update public.empresa_coformadora set logo_ec        = regexp_replace(logo_ec,        '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/', '/uploads/') where logo_ec        ~ '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/';$s$;
+select $s$update public.empresa_coformadora set imagen_portada = regexp_replace(imagen_portada, '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/', '/uploads/') where imagen_portada ~ '^https://[^/]+(\.blob\.vercel-storage\.com|\.supabase\.co/storage/v1/object/public/[^/]+)/';$s$;
 
 select 'set session_replication_role = origin;';
 select 'commit;';

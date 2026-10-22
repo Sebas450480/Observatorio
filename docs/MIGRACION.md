@@ -10,7 +10,7 @@ servidor oficial de la universidad, con todos los datos e imágenes.
 | Página web (React) | Vercel | La sirve la misma aplicación Node (variable `FRONTEND_DIR`) |
 | API (Express) | Función de Vercel (`api/index.mjs`) | Proceso Node 22 permanente (`node dist/servidor.js`) |
 | Base de datos | Supabase (PostgreSQL 17, proyecto `brobinraqmjepzqnumrq`) | PostgreSQL 15 o superior propio |
-| Imágenes subidas | Vercel Blob | Carpeta del servidor (`UPLOADS_DIR`), servida en `/uploads/...` |
+| Imágenes subidas | Supabase Storage (bucket `imagenes`; las más antiguas, en Vercel Blob) | Carpeta del servidor (`UPLOADS_DIR`), servida en `/uploads/...` |
 | Alertas programadas | Vercel Cron | Integradas en el proceso Node (cada 15 min y lunes 8:00) |
 | Correo | Sin configurar | SMTP institucional (opcional) |
 | Código | GitHub `Sebas450480/Observatorio` (de aquí publica Vercel) | Repositorio oficial `fusoft6-pixel/Unie-TechObservatory` |
@@ -54,7 +54,7 @@ como proxy HTTPS y un gestor de procesos (systemd o PM2). Ver la sección 6.
 | `.env.ejemplo` | Variables a completar (secretos, dominio, correo). Se copia como `.env`. |
 | `bd/inicializar.sh` | La primera vez crea la estructura (`supabase/schema.sql`) y carga los datos. |
 | `bd/volcado.sql` | Genera el script con todos los registros de la base actual. |
-| `exportar-datos.sh` | Exporta los registros de Supabase y descarga las imágenes de Vercel Blob. |
+| `exportar-datos.sh` | Exporta los registros de Supabase y descarga las imágenes (Supabase Storage y Vercel Blob). |
 | `nginx.conf.ejemplo` | Proxy HTTPS de ejemplo delante de la aplicación. |
 
 ## 4. Paso a paso con Docker
@@ -136,7 +136,7 @@ Luego configura el proxy HTTPS (ver `nginx.conf.ejemplo`) para que el dominio ap
    `www.observatorioempresarial.com`, se quita el dominio del proyecto en Vercel → *Settings → Domains*.
 2. Deja Vercel y Supabase encendidos (en solo lectura de hecho) una o dos semanas como respaldo.
 3. Después: en Vercel, *Settings → Git → Disconnect* (deja de desplegar) o elimina el proyecto;
-   en Supabase, pausa o elimina el proyecto; en Vercel Blob, elimina el almacenamiento.
+   en Supabase, pausa o elimina el proyecto (con él se van las imágenes de Storage); en Vercel Blob, elimina el almacenamiento.
 
 > Importante: si alguien crea o edita registros en Vercel después de exportar, esos cambios no
 > pasan al servidor nuevo. Avisa a los gestores o haz la exportación y el cambio de DNS el mismo día.
@@ -249,6 +249,6 @@ dejar (no estorban) o borrar cuando Vercel se apague.
 | En Vercel | En el servidor |
 |---|---|
 | Variables de entorno (`DATABASE_URL`, `JWT_SECRETO`, `FRONTEND_URL`, `CRON_SECRET`, `BLOB_*`…) | Se generan nuevas en `.env`. No hace falta copiar ninguna: `JWT_SECRETO` nuevo solo obliga a iniciar sesión otra vez. `CRON_SECRET` y `BLOB_*` ya no se usan. |
-| Vercel Blob (imágenes) | Lo descarga `exportar-datos.sh` a `datos/uploads/`. |
+| Supabase Storage y Vercel Blob (imágenes) | Los descarga `exportar-datos.sh` a `datos/uploads/`. |
 | Vercel Cron (alertas) | Lo hace el propio servidor (`ALERTAS_ACTIVAS=true`). |
 | Dominio `www.observatorioempresarial.com` | Se apunta por DNS al servidor nuevo, o se usa el dominio de la universidad. |

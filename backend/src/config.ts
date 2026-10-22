@@ -35,7 +35,12 @@ const esquemaEntorno = z.object({
   UPLOADS_DIR: z.string().default('uploads'),
   // En Vercel una petición puede pesar como máximo 4,5 MB.
   UPLOADS_MAX_MB: z.coerce.number().positive().default(4),
-  // Vercel Blob: con cualquiera de las dos, las imágenes se guardan ahí en lugar de UPLOADS_DIR.
+  // Supabase Storage: con la URL del proyecto y la llave secreta, las imágenes se guardan en el bucket
+  // SUPABASE_BUCKET (público). Tiene prioridad sobre Vercel Blob y sobre UPLOADS_DIR.
+  SUPABASE_URL: z.url().optional(),
+  SUPABASE_SECRET_KEY: z.string().optional(),
+  SUPABASE_BUCKET: z.string().default('imagenes'),
+  // Vercel Blob (anterior): con cualquiera de las dos, las imágenes se guardan ahí en lugar de UPLOADS_DIR.
   // BLOB_STORE_ID lo agrega Vercel al conectar el almacenamiento (autenticación OIDC).
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
   BLOB_STORE_ID: z.string().optional(),
@@ -88,6 +93,10 @@ export const config = {
     maxBytes: Math.round(env.UPLOADS_MAX_MB * 1024 * 1024),
     tokenBlob: env.BLOB_READ_WRITE_TOKEN || undefined,
     usarBlob: !!(env.BLOB_READ_WRITE_TOKEN || env.BLOB_STORE_ID),
+    supabase:
+      env.SUPABASE_URL && env.SUPABASE_SECRET_KEY
+        ? { url: env.SUPABASE_URL.replace(/\/$/, ''), llave: env.SUPABASE_SECRET_KEY, bucket: env.SUPABASE_BUCKET }
+        : undefined,
   },
   correo: {
     host: env.SMTP_HOST,
