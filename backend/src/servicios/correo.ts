@@ -59,17 +59,76 @@ export function escaparHtml(texto: string): string {
   return texto.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c);
 }
 
-/** Plantilla HTML común de los correos del Observatorio. */
-export function plantillaCorreo(titulo: string, cuerpoHtml: string, piePixelUrl?: string): string {
+const AZUL = '#1F3A68';
+const ROJO = '#C8102E';
+const GRIS = '#6b7280';
+
+/** Pie de cada correo: por qué lo recibe la persona. */
+export const PIE_CUENTA = 'Recibes este correo porque tienes una cuenta en el Observatorio Empresarial.';
+
+interface OpcionesPlantilla {
+  /** Por qué recibe el correo (va en el pie). Por defecto, porque tiene una cuenta. */
+  motivo?: string;
+  /** Imagen invisible que marca cuándo se abrió el correo. */
+  pixelUrl?: string;
+  /** Texto corto que algunos programas muestran junto al asunto. */
+  resumen?: string;
+}
+
+/**
+ * Botón que se ve igual en Gmail, Outlook y el celular, con el enlace en texto debajo
+ * por si el programa de correo no muestra el botón.
+ */
+export function botonCorreo(texto: string, url: string): string {
+  const u = escaparHtml(url);
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 8px"><tr>
+      <td align="center" bgcolor="${ROJO}" style="border-radius:8px">
+        <a href="${u}" target="_blank" style="display:inline-block;padding:13px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:8px">${escaparHtml(texto)}</a>
+      </td></tr></table>
+    <p style="margin:0 0 4px;font-size:12px;line-height:18px;color:${GRIS}">Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+      <a href="${u}" style="color:${AZUL};word-break:break-all">${u}</a></p>`;
+}
+
+/** Recuadro gris para datos clave (fecha, lugar, vigencia...). Recibe HTML ya escapado. */
+export function recuadroCorreo(contenidoHtml: string): string {
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:16px 0"><tr>
+      <td style="background:#f1f4f9;border-left:4px solid ${AZUL};border-radius:6px;padding:14px 18px;font-size:14px;line-height:22px;color:#1f293d">${contenidoHtml}</td>
+    </tr></table>`;
+}
+
+/** Plantilla HTML común de los correos del Observatorio: logo, título, contenido y pie. */
+export function plantillaCorreo(titulo: string, cuerpoHtml: string, opciones: OpcionesPlantilla = {}): string {
+  const sitio = config.frontendUrl;
+  const logo = `${sitio}/correo/logo-observatorio.png`;
   return `<!doctype html>
-<html lang="es"><body style="margin:0;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif;color:#222">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background:#fff">
-    <tr><td style="background:#1F3A68;color:#fff;padding:18px 24px;font-size:18px;font-weight:bold">OBSERVATORIO EMPRESARIAL</td></tr>
-    <tr><td style="padding:24px"><h2 style="margin:0 0 12px;font-size:18px;color:#1F3A68">${escaparHtml(titulo)}</h2>${cuerpoHtml}</td></tr>
-    <tr><td style="padding:16px 24px;font-size:11px;color:#777;border-top:1px solid #eee">
-      Uniempresarial · Recibes este correo porque tienes una cuenta en el Observatorio Empresarial.
-    </td></tr>
-  </table>
-  ${piePixelUrl ? `<img src="${escaparHtml(piePixelUrl)}" width="1" height="1" alt="" style="display:none">` : ''}
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<title>${escaparHtml(titulo)}</title>
+<style>
+  @media (max-width:620px){ .contenedor{width:100%!important} .relleno{padding-left:20px!important;padding-right:20px!important} h1{font-size:20px!important} }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#eef1f6;font-family:Arial,Helvetica,sans-serif;color:#1f293d;-webkit-text-size-adjust:100%">
+  ${opciones.resumen ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${escaparHtml(opciones.resumen)}</div>` : ''}
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#eef1f6"><tr><td align="center" style="padding:24px 12px">
+    <table role="presentation" class="contenedor" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden">
+      <tr><td bgcolor="${AZUL}" align="center" style="background:${AZUL};padding:26px 24px">
+        <a href="${escaparHtml(sitio)}" target="_blank"><img src="${escaparHtml(logo)}" width="240" alt="Uniempresarial · Observatorio Empresarial" style="display:block;width:240px;max-width:80%;height:auto;border:0;color:#ffffff;font-size:18px;font-weight:bold"></a>
+      </td></tr>
+      <tr><td bgcolor="${ROJO}" style="height:4px;line-height:4px;font-size:0">&nbsp;</td></tr>
+      <tr><td class="relleno" style="padding:32px 40px 28px;font-size:15px;line-height:24px">
+        <h1 style="margin:0 0 16px;font-size:22px;line-height:30px;color:${AZUL}">${escaparHtml(titulo)}</h1>
+        ${cuerpoHtml}
+      </td></tr>
+      <tr><td class="relleno" style="padding:20px 40px 26px;background:#f7f8fb;border-top:1px solid #e5e8ef;font-size:12px;line-height:18px;color:${GRIS}">
+        <p style="margin:0 0 8px">${escaparHtml(opciones.motivo ?? PIE_CUENTA)}</p>
+        <p style="margin:0"><strong style="color:${AZUL}">Observatorio Empresarial · Uniempresarial</strong><br>
+          <a href="${escaparHtml(sitio)}" style="color:${AZUL}">Ir al Observatorio</a> &nbsp;·&nbsp;
+          <a href="${escaparHtml(`${sitio}/politica-de-datos`)}" style="color:${AZUL}">Política de tratamiento de datos</a></p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+  ${opciones.pixelUrl ? `<img src="${escaparHtml(opciones.pixelUrl)}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0">` : ''}
 </body></html>`;
 }
