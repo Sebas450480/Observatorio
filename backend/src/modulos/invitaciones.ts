@@ -7,7 +7,7 @@ import { ErrorApi } from '../errores.js';
 import { NOMBRE_COOKIE, firmarToken, generarCodigoRecuperacion, huellaCodigo, opcionesCookie } from '../auth/tokens.js';
 import { requiereRol } from '../middlewares/sesion.js';
 import type { Sesion } from '../auth/roles.js';
-import { enviarCorreo, escaparHtml, plantillaCorreo } from '../servicios/correo.js';
+import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo } from '../servicios/correo.js';
 import {
   contrasena, correo, idPositivo, textoObligatorio, textoOpcional,
 } from '../utilidades/esquemas.js';
@@ -46,11 +46,15 @@ export async function enviarInvitacion(datos: DatosCorreo, codigo: string): Prom
       texto: `Hola ${datos.nombre_contacto}:\n\n${ASUNTO_INVITACION}.\n\nTe invitamos a registrar la información${empresa} como empresa coformadora de Uniempresarial. En el formulario crearás tu contraseña y completarás los datos de la empresa.\n\nAbre este enlace (vence en ${VIGENCIA_DIAS} días):\n${enlace}`,
       html: plantillaCorreo(
         ASUNTO_INVITACION,
-        `<p>Hola ${escaparHtml(datos.nombre_contacto)}:</p>
-         <p>Te invitamos a registrar la información${escaparHtml(empresa)} como empresa coformadora de Uniempresarial.
-            En el formulario crearás tu contraseña y completarás los datos de la empresa.</p>
-         <p><a href="${escaparHtml(enlace)}" style="background:#C8102E;color:#fff;padding:10px 18px;border-radius:20px;text-decoration:none">Completar el registro</a></p>
-         <p style="font-size:12px;color:#777">El enlace vence en ${VIGENCIA_DIAS} días.</p>`,
+        `<p style="margin:0 0 12px">Hola ${escaparHtml(datos.nombre_contacto)}:</p>
+         <p style="margin:0 0 12px">Te invitamos a registrar la información${escaparHtml(empresa)} como <strong>empresa coformadora de Uniempresarial</strong>
+            en el Observatorio Empresarial. En el formulario crearás tu contraseña y completarás los datos de la empresa.</p>
+         ${recuadroCorreo(`<strong>Vigencia:</strong> el enlace vence en ${VIGENCIA_DIAS} días.<br>Al registrarte autorizas el uso del nombre y la marca de la empresa en el Observatorio.`)}
+         ${botonCorreo('Completar el registro', enlace)}`,
+        {
+          motivo: 'Recibes este correo porque Uniempresarial te invitó a registrar tu empresa en el Observatorio Empresarial. Si no esperabas esta invitación, puedes ignorarla.',
+          resumen: `Registra${empresa} como empresa coformadora de Uniempresarial.`,
+        },
       ),
     });
     return true;
