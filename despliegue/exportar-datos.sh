@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Exporta los datos actuales (Supabase) y las imágenes (Vercel Blob) para
+# Exporta los datos actuales (Supabase) y las imágenes (Supabase Storage y Vercel Blob) para
 # llevarlos al servidor de la universidad. Ejecútalo el día de la migración,
 # justo antes de apagar la versión de Vercel, para no perder datos recientes.
 #
@@ -30,16 +30,17 @@ echo "1/3 Exportando registros..."
 psql "$ORIGEN" -X -q -At -v ON_ERROR_STOP=1 -f "$AQUI/bd/volcado.sql" -o "$DESTINO/datos.sql"
 echo "    $DESTINO/datos.sql ($(wc -c < "$DESTINO/datos.sql") bytes)"
 
-echo "2/3 Descargando imágenes de Vercel Blob..."
+echo "2/3 Descargando imágenes (Supabase Storage y Vercel Blob)..."
 psql "$ORIGEN" -X -q -At -v ON_ERROR_STOP=1 -c "
   select u from (
     select imagen u from public.flash_informativo
     union select imagen from public.faro_empresarial
     union select logo_ec from public.empresa_coformadora
     union select imagen_portada from public.empresa_coformadora
-  ) x where u like 'https://%.blob.vercel-storage.com/%'" |
+  ) x where u like 'https://%.blob.vercel-storage.com/%' or u like 'https://%.supabase.co/storage/v1/object/public/%'" |
 while read -r url; do
   ruta="${url#https://*.blob.vercel-storage.com/}"
+  ruta="${ruta#https://*.supabase.co/storage/v1/object/public/*/}"
   mkdir -p "$DESTINO/uploads/$(dirname "$ruta")"
   if curl -fsSL "$url" -o "$DESTINO/uploads/$ruta"; then
     echo "    uploads/$ruta"
