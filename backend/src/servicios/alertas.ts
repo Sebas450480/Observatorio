@@ -2,7 +2,7 @@ import cron, { type ScheduledTask } from 'node-cron';
 import { config } from '../config.js';
 import { comoSistema, type Cliente } from '../db/contexto.js';
 import { firmarIdEnvio } from '../auth/tokens.js';
-import { enviarCorreo, escaparHtml, plantillaCorreo } from './correo.js';
+import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo } from './correo.js';
 
 /**
  * Correos del Observatorio. Hay dos tipos, separados y con su propio control en Mi perfil:
@@ -30,6 +30,7 @@ interface Novedad {
   tipo: 'Flash' | 'Faro' | 'Tendencia' | 'Evento' | 'Empresa';
   id: number;
   titulo: string;
+  imagen: string | null;
 }
 
 const RUTA_FRONTEND: Record<Novedad['tipo'], string> = {
@@ -57,19 +58,19 @@ async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Prom
                  where p.${columna} = ${alias}.${columna} and ui.id_usuario = $1))`;
 
   const { rows } = await c.query<Novedad>(
-    `select 'Flash' as tipo, f.id_fi as id, f.titulo from flash_informativo f
+    `select 'Flash' as tipo, f.id_fi as id, f.titulo, f.imagen from flash_informativo f
       where f.estado_fi = 'Activo' and f.fecha_creacion > $2 and ${coincide('flash_informativo_categoria', 'id_fi', 'f')}
      union all
-     select 'Faro', fe.id_fe, fe.titulo from faro_empresarial fe
+     select 'Faro', fe.id_fe, fe.titulo, fe.imagen from faro_empresarial fe
       where fe.estado_fe = 'Activo' and fe.fecha_creacion > $2 and ${coincide('faro_empresarial_categoria', 'id_fe', 'fe')}
      union all
-     select 'Tendencia', t.id_te, t.tendencia from tendencia_empresarial t
+     select 'Tendencia', t.id_te, t.tendencia, null from tendencia_empresarial t
       where t.estado_te = 'Activo' and t.fecha_creacion > $2 and ${coincide('tendencia_categoria', 'id_te', 't')}
      union all
-     select 'Evento', e.id_evento, e.titulo from calendario_eventos e
+     select 'Evento', e.id_evento, e.titulo, null from calendario_eventos e
       where e.fecha_creacion > $2
      union all
-     select 'Empresa', ec.id_ec, coalesce(ec.nombre_comercial, ec.razon_social) from empresa_coformadora ec
+     select 'Empresa', ec.id_ec, coalesce(ec.nombre_comercial, ec.razon_social), ec.imagen_portada from empresa_coformadora ec
       where ec.estado_ec = 'Activo' and ec.fecha_creacion > $2
      order by 1, 3
      limit 50`,
@@ -78,20 +79,47 @@ async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Prom
   return rows;
 }
 
+/** Las imágenes guardadas en el servidor (/uploads/...) necesitan la dirección completa en un correo. */
+function urlImagen(ruta: string | null): string | null {
+  if (!ruta) return null;
+  if (/^https:\/\//.test(ruta)) return ruta;
+  return ruta.startsWith('/') ? `${config.apiUrlPublica}${ruta}` : null;
+}
+
 function armarCorreo(nombre: string, novedades: Novedad[], idEnvio: number) {
   const enlace = (n: Novedad) => `${config.frontendUrl}/${RUTA_FRONTEND[n.tipo]}/${n.id}`;
   const pixel = `${config.apiUrlPublica}/api/alertas/abierto/${idEnvio}/${firmarIdEnvio(idEnvio)}`;
-  const items = novedades
-    .map((n) => `<li style="margin-bottom:8px"><span style="color:#777;font-size:12px">${ETIQUETA[n.tipo]}</span><br>
-       <a href="${escaparHtml(enlace(n))}" style="color:#1F3A68">${escaparHtml(n.titulo)}</a></li>`)
+  // Tarjetas agrupadas por módulo (las novedades ya vienen ordenadas por tipo).
+  const grupos = new Map<Novedad['tipo'], Novedad[]>();
+  for (const n of novedades) grupos.set(n.tipo, [...(grupos.get(n.tipo) ?? []), n]);
+  const tarjeta = (n: Novedad) => {
+    const url = escaparHtml(enlace(n));
+    const imagen = urlImagen(n.imagen);
+    return `<tr><td style="padding:0 0 12px">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e5e8ef;border-radius:10px;overflow:hidden"><tr>
+        ${imagen ? `<td width="112" valign="top" style="width:112px;padding:0"><a href="${url}"><img src="${escaparHtml(imagen)}" width="112" height="84" alt="" style="display:block;width:112px;height:84px;object-fit:cover;border:0"></a></td>` : ''}
+        <td valign="middle" style="padding:12px 16px">
+          <a href="${url}" style="font-size:15px;line-height:21px;font-weight:bold;color:#1F3A68;text-decoration:none">${escaparHtml(n.titulo)}</a><br>
+          <a href="${url}" style="font-size:13px;color:#C8102E;text-decoration:none">Ver más →</a>
+        </td></tr></table>
+    </td></tr>`;
+  };
+  const secciones = [...grupos]
+    .map(([tipo, lista]) => `<p style="margin:20px 0 10px;font-size:12px;font-weight:bold;letter-spacing:.06em;text-transform:uppercase;color:#6b7280">${ETIQUETA[tipo]}</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">${lista.map(tarjeta).join('')}</table>`)
     .join('');
   return {
     asunto: `Novedades del Observatorio Empresarial (${novedades.length})`,
     html: plantillaCorreo(
       'Nuevas publicaciones para ti',
-      `<p>Hola ${escaparHtml(nombre)}, esto es lo nuevo según tus intereses:</p><ul style="padding-left:18px">${items}</ul>
-       <p style="font-size:12px;color:#777">Puedes cambiar la frecuencia de este boletín o desactivarlo en Mi perfil.</p>`,
-      pixel,
+      `<p style="margin:0 0 4px">Hola ${escaparHtml(nombre)}, esto es lo nuevo en el Observatorio según tus intereses:</p>
+       ${secciones}
+       ${botonCorreo('Ver todo en el Observatorio', `${config.frontendUrl}/inicio`)}`,
+      {
+        pixelUrl: pixel,
+        motivo: 'Recibes este boletín porque tienes una cuenta en el Observatorio Empresarial. Puedes cambiar su frecuencia o desactivarlo en Mi perfil.',
+        resumen: `${novedades.length} ${novedades.length === 1 ? 'publicación nueva' : 'publicaciones nuevas'} para ti.`,
+      },
     ),
     texto: `Hola ${nombre}, esto es lo nuevo en el Observatorio Empresarial:\n\n${novedades
       .map((n) => `- ${ETIQUETA[n.tipo]}: ${n.titulo}\n  ${enlace(n)}`)
@@ -199,11 +227,15 @@ function armarRecordatorio(r: Recordatorio, idEnvio: number) {
     asunto: `Recordatorio: ${titulo}`,
     html: plantillaCorreo(
       r.aviso === 'Dia' ? 'Tu evento es hoy' : 'Tu evento es en una semana',
-      `<p>Hola ${escaparHtml(r.nombre_usuario)}, te recordamos un evento que guardaste en tus favoritos:</p>
-       <p style="font-size:16px;font-weight:bold;margin:12px 0 4px"><a href="${escaparHtml(enlace)}" style="color:#1F3A68">${escaparHtml(r.titulo)}</a></p>
-       <p style="margin:0;color:#555">${datos.map(escaparHtml).join('<br>')}</p>
-       <p style="font-size:12px;color:#777;margin-top:16px">Puedes desactivar los recordatorios de eventos en Mi perfil.</p>`,
-      pixel,
+      `<p style="margin:0 0 12px">Hola ${escaparHtml(r.nombre_usuario)}, te recordamos un evento que guardaste en tus favoritos:</p>
+       ${recuadroCorreo(`<span style="display:block;margin-bottom:6px;font-size:17px;line-height:24px;font-weight:bold;color:#1F3A68">${escaparHtml(r.titulo)}</span>
+         <strong>Fecha:</strong> ${escaparHtml(cuando)}${r.lugar ? `<br><strong>Lugar:</strong> ${escaparHtml(r.lugar)}` : ''}`)}
+       ${botonCorreo('Ver evento', enlace)}`,
+      {
+        pixelUrl: pixel,
+        motivo: 'Recibes este recordatorio porque guardaste este evento en tus favoritos. Puedes desactivar los recordatorios en Mi perfil.',
+        resumen: `${r.aviso === 'Dia' ? 'Hoy' : 'En una semana'}: ${r.titulo}`,
+      },
     ),
     texto: `Hola ${r.nombre_usuario}, te recordamos un evento que guardaste en tus favoritos:\n\n${r.titulo}\n${datos.join('\n')}\n${enlace}\n\nPuedes desactivar los recordatorios de eventos en Mi perfil.`,
   };

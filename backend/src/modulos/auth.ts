@@ -8,7 +8,7 @@ import { ErrorApi, noAutenticado } from '../errores.js';
 import {
   NOMBRE_COOKIE, firmarToken, generarCodigoRecuperacion, huellaCodigo, opcionesCookie,
 } from '../auth/tokens.js';
-import { enviarCorreo, escaparHtml, plantillaCorreo } from '../servicios/correo.js';
+import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo } from '../servicios/correo.js';
 import { FRECUENCIAS_ALERTA, contrasena, correo, listaIds, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
 import { nombreRolCanonico, nombreRolPrincipal, type Sesion } from '../auth/roles.js';
 import { nombresDeRolesValidos, requiereSesion } from '../middlewares/sesion.js';
@@ -216,10 +216,15 @@ rutasAuth.post('/recuperar', limiteIntentos, async (req, res) => {
         texto: `Hola ${envio.nombre_usuario}:\n\nPara crear una nueva contraseña abre este enlace (vence en ${VIGENCIA_CODIGO_MINUTOS} minutos):\n${enlace}\n\nSi no lo solicitaste, ignora este correo.`,
         html: plantillaCorreo(
           'Restablece tu contraseña',
-          `<p>Hola ${escaparHtml(envio.nombre_usuario)}:</p>
-           <p>Recibimos una solicitud para restablecer tu contraseña. El enlace vence en ${VIGENCIA_CODIGO_MINUTOS} minutos.</p>
-           <p><a href="${escaparHtml(enlace)}" style="background:#C8102E;color:#fff;padding:10px 18px;border-radius:20px;text-decoration:none">Crear nueva contraseña</a></p>
-           <p style="font-size:12px;color:#777">Si no lo solicitaste, ignora este correo.</p>`,
+          `<p style="margin:0 0 12px">Hola ${escaparHtml(envio.nombre_usuario)}:</p>
+           <p style="margin:0 0 12px">Recibimos una solicitud para restablecer la contraseña de tu cuenta del Observatorio Empresarial.</p>
+           ${recuadroCorreo(`<strong>Vigencia:</strong> el enlace vence en ${VIGENCIA_CODIGO_MINUTOS} minutos y solo se puede usar una vez.`)}
+           ${botonCorreo('Crear nueva contraseña', enlace)}
+           <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Si no lo solicitaste, ignora este correo: tu contraseña actual sigue funcionando.</p>`,
+          {
+            motivo: 'Recibes este correo porque se pidió restablecer la contraseña de tu cuenta en el Observatorio Empresarial.',
+            resumen: 'Crea una nueva contraseña para tu cuenta.',
+          },
         ),
       });
     } catch (error) {
