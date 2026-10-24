@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { mensajeDeError } from '../../api/cliente';
@@ -25,6 +26,7 @@ import { costo, fechaLarga, modalidadTexto } from '../../utilidades/formato';
 import { DetalleFlash } from './DetalleFlash';
 import { FormularioFlash } from './FormularioFlash';
 import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
+import { BOTON_ACCEDER, clicTarjeta, FLECHA_ACCEDER, FOTO_INTERACTIVA, TARJETA_INTERACTIVA } from '../../componentes/ui/tarjetaInteractiva';
 
 /** Fondo e ilustración de cada tarjeta (los 6 estilos del Figma, en rotación). */
 const ESTILOS_TARJETA = [
@@ -56,11 +58,11 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
   const estilo = ESTILOS_TARJETA[indice % ESTILOS_TARJETA.length]!;
   const gratuito = flash.es_gratuito || !flash.costo;
   return (
-    <article className="flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta">
-      <div className={`relative grid h-[104px] shrink-0 place-items-center ${estilo.fondo}`}>
+    <article onClick={clicTarjeta(onAbrir)} className={`flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta ${TARJETA_INTERACTIVA}`}>
+      <div className={`relative grid h-[104px] shrink-0 place-items-center overflow-hidden ${estilo.fondo}`}>
         <FotoRegistro
           src={imagenFlash(flash)}
-          className="absolute inset-0 size-full object-cover"
+          className={`absolute inset-0 size-full object-cover ${FOTO_INTERACTIVA}`}
           respaldo={<img src={estilo.icono} alt="" aria-hidden width={46} height={46} />}
         />
         <Insignia tono={tonoModalidad(flash.modalidad)} className="absolute left-3 top-3">
@@ -90,9 +92,10 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
             {gratuito ? 'GRATUITO' : costo(flash.costo, false)}
           </DatoTarjeta>
         </ul>
-        <button type="button" onClick={onAbrir} className="cursor-pointer rounded-md bg-rojo py-2.5 text-small font-bold uppercase text-white hover:bg-[#c2002e]">
+        <button type="button" onClick={onAbrir} className={BOTON_ACCEDER}>
           Acceder
           <span className="sr-only">: {flash.titulo}</span>
+          <ArrowRight className={FLECHA_ACCEDER} aria-hidden />
         </button>
       </div>
     </article>
