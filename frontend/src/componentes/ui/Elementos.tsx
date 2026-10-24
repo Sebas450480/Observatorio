@@ -129,6 +129,59 @@ export function Paginacion({ pagina, paginas, onCambiar }: { pagina: number; pag
   );
 }
 
+/** Tamaños de página de las tablas: de 15 (el mínimo) a 100 registros. */
+export const TAMANOS_TABLA = [15, 25, 50, 100] as const;
+export type TamanoTabla = (typeof TAMANOS_TABLA)[number];
+
+/**
+ * Pie de las tablas: cuántos registros se muestran (15, 25, 50 o 100), el rango visible
+ * y, cuando hay más registros que el tamaño elegido, las páginas para pasar a los siguientes.
+ */
+export function PieTabla({
+  pagina,
+  paginas,
+  total,
+  tamano,
+  onCambiarPagina,
+  onCambiarTamano,
+}: {
+  pagina: number;
+  paginas: number;
+  total: number;
+  tamano: TamanoTabla;
+  onCambiarPagina: (p: number) => void;
+  /** Al cambiar el tamaño se vuelve a la primera página. */
+  onCambiarTamano: (t: TamanoTabla) => void;
+}) {
+  const desde = total ? (pagina - 1) * tamano + 1 : 0;
+  const hasta = Math.min(pagina * tamano, total);
+  return (
+    <div className="mt-5 flex flex-col items-center gap-3">
+      <div className="flex w-full flex-wrap items-center justify-between gap-3 text-small text-texto-suave">
+        <label className="flex items-center gap-2">
+          Mostrar
+          <select
+            value={tamano}
+            onChange={(e) => onCambiarTamano(Number(e.target.value) as TamanoTabla)}
+            className="h-9 cursor-pointer rounded-control border border-[#d1d9e3] bg-white px-2 font-semibold text-azul-marino focus:border-azul-oscuro focus:outline-none"
+          >
+            {TAMANOS_TABLA.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          registros
+        </label>
+        <span aria-live="polite">
+          {total ? `Mostrando ${desde}–${hasta} de ${total}` : 'Sin registros'}
+        </span>
+      </div>
+      <Paginacion pagina={pagina} paginas={paginas} onCambiar={onCambiarPagina} />
+    </div>
+  );
+}
+
 export function Cargando({ texto = 'Cargando...' }: { texto?: string }) {
   return (
     <div role="status" className="flex items-center justify-center gap-2 py-16 text-texto-suave">
