@@ -49,6 +49,9 @@ const ETIQUETA: Record<Novedad['tipo'], string> = {
   Empresa: 'Nueva empresa coformadora',
 };
 
+/** Fotos de ejemplo (las mismas de la plataforma) para los registros sin imagen. */
+const EJEMPLOS = 'https://brobinraqmjepzqnumrq.supabase.co/storage/v1/object/public/imagenes/ejemplos';
+
 /** Contenidos activos publicados después de `desde` que le interesan al usuario. */
 async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Promise<Novedad[]> {
   // Coincide con los intereses del usuario, o con todo si no marcó intereses.
@@ -58,10 +61,10 @@ async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Prom
                  where p.${columna} = ${alias}.${columna} and ui.id_usuario = $1))`;
 
   const { rows } = await c.query<Novedad>(
-    `select 'Flash' as tipo, f.id_fi as id, f.titulo, f.imagen from flash_informativo f
+    `select 'Flash' as tipo, f.id_fi as id, f.titulo, coalesce(f.imagen, '${EJEMPLOS}/flash-' || lower(f.tipo_evento::text) || '.jpg') as imagen from flash_informativo f
       where f.estado_fi = 'Activo' and f.fecha_creacion > $2 and ${coincide('flash_informativo_categoria', 'id_fi', 'f')}
      union all
-     select 'Faro', fe.id_fe, fe.titulo, fe.imagen from faro_empresarial fe
+     select 'Faro', fe.id_fe, fe.titulo, coalesce(fe.imagen, '${EJEMPLOS}/faro-' || lower(fe.tipo::text) || '.jpg') from faro_empresarial fe
       where fe.estado_fe = 'Activo' and fe.fecha_creacion > $2 and ${coincide('faro_empresarial_categoria', 'id_fe', 'fe')}
      union all
      select 'Tendencia', t.id_te, t.tendencia, null from tendencia_empresarial t
@@ -70,7 +73,7 @@ async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Prom
      select 'Evento', e.id_evento, e.titulo, null from calendario_eventos e
       where e.fecha_creacion > $2
      union all
-     select 'Empresa', ec.id_ec, coalesce(ec.nombre_comercial, ec.razon_social), ec.imagen_portada from empresa_coformadora ec
+     select 'Empresa', ec.id_ec, coalesce(ec.nombre_comercial, ec.razon_social), coalesce(ec.imagen_portada, '${EJEMPLOS}/empresa-general.jpg') from empresa_coformadora ec
       where ec.estado_ec = 'Activo' and ec.fecha_creacion > $2
      order by 1, 3
      limit 50`,

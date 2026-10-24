@@ -42,6 +42,18 @@ export function useEliminar(ruta: string) {
   });
 }
 
+export type AccionLote = 'eliminar' | 'activar' | 'desactivar';
+
+/** Eliminar, activar o desactivar varios registros a la vez (selección de la tabla). */
+export function useAccionLote(ruta: string) {
+  const cliente = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, accion }: { ids: number[]; accion: AccionLote }) =>
+      api<{ afectados: number }>(`${ruta}/lote`, { metodo: 'POST', cuerpo: { ids, accion } }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: [ruta] }),
+  });
+}
+
 /** Sube una imagen JPG/PNG a un campo (imagen, logo_ec, imagen_portada). */
 export function useSubirImagen(ruta: string) {
   const cliente = useQueryClient();

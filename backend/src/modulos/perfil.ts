@@ -5,7 +5,7 @@ import { config } from '../config.js';
 import { conRol } from '../db/contexto.js';
 import { ErrorApi } from '../errores.js';
 import { requiereSesion } from '../middlewares/sesion.js';
-import { NOMBRE_COOKIE, firmarToken, opcionesCookie } from '../auth/tokens.js';
+import { guardarSesion } from '../auth/tokens.js';
 import { FRECUENCIAS_ALERTA, contrasena, correo, listaIds, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
 import { obtenerPerfil } from './auth.js';
 
@@ -76,6 +76,6 @@ rutasPerfil.put('/contrasena', async (req, res) => {
   });
 
   // Las demás sesiones abiertas quedan cerradas; esta recibe un token nuevo.
-  res.cookie(NOMBRE_COOKIE, firmarToken(req.sesion.idUsuario!, { rol: req.sesion.rolActivo, recordar: req.sesion.recordar }), opcionesCookie());
+  guardarSesion(res, req.sesion.idUsuario!, { rol: req.sesion.rolActivo, recordar: req.sesion.recordar });
   res.json({ mensaje: 'Contraseña actualizada' });
 });

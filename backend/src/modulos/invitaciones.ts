@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { config } from '../config.js';
 import { conAutenticacion, conRol } from '../db/contexto.js';
 import { ErrorApi } from '../errores.js';
-import { NOMBRE_COOKIE, firmarToken, generarCodigoRecuperacion, huellaCodigo, opcionesCookie } from '../auth/tokens.js';
+import { generarCodigoRecuperacion, guardarSesion, huellaCodigo } from '../auth/tokens.js';
 import { requiereRol } from '../middlewares/sesion.js';
 import type { Sesion } from '../auth/roles.js';
 import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo } from '../servicios/correo.js';
@@ -293,7 +293,7 @@ rutasInvitaciones.post('/completar', limiteIntentos, async (req, res) => {
     return { idUsuario, idEc };
   });
 
-  res.cookie(NOMBRE_COOKIE, firmarToken(resultado.idUsuario), opcionesCookie());
+  guardarSesion(res, resultado.idUsuario);
   res.status(201).json({ id_ec: resultado.idEc, usuario: await perfilPorId(resultado.idUsuario) });
 });
 

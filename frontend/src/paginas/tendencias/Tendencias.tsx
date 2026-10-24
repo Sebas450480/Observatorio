@@ -25,6 +25,7 @@ import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 import { DetalleTendencia } from './DetalleTendencia';
 import { FormularioTendencia } from './FormularioTendencia';
 import { MapaTendencias } from './MapaTendencias';
+import { CasillaFila, CasillaTodos, MenuAcciones, useSeleccion, type Seleccion } from '../../componentes/contenido/AccionesLote';
 
 type VistaLista = 'tarjetas' | 'compactas' | 'tabla';
 
@@ -100,12 +101,15 @@ function TablaTendencias({
   onEditar,
   orden,
   onOrdenar,
+  seleccion,
 }: {
   datos: Tendencia[];
   onAbrir: (id: number) => void;
   onEditar?: (t: Tendencia) => void;
   orden: Orden;
   onOrdenar: (orden: Orden) => void;
+  /** Selección múltiple (solo gestores). */
+  seleccion?: Seleccion;
 }) {
   const { usuario } = useSesion();
   const columnas: { titulo: string; ancho: number; orden?: string }[] = [
@@ -121,6 +125,11 @@ function TablaTendencias({
       <ul className="flex flex-col gap-3 xl:hidden">
         {datos.map((t) => (
           <li key={t.id_te} className="flex items-start gap-3 rounded-2xl border-2 border-black/10 bg-[#fdfdfc] p-3.5 sm:gap-4 sm:px-5">
+            {seleccion && (
+              <span className="pt-1">
+                <CasillaFila seleccion={seleccion} id={t.id_te} nombre={t.tendencia} />
+              </span>
+            )}
             <button type="button" onClick={() => onAbrir(t.id_te)} className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 text-left">
               <span className="truncate text-caption font-bold text-azul-titulo">{t.megatendencia}</span>
               <span className="text-body font-bold leading-[1.2] text-black">{t.tendencia}</span>
@@ -150,18 +159,24 @@ function TablaTendencias({
       <div className="hidden overflow-x-auto xl:block">
         <table className="w-full min-w-[1100px] table-fixed border-separate border-spacing-0 text-body">
           <colgroup>
+            {seleccion && <col style={{ width: 48 }} />}
             {columnas.map((c) => (
               <col key={c.titulo} style={{ width: c.ancho }} />
             ))}
           </colgroup>
           <thead>
             <tr>
+              {seleccion && (
+                <th scope="col" className="h-10 border-y-2 border-l-2 border-black/10 bg-black/10 text-center">
+                  <CasillaTodos seleccion={seleccion} pagina={datos.map((t) => ({ id: t.id_te, nombre: t.tendencia }))} />
+                </th>
+              )}
               {columnas.map((c, i) => (
                 <th
                   key={c.titulo}
                   scope="col"
                   aria-sort={c.orden ? ariaOrden(orden, c.orden) : undefined}
-                  className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2' : ''} ${i === columnas.length - 1 ? 'border-r-2' : ''}`}
+                  className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 && !seleccion ? 'border-l-2' : ''} ${i === columnas.length - 1 ? 'border-r-2' : ''}`}
                 >
                   {c.orden ? <BotonOrden titulo={c.titulo} campo={c.orden} orden={orden} onOrdenar={onOrdenar} /> : c.titulo}
                 </th>
@@ -170,7 +185,12 @@ function TablaTendencias({
           </thead>
           <tbody className="bg-[#fdfdfc] [&_td:first-child]:border-l-2 [&_td:last-child]:border-r-2 [&_td]:border-black/10 [&_tr:last-child_td]:border-b-2">
             {datos.map((t) => (
-              <tr key={t.id_te} className="hover:bg-fondo">
+              <tr key={t.id_te} className={seleccion?.tiene(t.id_te) ? 'bg-[#eef3ff]' : 'hover:bg-fondo'}>
+                {seleccion && (
+                  <td className="h-10 text-center">
+                    <CasillaFila seleccion={seleccion} id={t.id_te} nombre={t.tendencia} />
+                  </td>
+                )}
                 <td className={tenue}>{t.id_te}</td>
                 <td className={`${celda} font-bold text-azul-titulo`}>{t.megatendencia}</td>
                 <td className="h-10 px-1 text-center font-bold leading-[1.1] text-black">
@@ -255,6 +275,7 @@ export function Tendencias() {
     estado: filtros.estado || undefined,
   };
   const [tamano, setTamano] = useState<TamanoTabla>(15);
+  const seleccion = useSeleccion();
   const limite = vista === 'tabla' ? tamano : vista === 'compactas' ? 12 : 8;
   const { data, isLoading, error, refetch } = useListado<Tendencia>('/tendencias', {
     ...consulta,
@@ -337,6 +358,7 @@ export function Tendencias() {
             onLimpiar={() => quitarFiltro()}
             acciones={
               <>
+                {gestiona && vista === 'tabla' && <MenuAcciones seleccion={seleccion} ruta="/tendencias" plural="tendencias" />}
                 {gestiona && (
                   <button
                     type="button"
@@ -419,6 +441,7 @@ export function Tendencias() {
                   datos={data.datos}
                   onAbrir={abrir}
                   onEditar={gestiona ? (t) => setFormulario({ registro: t }) : undefined}
+                  seleccion={gestiona ? seleccion : undefined}
                   orden={orden}
                   onOrdenar={(o) => {
                     setOrden(o);
