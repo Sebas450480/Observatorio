@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { mensajeDeError } from '../../api/cliente';
@@ -23,6 +24,7 @@ import { DatoTarjeta } from '../flash/FlashInformativo';
 import { DetalleFaro } from './DetalleFaro';
 import { FormularioFaro } from './FormularioFaro';
 import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
+import { BOTON_ACCEDER, clicTarjeta, FLECHA_ACCEDER, FOTO_INTERACTIVA, TARJETA_INTERACTIVA } from '../../componentes/ui/tarjetaInteractiva';
 
 /** Estilo de cada tipo de registro (Figma: Beca verde, Convocatoria azul, Curso morado). */
 export const ESTILO_TIPO: Record<TipoFaro, { singular: string; tono: 'verde' | 'azul' | 'morado' | 'naranja'; fondo: string; icono: string }> = {
@@ -44,11 +46,11 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
   const estilo = ESTILO_TIPO[faro.tipo];
   const valor = faro.es_gratuito || faro.costo ? costo(faro.costo, faro.es_gratuito) : [modalidadTexto(faro.modalidad), faro.duracion].filter(Boolean).join(' · ');
   return (
-    <article className="flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta">
-      <div className={`relative grid h-[104px] shrink-0 place-items-center ${estilo.fondo}`}>
+    <article onClick={clicTarjeta(onAbrir)} className={`flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta ${TARJETA_INTERACTIVA}`}>
+      <div className={`relative grid h-[104px] shrink-0 place-items-center overflow-hidden ${estilo.fondo}`}>
         <FotoRegistro
           src={imagenFaro(faro)}
-          className="absolute inset-0 size-full object-cover"
+          className={`absolute inset-0 size-full object-cover ${FOTO_INTERACTIVA}`}
           respaldo={<img src={estilo.icono} alt="" aria-hidden width={46} height={46} />}
         />
         <Insignia tono={estilo.tono} className="absolute left-3 top-3">
@@ -80,8 +82,9 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
             </DatoTarjeta>
           )}
         </ul>
-        <button type="button" onClick={onAbrir} className="cursor-pointer rounded-md bg-rojo py-2.5 text-small font-bold uppercase text-white hover:bg-[#c2002e]">
+        <button type="button" onClick={onAbrir} className={BOTON_ACCEDER}>
           Acceder<span className="sr-only">: {faro.titulo}</span>
+          <ArrowRight className={FLECHA_ACCEDER} aria-hidden />
         </button>
       </div>
     </article>

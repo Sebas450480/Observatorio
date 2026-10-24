@@ -26,6 +26,7 @@ import { DetalleTendencia } from './DetalleTendencia';
 import { FormularioTendencia } from './FormularioTendencia';
 import { MapaTendencias } from './MapaTendencias';
 import { CasillaFila, CasillaTodos, MenuAcciones, useSeleccion, type Seleccion } from '../../componentes/contenido/AccionesLote';
+import { TARJETA_INTERACTIVA } from '../../componentes/ui/tarjetaInteractiva';
 
 type VistaLista = 'tarjetas' | 'compactas' | 'tabla';
 
@@ -56,7 +57,7 @@ function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void })
       <button
         type="button"
         onClick={onAbrir}
-        className="flex w-full min-w-0 cursor-pointer flex-col gap-3 rounded-[20px] border-2 border-black/10 bg-white pb-[21px] pl-[23px] pr-[31px] pt-[26px] text-left transition-shadow hover:shadow-menu"
+        className={`flex w-full min-w-0 flex-col gap-3 rounded-[20px] border-2 border-black/10 bg-white pb-[21px] pl-[23px] pr-[31px] pt-[26px] text-left ${TARJETA_INTERACTIVA}`}
       >
         <span className="flex items-center justify-between gap-2 pr-8">
           <EtiquetaMega>{t.megatendencia}</EtiquetaMega>
