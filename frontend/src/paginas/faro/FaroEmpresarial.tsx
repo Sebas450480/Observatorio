@@ -15,7 +15,8 @@ import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, FotoRegistro, Insignia, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { imagenFaro } from '../../utilidades/imagenesEjemplo';
 import { useSesion } from '../../sesion/sesion';
 import { costo, fechaMedia, modalidadTexto } from '../../utilidades/formato';
 import { DatoTarjeta } from '../flash/FlashInformativo';
@@ -44,12 +45,12 @@ function TarjetaFaro({ faro, onAbrir }: { faro: Faro; onAbrir: () => void }) {
   const valor = faro.es_gratuito || faro.costo ? costo(faro.costo, faro.es_gratuito) : [modalidadTexto(faro.modalidad), faro.duracion].filter(Boolean).join(' · ');
   return (
     <article className="flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta">
-      <div className={`relative grid h-[104px] shrink-0 place-items-center ${faro.imagen ? '' : estilo.fondo}`}>
-        {faro.imagen ? (
-          <img src={faro.imagen} alt="" className="absolute inset-0 size-full object-cover" />
-        ) : (
-          <img src={estilo.icono} alt="" aria-hidden width={46} height={46} />
-        )}
+      <div className={`relative grid h-[104px] shrink-0 place-items-center ${estilo.fondo}`}>
+        <FotoRegistro
+          src={imagenFaro(faro)}
+          className="absolute inset-0 size-full object-cover"
+          respaldo={<img src={estilo.icono} alt="" aria-hidden width={46} height={46} />}
+        />
         <Insignia tono={estilo.tono} className="absolute left-3 top-3">
           {estilo.singular}
         </Insignia>

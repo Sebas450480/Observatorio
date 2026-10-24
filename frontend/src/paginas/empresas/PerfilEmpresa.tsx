@@ -127,9 +127,14 @@ export function PerfilEmpresa() {
   return (
     <>
       <Migas actual="Ver perfil" />
-      {/* La portada va aparte; debajo, todo el perfil en un solo marco. */}
-      <Portada empresa={empresa} className="h-[160px] w-full rounded-2xl border border-[#e2e8f0] sm:h-[220px]" />
-      <section className={`mt-6 overflow-hidden ${TARJETA}`}>
+      {/* Franja azul con la foto de la empresa en un círculo que sobresale; debajo, todo el perfil en un solo marco. */}
+      <div className="relative h-[120px] rounded-2xl bg-gradient-to-br from-azul-oscuro to-azul-marino sm:h-[150px]">
+        <span aria-hidden className="absolute bottom-0 left-0 h-1 w-24 rounded-xs bg-rojo" />
+        <div className="absolute -bottom-12 left-5 size-24 overflow-hidden rounded-full border-4 border-white bg-[#e3e8f4] shadow-tarjeta sm:-bottom-14 sm:left-8 sm:size-28">
+          <Portada empresa={empresa} className="size-full" />
+        </div>
+      </div>
+      <section className={`mt-16 overflow-hidden sm:mt-[72px] ${TARJETA}`}>
         <div className="flex flex-col gap-5 px-5 py-6 sm:px-8 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex items-start gap-6">
             {empresa.logo_ec && <img src={empresa.logo_ec} alt={`Logo de ${nombre}`} className="size-16 rounded-lg border border-borde bg-white object-contain p-1" />}

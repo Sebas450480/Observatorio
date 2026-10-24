@@ -11,7 +11,8 @@ import type { Empresa } from '../../api/tipos';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, FotoRegistro, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { imagenEmpresa } from '../../utilidades/imagenesEjemplo';
 import { useSesion } from '../../sesion/sesion';
 import { DEPARTAMENTOS } from '../../utilidades/colombia';
 import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
@@ -33,17 +34,18 @@ export function nombreEmpresa(e: Pick<Empresa, 'nombre_comercial' | 'razon_socia
   return e.razon_social || e.nombre_comercial || '';
 }
 
-/** Portada de la empresa o, si no tiene, un fondo con su logo o ícono. */
+/** Portada de la empresa o, si no tiene, la foto de ejemplo de su sector. */
 export function Portada({ empresa, className = '' }: { empresa: Empresa; className?: string }) {
-  if (empresa.imagen_portada) return <img src={empresa.imagen_portada} alt="" className={`object-cover ${className}`} />;
   return (
-    <div className={`grid place-items-center bg-gradient-to-br from-[#e3e8f4] to-[#c9d3ec] ${className}`}>
-      {empresa.logo_ec ? (
-        <img src={empresa.logo_ec} alt="" className="max-h-[60%] max-w-[60%] object-contain" />
-      ) : (
-        <Building2 className="size-12 text-azul-titulo/30" aria-hidden />
-      )}
-    </div>
+    <FotoRegistro
+      src={imagenEmpresa(empresa)}
+      className={`object-cover ${className}`}
+      respaldo={
+        <div className={`grid place-items-center bg-gradient-to-br from-[#e3e8f4] to-[#c9d3ec] ${className}`}>
+          <Building2 className="size-12 text-azul-titulo/30" aria-hidden />
+        </div>
+      }
+    />
   );
 }
 

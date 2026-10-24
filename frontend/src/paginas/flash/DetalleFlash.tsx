@@ -11,6 +11,7 @@ import { Modal } from '../../componentes/ui/Modal';
 import { costo, fechaLarga, modalidadTexto, nombreTipoEvento, rangoHoras, vinetas } from '../../utilidades/formato';
 import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
+import { imagenFlash } from '../../utilidades/imagenesEjemplo';
 
 /** Modal de detalle de un Flash (Figma: "Modal — Detalle Congreso"). */
 export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar: () => void; onEditar?: (f: Flash) => void }) {
@@ -29,6 +30,7 @@ export function DetalleFlash({ id, onCerrar, onEditar }: { id: number; onCerrar:
       ancho={700}
       destacado
       claseCuerpo={CUERPO_DETALLE}
+      imagenFondo={flash ? imagenFlash(flash) : undefined}
       titulo={<span className="uppercase">{flash?.titulo ?? 'Flash Informativo'}</span>}
       accion={
         flash && (
