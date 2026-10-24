@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { ErrorApi, api, mensajeDeError, urlDescarga } from '../../api/cliente';
 import { Boton } from '../ui/Boton';
 import { Modal } from '../ui/Modal';
+import { PieTabla, type TamanoTabla } from '../ui/Elementos';
 
 const MAXIMO = 50;
 
@@ -76,6 +77,8 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conIm
   const entrada = useRef<HTMLInputElement>(null);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [revision, setRevision] = useState<Revision | null>(null);
+  const [paginaErrores, setPaginaErrores] = useState(1);
+  const [tamanoErrores, setTamanoErrores] = useState<TamanoTabla>(15);
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [trabajando, setTrabajando] = useState(false);
@@ -114,6 +117,7 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conIm
   const revisar = async (elegido: File) => {
     setArchivo(elegido);
     setRevision(null);
+    setPaginaErrores(1);
     setError(null);
     setTrabajando(true);
     try {
@@ -261,7 +265,7 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conIm
                       </tr>
                     </thead>
                     <tbody>
-                      {revision.errores.map((e, i) => (
+                      {revision.errores.slice((paginaErrores - 1) * tamanoErrores, paginaErrores * tamanoErrores).map((e, i) => (
                         <tr key={`${e.fila}-${e.columna ?? ''}-${i}`} className="border-t border-[#f8dde2]">
                           <td className="px-3 py-1.5 font-semibold">{e.fila}</td>
                           <td className="px-3 py-1.5">{e.columna ?? '—'}</td>
@@ -271,6 +275,19 @@ function ModalCargaMasiva({ ruta, modulo, refrescar = [], conInvitaciones, conIm
                     </tbody>
                   </table>
                 </div>
+              )}
+              {!listo && (
+                <PieTabla
+                  pagina={paginaErrores}
+                  paginas={Math.max(1, Math.ceil(revision.errores.length / tamanoErrores))}
+                  total={revision.errores.length}
+                  tamano={tamanoErrores}
+                  onCambiarPagina={setPaginaErrores}
+                  onCambiarTamano={(t) => {
+                    setTamanoErrores(t);
+                    setPaginaErrores(1);
+                  }}
+                />
               )}
               {listo && (
                 <ul className="max-h-56 overflow-auto rounded-lg border border-[#e2e8f0] text-caption">

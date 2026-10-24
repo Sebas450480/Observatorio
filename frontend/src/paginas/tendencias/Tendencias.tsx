@@ -17,7 +17,7 @@ import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion, PieTabla, type TamanoTabla } from '../../componentes/ui/Elementos';
 import { BotonOrden, ariaOrden, consultaOrden, type Orden } from '../../componentes/ui/Orden';
 import { useSesion } from '../../sesion/sesion';
 import { fechaCorta, numero } from '../../utilidades/formato';
@@ -254,7 +254,8 @@ export function Tendencias() {
     desde: filtros.dias ? hace(Number(filtros.dias)) : undefined,
     estado: filtros.estado || undefined,
   };
-  const limite = vista === 'tabla' ? 15 : vista === 'compactas' ? 12 : 8;
+  const [tamano, setTamano] = useState<TamanoTabla>(15);
+  const limite = vista === 'tabla' ? tamano : vista === 'compactas' ? 12 : 8;
   const { data, isLoading, error, refetch } = useListado<Tendencia>('/tendencias', {
     ...consulta,
     ...(vista === 'tabla' ? consultaOrden(orden) : {}),
@@ -431,7 +432,21 @@ export function Tendencias() {
                   ))}
                 </div>
               )}
-              <Paginacion pagina={data.pagina} paginas={data.paginas} onCambiar={setPagina} />
+              {vista === 'tabla' ? (
+                <PieTabla
+                  pagina={data.pagina}
+                  paginas={data.paginas}
+                  total={data.total}
+                  tamano={tamano}
+                  onCambiarPagina={setPagina}
+                  onCambiarTamano={(t) => {
+                    setTamano(t);
+                    setPagina(1);
+                  }}
+                />
+              ) : (
+                <Paginacion pagina={data.pagina} paginas={data.paginas} onCambiar={setPagina} />
+              )}
             </>
           )}
         </>
