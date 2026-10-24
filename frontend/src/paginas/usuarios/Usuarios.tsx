@@ -12,7 +12,7 @@ import { BarraFiltros, contarActivos } from '../../componentes/contenido/Control
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { Boton } from '../../componentes/ui/Boton';
 import { Casilla, Entrada, Filtro, Selector } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, PieTabla, type TamanoTabla } from '../../componentes/ui/Elementos';
 import { BotonOrden, ariaOrden, consultaOrden, type Orden } from '../../componentes/ui/Orden';
 import { SUPER_ADMIN, descripcionRol, descripcionRoles, mismoRol, rolesDe, useSesion } from '../../sesion/sesion';
 import { esquemaContrasena as reglaContrasena } from '../../utilidades/contrasena';
@@ -162,6 +162,7 @@ export function Usuarios() {
   const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
+  const [tamano, setTamano] = useState<TamanoTabla>(15);
   const [formulario, setFormulario] = useState<{ registro?: Perfil } | null>(null);
   const [orden, setOrden] = useState<Orden>(null);
   const { data, isLoading, error, refetch } = useListado<Perfil>('/usuarios', {
@@ -170,7 +171,7 @@ export function Usuarios() {
     id_rol: filtros.id_rol || undefined,
     estado: filtros.estado || undefined,
     pagina,
-    limite: 15,
+    limite: tamano,
   });
 
   const buscar = () => {
@@ -356,7 +357,17 @@ export function Usuarios() {
               </tbody>
             </table>
           </div>
-          <Paginacion pagina={data.pagina} paginas={data.paginas} onCambiar={setPagina} />
+          <PieTabla
+            pagina={data.pagina}
+            paginas={data.paginas}
+            total={data.total}
+            tamano={tamano}
+            onCambiarPagina={setPagina}
+            onCambiarTamano={(t) => {
+              setTamano(t);
+              setPagina(1);
+            }}
+          />
         </>
       )}
       {formulario && <FormularioUsuario registro={formulario.registro} onCerrar={() => setFormulario(null)} />}
