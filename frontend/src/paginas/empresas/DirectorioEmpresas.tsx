@@ -16,6 +16,7 @@ import { imagenEmpresa } from '../../utilidades/imagenesEjemplo';
 import { useSesion } from '../../sesion/sesion';
 import { DEPARTAMENTOS } from '../../utilidades/colombia';
 import { CargaMasiva } from '../../componentes/contenido/CargaMasiva';
+import { FOTO_INTERACTIVA, TARJETA_INTERACTIVA } from '../../componentes/ui/tarjetaInteractiva';
 
 export interface ResumenEmpresas {
   total: number;
@@ -55,10 +56,10 @@ function TarjetaEmpresa({ empresa }: { empresa: Empresa }) {
     <div className="relative">
       <Link
         to={`/empresas/${empresa.id_ec}`}
-        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.02)] transition-shadow hover:shadow-menu focus-visible:outline-2 focus-visible:outline-azul-oscuro"
+        className={`flex h-full flex-col overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.02)] focus-visible:outline-2 focus-visible:outline-azul-oscuro ${TARJETA_INTERACTIVA}`}
       >
-        <div className="relative">
-          <Portada empresa={empresa} className="h-[130px] w-full" />
+        <div className="relative overflow-hidden">
+          <Portada empresa={empresa} className={`h-[130px] w-full ${FOTO_INTERACTIVA}`} />
           {empresa.estado_ec === 'Inactivo' && (
             <span className="absolute bottom-3 right-3 rounded-md bg-white/90 px-2 py-1 text-[12px] font-bold text-texto-suave">INACTIVA</span>
           )}
