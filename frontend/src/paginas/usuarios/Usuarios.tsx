@@ -16,6 +16,7 @@ import { Cargando, EncabezadoPagina, EstadoVacio, MensajeError, PieTabla, type T
 import { BotonOrden, ariaOrden, consultaOrden, type Orden } from '../../componentes/ui/Orden';
 import { SUPER_ADMIN, descripcionRol, descripcionRoles, mismoRol, rolesDe, useSesion } from '../../sesion/sesion';
 import { esquemaContrasena as reglaContrasena } from '../../utilidades/contrasena';
+import { CasillaFila, CasillaTodos, MenuAcciones, useSeleccion } from '../../componentes/contenido/AccionesLote';
 
 const esSuperAdminDe = (perfil?: Pick<Perfil, 'nombre_rol' | 'roles'> | null) => rolesDe(perfil).some((r) => mismoRol(r, SUPER_ADMIN));
 
@@ -163,6 +164,7 @@ export function Usuarios() {
   const [filtros, setFiltros] = useState(borrador);
   const [pagina, setPagina] = useState(1);
   const [tamano, setTamano] = useState<TamanoTabla>(15);
+  const seleccion = useSeleccion();
   const [formulario, setFormulario] = useState<{ registro?: Perfil } | null>(null);
   const [orden, setOrden] = useState<Orden>(null);
   const { data, isLoading, error, refetch } = useListado<Perfil>('/usuarios', {
@@ -218,9 +220,16 @@ export function Usuarios() {
           </form>
         }
         acciones={
-          <Boton pildora className="px-5! font-semibold" onClick={() => setFormulario({})}>
-            Crear usuario
-          </Boton>
+          <>
+            <MenuAcciones
+              seleccion={seleccion}
+              ruta="/usuarios"
+              plural="usuarios"
+            />
+            <Boton pildora className="px-5! font-semibold" onClick={() => setFormulario({})}>
+              Crear usuario
+            </Boton>
+          </>
         }
       >
         <Filtro
@@ -253,6 +262,7 @@ export function Usuarios() {
           <ul className="flex flex-col gap-3 xl:hidden">
             {data.datos.map((u) => (
               <li key={u.id_usuario} className="flex items-center gap-3 rounded-2xl border-2 border-black/10 bg-[#fdfdfc] p-3.5 sm:gap-4 sm:px-5">
+                <CasillaFila seleccion={seleccion} id={u.id_usuario} nombre={`${u.nombre_usuario} ${u.apellido_usuario} (${u.correo})`} />
                 <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-full bg-azul-marino text-small font-bold text-white">
                   {(u.nombre_usuario[0] ?? '') + (u.apellido_usuario[0] ?? '')}
                 </span>
@@ -290,18 +300,21 @@ export function Usuarios() {
           <div className="hidden overflow-x-auto xl:block">
             <table className="w-full min-w-[1100px] table-fixed border-separate border-spacing-0 text-body">
               <colgroup>
-                {[71, 152, 160, 262, 312, 104, 238, 205].map((ancho, i) => (
+                {[48, 71, 152, 160, 262, 312, 104, 238, 205].map((ancho, i) => (
                   <col key={i} style={{ width: ancho }} />
                 ))}
               </colgroup>
               <thead>
                 <tr>
+                  <th scope="col" className="h-10 border-y-2 border-l-2 border-black/10 bg-black/10 text-center">
+                    <CasillaTodos seleccion={seleccion} pagina={data.datos.map((u) => ({ id: u.id_usuario, nombre: `${u.nombre_usuario} ${u.apellido_usuario} (${u.correo})` }))} />
+                  </th>
                   {COLUMNAS.map((c, i) => (
                     <th
                       key={c.titulo}
                       scope="col"
                       aria-sort={c.orden ? ariaOrden(orden, c.orden) : undefined}
-                      className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'border-l-2 pr-[23px]' : ''} ${i === 6 ? 'pl-14' : ''} ${i === 7 ? 'border-r-2' : ''}`}
+                      className={`h-10 border-y-2 border-black/10 bg-black/10 text-center font-bold text-azul-titulo ${i === 0 ? 'pr-[23px]' : ''} ${i === 6 ? 'pl-14' : ''} ${i === 7 ? 'border-r-2' : ''}`}
                     >
                       {c.orden ? (
                         <BotonOrden
@@ -322,7 +335,10 @@ export function Usuarios() {
               </thead>
               <tbody className="bg-[#fdfdfc] [&_td]:h-10 [&_td]:border-b [&_td]:border-black/10 [&_td]:text-center [&_td:first-child]:border-l-2 [&_td:last-child]:border-r-2 [&_tr:last-child_td]:border-b-2">
                 {data.datos.map((u) => (
-                  <tr key={u.id_usuario} className="hover:bg-fondo">
+                  <tr key={u.id_usuario} className={seleccion.tiene(u.id_usuario) ? 'bg-[#eef3ff]' : 'hover:bg-fondo'}>
+                    <td>
+                      <CasillaFila seleccion={seleccion} id={u.id_usuario} nombre={`${u.nombre_usuario} ${u.apellido_usuario} (${u.correo})`} />
+                    </td>
                     <td className="pr-[23px] font-semibold text-black/40">{u.id_usuario}</td>
                     <td className="truncate px-1 font-bold text-azul-titulo">{u.apodo_usuario ?? '—'}</td>
                     <td className="truncate px-1 font-bold text-black">{u.nombre_usuario}</td>

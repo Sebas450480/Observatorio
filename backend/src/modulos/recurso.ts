@@ -8,7 +8,7 @@ import { borrarImagen, guardarImagen, recibirArchivo } from '../servicios/archiv
 import { rutasCargaMasiva, type CargaRecurso } from '../servicios/cargaMasiva.js';
 import { generarExcel, generarFichaExcel, generarFichaPdf, generarPdf, type ColumnaExportar } from '../servicios/exportar.js';
 import { Filtros, columnasYValores, construirPagina, esquemaPaginacion } from '../utilidades/consulta.js';
-import { ESTADOS, idPositivo, listaIdsConsulta } from '../utilidades/esquemas.js';
+import { ESTADOS, esquemaLote, idPositivo, listaIdsConsulta } from '../utilidades/esquemas.js';
 
 /**
  * Fábrica de rutas CRUD para los módulos de contenido (Flash, Faro, Empresas,
@@ -21,6 +21,7 @@ import { ESTADOS, idPositivo, listaIdsConsulta } from '../utilidades/esquemas.js
  *   POST   /                    crear              (gestor del módulo o SuperAdmin)
  *   PATCH  /:id                 editar             (gestor del módulo o SuperAdmin)
  *   DELETE /:id                 eliminar           (gestor del módulo o SuperAdmin)
+ *   POST   /lote                eliminar, activar o desactivar varios a la vez (gestor o SuperAdmin)
  *   POST   /:id/imagen/:campo   subir imagen       (gestor del módulo o SuperAdmin)
  *   DELETE /:id/imagen/:campo   quitar imagen      (gestor del módulo o SuperAdmin)
  *
@@ -315,6 +316,34 @@ export function crearRecurso(op: OpcionesRecurso): Router {
       return obtener(c, id);
     });
     res.json(fila);
+  });
+
+  // ---------------------------------------------------------------- Acciones en lote (tablas)
+  // Todo o nada: si un registro no se puede cambiar, no se cambia ninguno.
+  router.post('/lote', soloGestor, async (req, res) => {
+    const { ids, accion } = esquemaLote.parse(req.body);
+    const unicos = [...new Set(ids)];
+    if (accion !== 'eliminar' && !op.columnaEstado) throw new ErrorApi(400, 'Este módulo no tiene estado');
+    if (accion === 'eliminar') {
+      const filas = await conRol(req.sesion, async (c) => {
+        const { rows } = await c.query<Record<string, string | null>>(
+          `delete from ${op.tabla} where ${op.id} = any($1::int[]) returning ${['1 as borrado', ...camposImagen].join(', ')}`,
+          [unicos],
+        );
+        return rows;
+      });
+      await Promise.all(filas.flatMap((f) => camposImagen.map((campo) => borrarImagen(f[campo]))));
+      res.json({ afectados: filas.length });
+      return;
+    }
+    const afectados = await conRol(req.sesion, async (c) => {
+      const { rowCount } = await c.query(
+        `update ${op.tabla} set ${op.columnaEstado} = $1 where ${op.id} = any($2::int[])`,
+        [accion === 'activar' ? 'Activo' : 'Inactivo', unicos],
+      );
+      return rowCount ?? 0;
+    });
+    res.json({ afectados });
   });
 
   // ---------------------------------------------------------------- Eliminar

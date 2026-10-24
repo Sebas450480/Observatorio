@@ -8,7 +8,7 @@ import { ErrorApi, noEncontrado, prohibido } from '../errores.js';
 import { requiereSuperAdmin } from '../middlewares/sesion.js';
 import { Filtros, construirPagina, esquemaPaginacion } from '../utilidades/consulta.js';
 import {
-  ESTADOS, FRECUENCIAS_ALERTA, contrasena, correo, idPositivo, listaIds, textoObligatorio, textoOpcional,
+  ESTADOS, FRECUENCIAS_ALERTA, contrasena, correo, esquemaLote, idPositivo, listaIds, textoObligatorio, textoOpcional,
 } from '../utilidades/esquemas.js';
 import { COLUMNAS_PERFIL } from './auth.js';
 
@@ -210,6 +210,29 @@ rutasUsuarios.patch('/:id', async (req, res) => {
     if (roles) await asignarRoles(c, id, roles);
   });
   res.json(await obtenerUsuario(req.sesion, id));
+});
+
+/** Eliminar, activar o desactivar varios usuarios a la vez. Todo o nada. */
+rutasUsuarios.post('/lote', async (req, res) => {
+  const { ids, accion } = esquemaLote.parse(req.body);
+  const unicos = [...new Set(ids)];
+  if (unicos.includes(req.sesion.idUsuario!)) {
+    throw new ErrorApi(400, accion === 'eliminar' ? 'No puedes eliminar tu propia cuenta' : 'No puedes cambiar tu propio estado');
+  }
+  const afectados = await conRol(req.sesion, async (c) => {
+    if (!esSuperAdmin(req.sesion)) {
+      for (const id of unicos) {
+        if ((await rolesDeUsuario(c, id)).includes(SUPER_ADMIN)) {
+          throw prohibido(accion === 'eliminar' ? 'No puedes eliminar a un Super Admin' : 'No puedes cambiar el estado de un Super Admin');
+        }
+      }
+    }
+    const { rowCount } = accion === 'eliminar'
+      ? await c.query('delete from usuario where id_usuario = any($1::int[])', [unicos])
+      : await c.query('update usuario set estado_usuario = $1 where id_usuario = any($2::int[])', [accion === 'activar' ? 'Activo' : 'Inactivo', unicos]);
+    return rowCount ?? 0;
+  });
+  res.json({ afectados });
 });
 
 rutasUsuarios.delete('/:id', async (req, res) => {
