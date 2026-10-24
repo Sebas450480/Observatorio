@@ -12,6 +12,7 @@ import { costo, fechaLarga, modalidadTexto } from '../../utilidades/formato';
 import { ESTILO_TIPO } from './FaroEmpresarial';
 import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
+import { imagenFaro } from '../../utilidades/imagenesEjemplo';
 
 /** Detalle de una beca, convocatoria, curso o taller (Figma: "Modal — Detalle beca"). */
 export function DetalleFaro({ id, onCerrar, onEditar }: { id: number; onCerrar: () => void; onEditar?: (f: Faro) => void }) {
@@ -30,6 +31,7 @@ export function DetalleFaro({ id, onCerrar, onEditar }: { id: number; onCerrar: 
       ancho={700}
       destacado
       claseCuerpo={CUERPO_DETALLE}
+      imagenFondo={faro ? imagenFaro(faro) : undefined}
       titulo={faro?.titulo ?? 'Faro'}
       accion={
         faro && (

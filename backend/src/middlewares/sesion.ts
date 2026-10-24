@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
 import { conAutenticacion } from '../db/contexto.js';
-import { NOMBRE_COOKIE, verificarToken } from '../auth/tokens.js';
+import { NOMBRE_COOKIE, guardarSesion, verificarToken } from '../auth/tokens.js';
 import {
   ROL_POR_NOMBRE, SESION_INVITADO, nombreRolCanonico, nombreRolPrincipal, rolPrincipal, rolesDeSesion, type RolBD, type Sesion,
 } from '../auth/roles.js';
@@ -30,7 +30,10 @@ export function nombresDeRolesValidos(nombres: string[]): string[] {
  * - Con token: se consulta el usuario en la base de datos en cada petición, así un
  *   cambio de rol, un bloqueo o un cambio de contraseña aplican de inmediato.
  */
-export const identificarSesion: RequestHandler = async (req, _res, next) => {
+/** Una sesión recordada se renueva (nuevos 30 días) si su token tiene más de un día. */
+const RENOVAR_DESPUES_MS = 24 * 3600 * 1000;
+
+export const identificarSesion: RequestHandler = async (req, res, next) => {
   req.sesion = SESION_INVITADO;
 
   const token = leerToken(req.cookies, req.headers.authorization);
@@ -75,6 +78,10 @@ export const identificarSesion: RequestHandler = async (req, _res, next) => {
     rolActivo,
     recordar: datos.recordar,
   };
+  // "Recordar sesión": cada visita renueva la cookie, así solo se cierra tras 30 días sin entrar.
+  if (datos.recordar && req.cookies?.[NOMBRE_COOKIE] === token && Date.now() - datos.emitidoEn.getTime() > RENOVAR_DESPUES_MS) {
+    guardarSesion(res, datos.idUsuario, { rol: datos.rolActivo, recordar: true });
+  }
   next();
 };
 

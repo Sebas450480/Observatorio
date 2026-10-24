@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import type { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 
@@ -19,13 +20,27 @@ export interface OpcionesToken {
   recordar?: boolean;
 }
 
+/** Segundos de vigencia de la sesión: 30 días con "Recordar sesión", 8 horas sin él. */
+export const vigenciaSesion = (recordar: boolean) =>
+  Math.round(recordar ? config.jwt.recordarDias * 86400 : config.jwt.expiracionHoras * 3600);
+
 /** Crea el token de sesión de un usuario. */
 export function firmarToken(idUsuario: number, { rol, recordar = true }: OpcionesToken = {}): string {
   return jwt.sign({ ...(rol ? { rol } : {}), rec: recordar }, config.jwt.secreto, {
     subject: String(idUsuario),
-    expiresIn: Math.round(config.jwt.expiracionHoras * 3600),
+    expiresIn: vigenciaSesion(recordar),
     algorithm: 'HS256',
   });
+}
+
+/**
+ * Escribe la cookie de sesión. Con "Recordar sesión" la cookie dura lo mismo que el token
+ * (y se renueva en cada visita); sin él es de sesión y el navegador la borra al cerrarse.
+ */
+export function guardarSesion(res: Response, idUsuario: number, opciones: OpcionesToken = {}) {
+  const recordar = opciones.recordar ?? true;
+  const { maxAge: _maxAge, ...base } = opcionesCookie();
+  res.cookie(NOMBRE_COOKIE, firmarToken(idUsuario, { ...opciones, recordar }), recordar ? { ...base, maxAge: vigenciaSesion(true) * 1000 } : base);
 }
 
 /** Devuelve el id del usuario, la fecha de emisión y el rol elegido, o null si el token no es válido o venció. */
@@ -51,7 +66,7 @@ export const opcionesCookie = () => ({
   httpOnly: true,
   sameSite: 'lax' as const,
   secure: config.esProduccion,
-  maxAge: Math.round(config.jwt.expiracionHoras * 3600 * 1000),
+  maxAge: vigenciaSesion(true) * 1000,
   path: '/',
 });
 

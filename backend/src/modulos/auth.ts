@@ -6,7 +6,7 @@ import { config } from '../config.js';
 import { conAutenticacion, conRol, type Cliente } from '../db/contexto.js';
 import { ErrorApi, noAutenticado } from '../errores.js';
 import {
-  NOMBRE_COOKIE, firmarToken, generarCodigoRecuperacion, huellaCodigo, opcionesCookie,
+  NOMBRE_COOKIE, generarCodigoRecuperacion, guardarSesion, huellaCodigo, opcionesCookie,
 } from '../auth/tokens.js';
 import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo } from '../servicios/correo.js';
 import { FRECUENCIAS_ALERTA, contrasena, correo, listaIds, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
@@ -53,8 +53,7 @@ const nombresDelPerfil = (perfil: { roles: { nombre_rol: string }[] }) => nombre
 
 /** Guarda en la cookie el token de sesión (con el rol elegido) respetando "Recordar sesión". */
 function guardarCookieSesion(res: Response, idUsuario: number, rol: string | null, recordar: boolean) {
-  const { maxAge, ...sinVencimiento } = opcionesCookie();
-  res.cookie(NOMBRE_COOKIE, firmarToken(idUsuario, { rol, recordar }), recordar ? { ...sinVencimiento, maxAge } : sinVencimiento);
+  guardarSesion(res, idUsuario, { rol, recordar });
 }
 
 async function guardarIntereses(c: Cliente, idUsuario: number, intereses: number[]) {
@@ -111,7 +110,7 @@ rutasAuth.post('/registro', limiteIntentos, async (req, res) => {
     return id;
   });
 
-  res.cookie(NOMBRE_COOKIE, firmarToken(idUsuario), opcionesCookie());
+  guardarSesion(res, idUsuario);
   res.status(201).json(await perfilPorId(idUsuario));
 });
 

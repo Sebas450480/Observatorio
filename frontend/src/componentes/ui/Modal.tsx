@@ -28,6 +28,8 @@ interface PropsModal {
   hoja?: boolean;
   /** Botón junto a la X del encabezado (p. ej. la banderita de favorito). */
   accion?: ReactNode;
+  /** Foto del registro de fondo en el encabezado, bajo un velo azul para que el título se lea. */
+  imagenFondo?: string;
 }
 
 const INSIGNIAS = { advertencia: insigniaAdvertencia, editar: insigniaEditar, exito: insigniaExito };
@@ -91,6 +93,7 @@ export function Modal({
   claseCuerpo = 'p-6 sm:p-7',
   hoja = false,
   accion,
+  imagenFondo,
 }: PropsModal) {
   const idTitulo = useId();
   const panel = useRef<HTMLDivElement>(null);
@@ -133,7 +136,14 @@ export function Modal({
         style={{ maxWidth: ancho }}
         className={`${hoja ? 'entrada-hoja max-h-[85dvh] rounded-t-[24px]' : `${insignia === 'exito' ? 'rebote-aviso' : 'entrada-modal'} max-h-[min(900px,calc(100vh-24px))] ${destacado ? 'rounded-2xl' : 'rounded-[20px]'}`} flex w-full flex-col overflow-hidden bg-white focus:outline-none ${destacado ? 'shadow-[0_0_40px_0_rgba(0,0,0,0.15)]' : 'shadow-[0_12px_32px_0_rgba(7,31,93,0.13)]'}`}
       >
-        <header className={`relative shrink-0 bg-azul-oscuro text-white ${destacado ? 'p-6 sm:p-7' : 'px-6 py-5'}`}>
+        <header
+          className={`relative shrink-0 bg-azul-oscuro bg-cover bg-center text-white ${destacado ? 'p-6 sm:p-7' : 'px-6 py-5'} ${imagenFondo ? 'flex min-h-[190px] flex-col justify-end sm:min-h-[230px]' : ''}`}
+          style={
+            imagenFondo
+              ? { backgroundImage: `linear-gradient(180deg, rgba(1,31,117,0.25) 0%, rgba(1,24,84,0.88) 72%), url("${imagenFondo.replace(/"/g, '%22')}")` }
+              : undefined
+          }
+        >
           {sobreTitulo && <div className={`flex flex-wrap items-center gap-2 ${accion ? 'pr-20' : 'pr-10'} ${destacado ? 'mb-3' : 'mb-2'}`}>{sobreTitulo}</div>}
           <div className={`flex items-center gap-3 ${accion ? 'pr-20' : 'pr-10'}`}>
             {insignia === 'exito' ? (

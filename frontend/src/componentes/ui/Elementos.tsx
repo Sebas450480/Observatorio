@@ -1,5 +1,5 @@
 import { AlertTriangle, Inbox, LoaderCircle } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ICONOS_MODULO, type Modulo } from '../../assets/figma/iconos';
 import flechaDerecha from '../../assets/figma/iconos/flecha-derecha.svg';
 import flechaIzquierda from '../../assets/figma/iconos/flecha-izquierda.svg';
@@ -92,6 +92,13 @@ export function EncabezadoPagina({
       {acciones && <div className="flex flex-wrap items-center gap-3">{acciones}</div>}
     </div>
   );
+}
+
+/** Foto de un registro; si no carga (p. ej. sin conexión), muestra el respaldo. */
+export function FotoRegistro({ src, className = '', respaldo = null }: { src: string; className?: string; respaldo?: ReactNode }) {
+  const [fallo, setFallo] = useState<string | null>(null);
+  if (fallo === src) return <>{respaldo}</>;
+  return <img src={src} alt="" loading="lazy" onError={() => setFallo(src)} className={className} />;
 }
 
 /** Tarjeta blanca básica. */

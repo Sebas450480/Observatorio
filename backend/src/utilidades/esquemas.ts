@@ -60,3 +60,9 @@ export const contrasena = z
 /** Nombre para comparar duplicados: sin tildes, en minúsculas y sin espacios repetidos. */
 export const normalizarNombre = (texto: string) =>
   texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim().replace(/\s+/g, ' ');
+
+/** Acciones de la selección múltiple de las tablas (hasta 100 registros, una página). */
+export const esquemaLote = z.object({
+  ids: z.array(idPositivo).min(1, 'Selecciona al menos un registro').max(100, 'Máximo 100 registros a la vez'),
+  accion: z.enum(['eliminar', 'activar', 'desactivar']),
+});

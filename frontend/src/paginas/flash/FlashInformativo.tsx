@@ -17,7 +17,8 @@ import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
 import { Boton } from '../../componentes/ui/Boton';
 import { Filtro } from '../../componentes/ui/Campos';
-import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, Insignia, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { Cargando, EncabezadoPagina, EstadoVacio, Etiqueta, FotoRegistro, Insignia, MensajeError, Paginacion } from '../../componentes/ui/Elementos';
+import { imagenFlash } from '../../utilidades/imagenesEjemplo';
 import { useSesion } from '../../sesion/sesion';
 import { DEPARTAMENTOS, opcionesAnios } from '../../utilidades/colombia';
 import { costo, fechaLarga, modalidadTexto } from '../../utilidades/formato';
@@ -56,12 +57,12 @@ function TarjetaFlash({ flash, indice, onAbrir }: { flash: Flash; indice: number
   const gratuito = flash.es_gratuito || !flash.costo;
   return (
     <article className="flex flex-col overflow-hidden rounded-tarjeta bg-white shadow-tarjeta">
-      <div className={`relative grid h-[104px] shrink-0 place-items-center ${flash.imagen ? '' : estilo.fondo}`}>
-        {flash.imagen ? (
-          <img src={flash.imagen} alt="" className="absolute inset-0 size-full object-cover" />
-        ) : (
-          <img src={estilo.icono} alt="" aria-hidden width={46} height={46} />
-        )}
+      <div className={`relative grid h-[104px] shrink-0 place-items-center ${estilo.fondo}`}>
+        <FotoRegistro
+          src={imagenFlash(flash)}
+          className="absolute inset-0 size-full object-cover"
+          respaldo={<img src={estilo.icono} alt="" aria-hidden width={46} height={46} />}
+        />
         <Insignia tono={tonoModalidad(flash.modalidad)} className="absolute left-3 top-3">
           {modalidadTexto(flash.modalidad)}
         </Insignia>

@@ -18,7 +18,7 @@ test.describe('Tablas', () => {
     await page.getByRole('button', { name: 'Vista en tabla' }).click();
     const tabla = page.getByRole('table');
     const encabezadoId = tabla.getByRole('columnheader', { name: /^ID/ });
-    const ids = async () => (await tabla.locator('tbody tr td:first-child').allTextContents()).map(Number);
+    const ids = async () => (await tabla.locator('tbody tr td:nth-child(2)').allTextContents()).map(Number);
 
     await encabezadoId.getByRole('button').click();
     await expect(encabezadoId).toHaveAttribute('aria-sort', 'ascending');
@@ -42,7 +42,7 @@ test.describe('Tablas', () => {
     const encabezado = tabla.getByRole('columnheader', { name: /^Nombre/ });
     await encabezado.getByRole('button').click();
     await expect(encabezado).toHaveAttribute('aria-sort', 'ascending');
-    const nombres = async () => (await tabla.locator('tbody tr td:nth-child(3)').allTextContents()).map((n) => n.toLowerCase());
+    const nombres = async () => (await tabla.locator('tbody tr td:nth-child(4)').allTextContents()).map((n) => n.toLowerCase());
     await expect.poll(async () => {
       const lista = await nombres();
       return JSON.stringify(lista) === JSON.stringify([...lista].sort((a, b) => a.localeCompare(b, 'es')));
