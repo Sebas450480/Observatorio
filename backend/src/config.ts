@@ -21,7 +21,11 @@ const esquemaEntorno = z.object({
 
   // Sesiones (JWT). El secreto debe ser largo y aleatorio.
   JWT_SECRETO: z.string().min(32, 'JWT_SECRETO debe tener al menos 32 caracteres'),
+  // Sin "Recordar sesión": horas de vigencia (la cookie además se borra al cerrar el navegador).
   JWT_EXPIRACION_HORAS: z.coerce.number().positive().default(8),
+  // Con "Recordar sesión": días de vigencia; se renueva sola en cada visita, así que solo
+  // se cierra si la persona pasa este tiempo sin entrar.
+  SESION_RECORDAR_DIAS: z.coerce.number().positive().default(30),
   BCRYPT_COSTO: z.coerce.number().int().min(4).max(15).default(12),
 
   // URL del frontend (CORS y enlaces de los correos) y URL pública de esta API.
@@ -83,6 +87,7 @@ export const config = {
   jwt: {
     secreto: env.JWT_SECRETO,
     expiracionHoras: env.JWT_EXPIRACION_HORAS,
+    recordarDias: env.SESION_RECORDAR_DIAS,
   },
   bcryptCosto: env.BCRYPT_COSTO,
   frontendUrl: env.FRONTEND_URL.replace(/\/$/, ''),
