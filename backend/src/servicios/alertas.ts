@@ -321,6 +321,31 @@ export async function ejecutarRecordatorios(): Promise<{ enviados: number; error
   return { enviados, errores };
 }
 
+/**
+ * Correos de prueba para revisar el diseño: el boletín (con las 5 publicaciones más destacadas
+ * de siempre, según los intereses del usuario) y los dos recordatorios (una semana antes y el
+ * mismo día) con el próximo evento institucional. No quedan en envio_alerta y sus enlaces
+ * (envío 0) no suman clics al top 5.
+ */
+export async function correosDePrueba(idUsuario: number, nombre: string) {
+  return comoSistema(async (c) => {
+    const correos: { asunto: string; texto: string; html: string }[] = [];
+    const novedades = await buscarNovedades(c, idUsuario, new Date(0));
+    if (novedades.length) correos.push(armarCorreo(nombre, novedades, 0));
+    const { rows } = await c.query<{ id: number; titulo: string; fecha_inicio: Date; lugar: string | null }>(
+      `select id_evento as id, titulo, fecha_inicio, lugar from calendario_eventos
+        order by fecha_inicio < now(), abs(extract(epoch from fecha_inicio - now())) limit 1`,
+    );
+    const evento = rows[0];
+    if (evento) {
+      for (const aviso of ['Semana', 'Dia'] as const) {
+        correos.push(armarRecordatorio({ id_usuario: idUsuario, nombre_usuario: nombre, correo: '', tipo: 'Evento', ...evento, aviso }, 0));
+      }
+    }
+    return correos;
+  });
+}
+
 /** Ejecuta una tarea: el boletín de una frecuencia o los recordatorios. */
 export function ejecutarTarea(tarea: TareaAlertas) {
   return tarea === 'Recordatorios' ? ejecutarRecordatorios() : ejecutarAlertas(tarea);
