@@ -1859,3 +1859,10 @@ $$;
 -- >>> migrations/20261028010000_boletin_cada_dos_dias.sql
 -- Boletín cada 2 días: nueva frecuencia entre la diaria y la semanal.
 alter type public.frecuencia_alertas add value if not exists 'Cada2Dias' after 'Diaria';
+
+
+-- >>> migrations/20261029010000_sin_alerta_inmediata.sql
+-- Ya no se ofrece el boletín «Inmediata» (en el momento): las cuentas que lo tenían pasan
+-- al boletín diario. El valor se conserva en el tipo frecuencia_alertas por compatibilidad,
+-- pero la API ya no lo acepta.
+update public.usuario set frecuencia_alertas = 'Diaria' where frecuencia_alertas = 'Inmediata';

@@ -10,7 +10,7 @@ import { enviarCorreo } from '../servicios/correo.js';
 import { correoRecuperacion } from './auth.js';
 import { correoInvitacion } from './invitaciones.js';
 
-const TAREAS = ['Inmediata', 'Diaria', 'Cada2Dias', 'Semanal', 'Recordatorios'] as const;
+const TAREAS = ['Diaria', 'Cada2Dias', 'Semanal', 'Recordatorios'] as const;
 
 export const rutasAlertas = Router();
 

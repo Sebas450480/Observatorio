@@ -26,7 +26,7 @@ const esquema = z.object({
   correo: z.email('Escribe un correo válido'),
   ciudad: z.string().trim().max(60),
   apodo_usuario: z.string().trim().max(20),
-  frecuencia_alertas: z.enum(['Inmediata', 'Diaria', 'Cada2Dias', 'Semanal', 'Ninguna']),
+  frecuencia_alertas: z.enum(['Diaria', 'Cada2Dias', 'Semanal', 'Ninguna']),
   recordatorios_eventos: z.boolean(),
 });
 type Datos = z.infer<typeof esquema>;
@@ -41,7 +41,6 @@ const esquemaContrasena = z
 type DatosContrasena = z.infer<typeof esquemaContrasena>;
 
 const FRECUENCIAS: { valor: FrecuenciaAlertas; titulo: string; detalle: string }[] = [
-  { valor: 'Inmediata', titulo: 'En el momento', detalle: 'Cada vez que se publique algo de tu interés' },
   { valor: 'Diaria', titulo: 'Resumen diario', detalle: 'Un correo cada mañana con lo más destacado del día anterior' },
   { valor: 'Cada2Dias', titulo: 'Cada 2 días', detalle: 'Un correo día de por medio con lo más destacado' },
   { valor: 'Semanal', titulo: 'Resumen semanal', detalle: 'Un correo los lunes con lo más importante' },
