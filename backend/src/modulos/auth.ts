@@ -70,11 +70,14 @@ export async function guardarIntereses(c: Cliente, idUsuario: number, intereses:
   );
 }
 
-/** Intereses de Flash, Empresas y Tendencias: reemplaza los de cada módulo que venga en `preferencias`. */
-export async function guardarPreferencias(c: Cliente, idUsuario: number, preferencias: Preferencias) {
+/**
+ * Intereses de Flash, Empresas y Tendencias: reemplaza los de cada módulo que venga en
+ * `preferencias`. En una cuenta nueva no hay nada que borrar (y el rol de autenticación no borra).
+ */
+export async function guardarPreferencias(c: Cliente, idUsuario: number, preferencias: Preferencias, cuentaNueva = false) {
   for (const [modulo, valores] of Object.entries(preferencias)) {
     if (!valores) continue;
-    await c.query('delete from usuario_preferencia where id_usuario = $1 and modulo = $2', [idUsuario, modulo]);
+    if (!cuentaNueva) await c.query('delete from usuario_preferencia where id_usuario = $1 and modulo = $2', [idUsuario, modulo]);
     if (valores.length) {
       await c.query(
         `insert into usuario_preferencia (id_usuario, modulo, valor)
@@ -127,7 +130,7 @@ rutasAuth.post('/registro', limiteIntentos, async (req, res) => {
     );
     const id = rows[0]!.id_usuario;
     await guardarIntereses(c, id, datos.intereses);
-    await guardarPreferencias(c, id, datos.preferencias);
+    await guardarPreferencias(c, id, datos.preferencias, true);
     return id;
   });
 
