@@ -9,7 +9,6 @@ import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo
  *
  * 1. Boletín de novedades (tendencias, contenidos nuevos y empresas coformadoras nuevas),
  *    según la frecuencia elegida:
- *    - Inmediata: cada 15 minutos se envía lo publicado desde el último boletín.
  *    - Diaria:    todos los días a las 8:00 (hora de Bogotá) con lo publicado en el día.
  *    - Cada2Dias: a las 8:00, un día sí y otro no, con lo publicado en esos dos días.
  *    - Semanal:   los lunes a las 8:00 con lo publicado en la semana.
@@ -23,7 +22,7 @@ import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo
  * Cada envío queda en la tabla envio_alerta, y una imagen invisible en el correo marca
  * cuándo se abrió.
  */
-export type FrecuenciaEnvio = 'Inmediata' | 'Diaria' | 'Cada2Dias' | 'Semanal';
+export type FrecuenciaEnvio = 'Diaria' | 'Cada2Dias' | 'Semanal';
 /** Tareas que se pueden ejecutar: un boletín o los recordatorios. */
 export type TareaAlertas = FrecuenciaEnvio | 'Recordatorios';
 
@@ -352,12 +351,12 @@ export function ejecutarTarea(tarea: TareaAlertas) {
 }
 
 /**
- * Tareas del envío diario de las 8:00 (Vercel Cron llama una vez al día): boletín inmediato
- * y diario, recordatorios y, los lunes, el boletín semanal.
+ * Tareas del envío diario de las 8:00 (Vercel Cron llama una vez al día): boletín diario y
+ * de cada 2 días, recordatorios y, los lunes, el boletín semanal.
  */
 export async function ejecutarEnvioDiario(fecha = new Date()): Promise<Partial<Record<TareaAlertas, { enviados: number; errores: number }>>> {
   const dia = fecha.toLocaleDateString('en-US', { timeZone: config.alertas.zonaHoraria, weekday: 'short' });
-  const tareas: TareaAlertas[] = ['Inmediata', 'Diaria', 'Cada2Dias', ...(dia === 'Mon' ? (['Semanal'] as const) : []), 'Recordatorios'];
+  const tareas: TareaAlertas[] = ['Diaria', 'Cada2Dias', ...(dia === 'Mon' ? (['Semanal'] as const) : []), 'Recordatorios'];
   const resultado: Partial<Record<TareaAlertas, { enviados: number; errores: number }>> = {};
   for (const tarea of tareas) resultado[tarea] = await ejecutarTarea(tarea);
   return resultado;
@@ -395,7 +394,6 @@ export function programarAlertas(): ScheduledTask[] {
     }
   };
   return [
-    cron.schedule('*/15 * * * *', ejecutar('Inmediata'), opciones),
     cron.schedule('0 8 * * *', ejecutar('Diaria', 'Cada2Dias', 'Recordatorios'), opciones),
     cron.schedule('0 8 * * 1', ejecutar('Semanal'), opciones),
   ];
