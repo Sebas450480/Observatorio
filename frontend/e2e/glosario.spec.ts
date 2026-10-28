@@ -30,7 +30,8 @@ test.describe('Glosario y páginas legales', () => {
   test('la política de tratamiento de datos está publicada y enlazada desde el menú', async ({ page }) => {
     await page.goto('/politica-de-datos');
     await expect(page.getByRole('heading', { name: 'Política de tratamiento de datos personales' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '4. Derechos de los titulares' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '6. Derechos de los titulares' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Decisión Rectoral 12 de 2021/ })).toHaveAttribute('href', /uniempresarial\.edu\.co/);
     await expect(page.getByRole('complementary', { name: 'Menú principal' }).getByRole('link', { name: 'Política de tratamiento de datos' })).toBeVisible();
   });
 
