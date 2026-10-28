@@ -62,6 +62,28 @@ export const contrasena = z
 export const normalizarNombre = (texto: string) =>
   texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim().replace(/\s+/g, ' ');
 
+/** Siglas que se conservan en mayúscula al dar formato de oración (IoT conserva su forma). */
+const SIGLAS = new Map(
+  ['IA', 'AI', 'ESG', 'TIC', 'TICS', 'B2B', 'B2C', 'D2C', 'PYME', 'PYMES', 'MIPYME', 'MIPYMES', 'ODS', 'RSE', 'KPI', 'CRM', 'ERP', 'ONG', 'API', 'UX', 'UI',
+   'VR', 'AR', 'NFT', 'PIB', 'SENA', 'DANE', 'BPO', 'SAAS', 'IOT', '5G', '3D', 'ADN', 'LGBTIQ+', 'CO2']
+    .map((s) => [s, s === 'IOT' ? 'IoT' : s === 'SAAS' ? 'SaaS' : s === 'TICS' ? 'TICs' : s]),
+);
+
+/**
+ * Formato de oración: solo la primera letra en mayúscula y el resto en minúscula, conservando
+ * las siglas conocidas ("VIDEO MARKETING" -> "Video marketing", "ia generativa" -> "IA generativa").
+ */
+export function formatoOracion(texto: string): string {
+  const palabras = texto.trim().replace(/\s+/g, ' ').split(' ').map((palabra) => {
+    const nucleo = palabra.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}+]+$/gu, '');
+    const sigla = SIGLAS.get(nucleo.toLocaleUpperCase('es'));
+    return sigla ? palabra.replace(nucleo, sigla) : palabra.toLocaleLowerCase('es');
+  });
+  const frase = palabras.join(' ');
+  // Primera letra (después de signos como «¿» o comillas) en mayúscula.
+  return frase.replace(/\p{L}/u, (letra) => letra.toLocaleUpperCase('es'));
+}
+
 /** Acciones de la selección múltiple de las tablas (hasta 100 registros, una página). */
 export const esquemaLote = z.object({
   ids: z.array(idPositivo).min(1, 'Selecciona al menos un registro').max(100, 'Máximo 100 registros a la vez'),

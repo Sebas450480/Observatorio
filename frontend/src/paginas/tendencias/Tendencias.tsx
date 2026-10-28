@@ -24,7 +24,7 @@ import { fechaCorta, numero } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 import { DetalleTendencia } from './DetalleTendencia';
 import { FormularioTendencia } from './FormularioTendencia';
-import { MapaTendencias } from './MapaTendencias';
+import { MapaTendencias, todasLasMegatendencias } from './MapaTendencias';
 import { CasillaFila, CasillaTodos, MenuAcciones, useSeleccion, type Seleccion } from '../../componentes/contenido/AccionesLote';
 import { TARJETA_INTERACTIVA } from '../../componentes/ui/tarjetaInteractiva';
 
@@ -59,9 +59,12 @@ function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void })
         onClick={onAbrir}
         className={`flex w-full min-w-0 flex-col gap-3 rounded-[20px] border-2 border-black/10 bg-white pb-[21px] pl-[23px] pr-[31px] pt-[26px] text-left ${TARJETA_INTERACTIVA}`}
       >
-        <span className="flex items-center justify-between gap-2 pr-8">
+        {/* Espacio a la derecha para los botones de descarga y favorito, que van encima de la tarjeta. */}
+        <span className="flex flex-wrap items-center gap-2 pr-[72px]">
           <EtiquetaMega>{t.megatendencia}</EtiquetaMega>
-          {t.estado_te === 'Inactivo' && <span className="text-[12px] font-bold text-texto-suave">INACTIVA</span>}
+          {t.estado_te === 'Inactivo' && (
+            <span className="inline-flex h-[22px] items-center rounded-full bg-[#eef2f6] px-2.5 text-[11px] font-bold tracking-[0.3px] text-texto-suave">INACTIVA</span>
+          )}
         </span>
         <span className="flex flex-col gap-1.5 tracking-[-0.5px] text-[#232734]">
           <span className="text-subtitle font-bold">{t.tendencia}</span>
@@ -397,7 +400,7 @@ export function Tendencias() {
               etiqueta="Megatendencia"
               todos="Todas las megatendencias"
               className="xl:w-[280px]"
-              opciones={megatendencias.map((m) => ({ valor: m, texto: m }))}
+              opciones={todasLasMegatendencias(megatendencias).map((m) => ({ valor: m, texto: m }))}
               valor={borrador.megatendencia}
               onChange={(v) => setBorrador({ ...borrador, megatendencia: v, q: '' })}
             />

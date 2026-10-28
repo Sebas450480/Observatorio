@@ -4,7 +4,7 @@ import { conRol, type Cliente } from '../db/contexto.js';
 import { noEncontrado } from '../errores.js';
 import { requiereRol } from '../middlewares/sesion.js';
 import { cargaRecurso } from '../servicios/cargaMasiva.js';
-import { ESTADOS, enlace, fecha, idPositivo, listaIds, textoObligatorio, textoOpcional, normalizarNombre } from '../utilidades/esquemas.js';
+import { ESTADOS, enlace, fecha, idPositivo, listaIds, textoObligatorio, textoOpcional, normalizarNombre, formatoOracion } from '../utilidades/esquemas.js';
 
 /** Tendencias: radar de tendencias agrupadas por megatendencia, con fuentes y menciones. */
 const esquemaFuente = z.object({
@@ -14,7 +14,8 @@ const esquemaFuente = z.object({
 
 const esquema = z.object({
   megatendencia: textoObligatorio(60),
-  tendencia: textoObligatorio(80),
+  // Siempre en formato de oración, aunque la escriban toda en mayúscula.
+  tendencia: textoObligatorio(80).transform(formatoOracion),
   descripcion: textoOpcional(),
   comportamiento_mundo: textoOpcional(),
   comportamiento_colombia: textoOpcional(),
