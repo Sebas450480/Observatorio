@@ -21,14 +21,20 @@ test.describe('Usuario registrado', () => {
   test('actualiza su perfil e intereses', async ({ page }) => {
     await page.goto('/mi-perfil');
     await page.getByLabel('Ciudad').fill('Medellín');
-    await page.getByRole('button', { name: 'Becas' }).click();
+    // Intereses por módulo: en Faro, «Becas» se elige desde «Más».
+    const faro = page.getByRole('group', { name: /^Faro/ });
+    await faro.getByRole('button', { name: '+ Más' }).click();
+    const todas = page.getByRole('dialog', { name: 'Faro' });
+    await todas.getByRole('searchbox', { name: 'Buscar en Faro' }).fill('beca');
+    await todas.getByRole('button', { name: 'Becas' }).click();
+    await todas.getByRole('button', { name: 'Listo' }).click();
     await page.getByText('Cada 2 días', { exact: true }).click();
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(page.getByRole('dialog', { name: 'Perfil actualizado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
     await page.reload();
     await expect(page.getByLabel('Ciudad')).toHaveValue('Medellín');
-    await expect(page.getByRole('button', { name: 'Becas' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('group', { name: /^Faro/ }).getByRole('button', { name: 'Becas' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('radio', { name: /Cada 2 días/ })).toBeChecked();
   });
 

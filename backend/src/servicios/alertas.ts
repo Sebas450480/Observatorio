@@ -13,8 +13,9 @@ import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo
  *    - Cada2Dias: a las 8:00, un día sí y otro no, con lo publicado en esos dos días.
  *    - Semanal:   los lunes a las 8:00 con lo publicado en la semana.
  *    - Ninguna:   no recibe boletines.
- *    Se incluyen Flash, Faro y Tendencias que coincidan con sus intereses (si no marcó
- *    intereses, recibe todo), los eventos institucionales y las empresas nuevas.
+ *    Cada módulo se filtra con sus intereses (Flash: tipo de evento; Faro: categorías;
+ *    Empresas: sector; Tendencias: megatendencia); si no marcó ninguno en un módulo, recibe
+ *    todo ese módulo. Los eventos institucionales nuevos siempre se incluyen.
  *
  * 2. Recordatorios de eventos favoritos (Flash y Calendario): una semana antes y el
  *    mismo día del evento, a las 8:00. Se desactivan en Mi perfil.
@@ -64,27 +65,36 @@ const clics = (tipo: Novedad['tipo'], columna: string) =>
  * veces se abrió con "Acceder" y, a igualdad (o si aún nadie lo abrió), lo más reciente.
  */
 async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Promise<Novedad[]> {
-  // Coincide con los intereses del usuario, o con todo si no marcó intereses.
-  const coincide = (puente: string, columna: string, alias: string) => `
+  // Cada módulo se filtra con los intereses de ese módulo; si no marcó ninguno, recibe todo el módulo.
+  // Faro: categorías (usuario_interes).
+  const coincideFaro = `
     (not exists (select 1 from usuario_interes where id_usuario = $1)
-     or exists (select 1 from ${puente} p join usuario_interes ui on ui.id_categoria = p.id_categoria
-                 where p.${columna} = ${alias}.${columna} and ui.id_usuario = $1))`;
+     or exists (select 1 from faro_empresarial_categoria p join usuario_interes ui on ui.id_categoria = p.id_categoria
+                 where p.id_fe = fe.id_fe and ui.id_usuario = $1))`;
+  // Flash (tipo de evento), Empresa (sector) y Tendencia (megatendencia): usuario_preferencia.
+  const preferencias = (modulo: string) => `(select valor from usuario_preferencia where id_usuario = $1 and modulo = '${modulo}')`;
+  const coincide = (modulo: string, valor: string) => `
+    (not exists ${preferencias(modulo)} or ${valor} in ${preferencias(modulo)})`;
+  // "Otro" en sectores: las empresas cuyo sector no está en la lista.
+  const coincideEmpresa = `
+    (not exists ${preferencias('Empresa')} or ec.sector_economico in ${preferencias('Empresa')}
+     or ('Otro' in ${preferencias('Empresa')} and ec.sector_economico not in (select nombre from sector_economico)))`;
 
   const { rows } = await c.query<Novedad>(
     `select tipo, id, titulo, imagen from (
        select 'Flash' as tipo, f.id_fi as id, f.titulo, coalesce(f.imagen, '${EJEMPLOS}/flash-' || lower(f.tipo_evento::text) || '.jpg?v=2') as imagen,
               ${clics('Flash', 'f.id_fi')} as clics, f.fecha_creacion as fecha
          from flash_informativo f
-        where f.estado_fi = 'Activo' and f.fecha_creacion > $2 and ${coincide('flash_informativo_categoria', 'id_fi', 'f')}
+        where f.estado_fi = 'Activo' and f.fecha_creacion > $2 and ${coincide('Flash', 'f.tipo_evento::text')}
        union all
        select 'Faro', fe.id_fe, fe.titulo, coalesce(fe.imagen, '${EJEMPLOS}/faro-' || lower(fe.tipo::text) || '.jpg?v=2'),
               ${clics('Faro', 'fe.id_fe')}, fe.fecha_creacion
          from faro_empresarial fe
-        where fe.estado_fe = 'Activo' and fe.fecha_creacion > $2 and ${coincide('faro_empresarial_categoria', 'id_fe', 'fe')}
+        where fe.estado_fe = 'Activo' and fe.fecha_creacion > $2 and ${coincideFaro}
        union all
        select 'Tendencia', t.id_te, t.tendencia, null, ${clics('Tendencia', 't.id_te')}, t.fecha_creacion
          from tendencia_empresarial t
-        where t.estado_te = 'Activo' and t.fecha_creacion > $2 and ${coincide('tendencia_categoria', 'id_te', 't')}
+        where t.estado_te = 'Activo' and t.fecha_creacion > $2 and ${coincide('Tendencia', 't.megatendencia')}
        union all
        select 'Evento', e.id_evento, e.titulo, null, ${clics('Evento', 'e.id_evento')}, e.fecha_creacion
          from calendario_eventos e
@@ -93,7 +103,7 @@ async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Prom
        select 'Empresa', ec.id_ec, coalesce(ec.nombre_comercial, ec.razon_social), coalesce(ec.imagen_portada, '${EJEMPLOS}/empresa-general.jpg?v=2'),
               ${clics('Empresa', 'ec.id_ec')}, ec.fecha_creacion
          from empresa_coformadora ec
-        where ec.estado_ec = 'Activo' and ec.fecha_creacion > $2
+        where ec.estado_ec = 'Activo' and ec.fecha_creacion > $2 and ${coincideEmpresa}
      ) x
      order by clics desc, fecha desc
      limit ${MAXIMO_BOLETIN}`,

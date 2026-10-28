@@ -9,7 +9,7 @@ import {
   NOMBRE_COOKIE, generarCodigoRecuperacion, guardarSesion, huellaCodigo, opcionesCookie,
 } from '../auth/tokens.js';
 import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo } from '../servicios/correo.js';
-import { FRECUENCIAS_ALERTA, contrasena, correo, listaIds, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
+import { FRECUENCIAS_ALERTA, contrasena, correo, esquemaPreferencias, interesesFaro, textoObligatorio, textoOpcional, type Preferencias } from '../utilidades/esquemas.js';
 import { nombreRolCanonico, nombreRolPrincipal, type Sesion } from '../auth/roles.js';
 import { nombresDeRolesValidos, requiereSesion } from '../middlewares/sesion.js';
 
@@ -35,7 +35,10 @@ export const COLUMNAS_PERFIL = `u.id_usuario, u.apodo_usuario, u.nombre_usuario,
   coalesce((select json_agg(json_build_object('id_categoria', c.id_categoria, 'nombre', c.nombre_categoria)
                             order by c.nombre_categoria)
               from usuario_interes ui join categoria c on c.id_categoria = ui.id_categoria
-             where ui.id_usuario = u.id_usuario), '[]'::json) as intereses`;
+             where ui.id_usuario = u.id_usuario), '[]'::json) as intereses,
+  coalesce((select json_object_agg(p.modulo, p.valores)
+              from (select modulo, json_agg(valor order by valor) as valores
+                      from usuario_preferencia where id_usuario = u.id_usuario group by modulo) p), '{}'::json) as preferencias`;
 
 /** Perfil del usuario de la sesión (con sus roles, el rol con el que entró y sus intereses). */
 export async function obtenerPerfil(sesion: Sesion) {
@@ -56,7 +59,8 @@ function guardarCookieSesion(res: Response, idUsuario: number, rol: string | nul
   guardarSesion(res, idUsuario, { rol, recordar });
 }
 
-async function guardarIntereses(c: Cliente, idUsuario: number, intereses: number[]) {
+/** Intereses de Faro (categorías). */
+export async function guardarIntereses(c: Cliente, idUsuario: number, intereses: number[]) {
   if (!intereses.length) return;
   await c.query(
     `insert into usuario_interes (id_usuario, id_categoria)
@@ -64,6 +68,21 @@ async function guardarIntereses(c: Cliente, idUsuario: number, intereses: number
      on conflict do nothing`,
     [idUsuario, intereses],
   );
+}
+
+/** Intereses de Flash, Empresas y Tendencias: reemplaza los de cada módulo que venga en `preferencias`. */
+export async function guardarPreferencias(c: Cliente, idUsuario: number, preferencias: Preferencias) {
+  for (const [modulo, valores] of Object.entries(preferencias)) {
+    if (!valores) continue;
+    await c.query('delete from usuario_preferencia where id_usuario = $1 and modulo = $2', [idUsuario, modulo]);
+    if (valores.length) {
+      await c.query(
+        `insert into usuario_preferencia (id_usuario, modulo, valor)
+         select $1, $2, v from unnest($3::text[]) v on conflict do nothing`,
+        [idUsuario, modulo, [...new Set(valores)]],
+      );
+    }
+  }
 }
 
 // ---------------------------------------------------------------------- Registro
@@ -77,7 +96,8 @@ const esquemaRegistro = z.object({
   ciudad: textoOpcional(60),
   acepta_tratamiento_datos: z.literal(true, { message: 'Debes aceptar el tratamiento de datos personales (Ley 1581 de 2012)' }),
   // Paso 2: intereses
-  intereses: listaIds.default([]),
+  intereses: interesesFaro.default([]),
+  preferencias: esquemaPreferencias.default({}),
   frecuencia_alertas: z.enum(FRECUENCIAS_ALERTA).optional(),
 });
 
@@ -107,6 +127,7 @@ rutasAuth.post('/registro', limiteIntentos, async (req, res) => {
     );
     const id = rows[0]!.id_usuario;
     await guardarIntereses(c, id, datos.intereses);
+    await guardarPreferencias(c, id, datos.preferencias);
     return id;
   });
 

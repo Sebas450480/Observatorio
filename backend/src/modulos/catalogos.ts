@@ -23,6 +23,40 @@ rutasSectores.get('/', async (req, res) => {
   res.json(sectores);
 });
 
+/**
+ * Opciones de "Mis intereses" por módulo, de la más usada a la menos usada (las primeras 5 se
+ * muestran como fichas y el resto en "Más"): tipos de evento del Flash, categorías de Faro,
+ * sectores de empresas y megatendencias registradas (el frontend agrega las del Figma).
+ */
+export const rutasIntereses = Router();
+
+rutasIntereses.get('/', async (req, res) => {
+  const opciones = await conRol(req.sesion, async (c) => {
+    const flash = await c.query(
+      `select e.tipo::text as valor, count(f.id_fi)::int as usos
+         from unnest(enum_range(null::tipo_evento)) e(tipo)
+         left join flash_informativo f on f.tipo_evento = e.tipo
+        group by e.tipo order by usos desc, valor`,
+    );
+    const faro = await c.query(
+      `select c.id_categoria as id, c.nombre_categoria as valor, count(fc.id_fe)::int as usos
+         from categoria c left join faro_empresarial_categoria fc on fc.id_categoria = c.id_categoria
+        group by c.id_categoria order by usos desc, c.nombre_categoria`,
+    );
+    const empresa = await c.query(
+      `select s.nombre as valor, count(e.id_ec)::int as usos
+         from sector_economico s left join empresa_coformadora e on e.sector_economico = s.nombre
+        group by s.nombre order by usos desc, s.nombre`,
+    );
+    const tendencia = await c.query(
+      `select megatendencia as valor, count(*)::int as usos from tendencia_empresarial
+        group by megatendencia order by usos desc, megatendencia`,
+    );
+    return { Flash: flash.rows, Faro: faro.rows, Empresa: empresa.rows, Tendencia: tendencia.rows };
+  });
+  res.json(opciones);
+});
+
 export const rutasCategorias = Router();
 
 rutasCategorias.get('/', async (req, res) => {

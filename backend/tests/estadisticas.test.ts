@@ -36,19 +36,15 @@ describe('Alertas por correo', () => {
   it('envía las novedades según los intereses y registra la apertura', async () => {
     const interesado = await crearUsuario('Usuario', { frecuencia: 'Diaria' });
     await db().query("update usuario set fecha_registro = now() - interval '1 hour' where id_usuario = $1", [interesado.id]);
-    await db().query(
-      "insert into usuario_interes (id_usuario, id_categoria) select $1, id_categoria from categoria where nombre_categoria = 'Finanzas'",
-      [interesado.id],
-    );
+    // Intereses del Flash: solo los foros.
+    await db().query("insert into usuario_preferencia (id_usuario, modulo, valor) values ($1, 'Flash', 'Foro')", [interesado.id]);
     const sinAlertas = await crearUsuario('Usuario', { frecuencia: 'Ninguna' });
 
     const { agente: gestor } = await sesion('Gestor Flash Informativo');
-    const finanzas = (await invitado().get('/api/categorias')).body.find((c: { nombre_categoria: string }) => c.nombre_categoria === 'Finanzas');
-    const tecnologia = (await invitado().get('/api/categorias')).body.find((c: { nombre_categoria: string }) => c.nombre_categoria === 'Tecnología');
     const base = { fecha_inicio: '2026-12-10T08:00:00-05:00', modalidad: 'Virtual', tipo_evento: 'Foro' };
-    await gestor.post('/api/flash').send({ ...base, titulo: 'Foro de inversión ángel', categorias: [finanzas.id_categoria] });
-    await gestor.post('/api/flash').send({ ...base, titulo: 'Foro de robótica', categorias: [tecnologia.id_categoria] });
-    await gestor.post('/api/flash').send({ ...base, titulo: 'Foro oculto de finanzas', categorias: [finanzas.id_categoria], estado_fi: 'Inactivo' });
+    await gestor.post('/api/flash').send({ ...base, titulo: 'Foro de inversión ángel' });
+    await gestor.post('/api/flash').send({ ...base, titulo: 'Taller de robótica', tipo_evento: 'Taller' });
+    await gestor.post('/api/flash').send({ ...base, titulo: 'Foro oculto de finanzas', estado_fi: 'Inactivo' });
 
     correosDePrueba.length = 0;
     const resultado = await ejecutarAlertas('Diaria');
@@ -57,7 +53,7 @@ describe('Alertas por correo', () => {
     const correo = correosDePrueba.find((c) => c.para === interesado.correo);
     expect(correo).toBeDefined();
     expect(correo!.texto).toContain('Foro de inversión ángel');
-    expect(correo!.texto).not.toContain('Foro de robótica');
+    expect(correo!.texto).not.toContain('Taller de robótica');
     expect(correo!.texto).not.toContain('Foro oculto de finanzas');
     expect(correosDePrueba.find((c) => c.para === sinAlertas.correo)).toBeUndefined();
 
