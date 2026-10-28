@@ -51,7 +51,16 @@ function EtiquetaMega({ children }: { children: string }) {
   );
 }
 
+/** Alcance de la tendencia según la información llenada: mundial, Colombia o ambas (nada si ninguna). */
+function alcance(t: Pick<Tendencia, 'comportamiento_mundo' | 'comportamiento_colombia'>): string | null {
+  const mundo = !!t.comportamiento_mundo?.trim();
+  const colombia = !!t.comportamiento_colombia?.trim();
+  if (mundo && colombia) return 'Global & Colombia';
+  return mundo ? 'Global' : colombia ? 'Colombia' : null;
+}
+
 function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void }) {
+  const zona = alcance(t);
   // La banderita va fuera del botón de la tarjeta (un botón no puede ir dentro de otro).
   return (
     <div className="relative flex min-w-0">
@@ -72,9 +81,13 @@ function TarjetaTendencia({ t, onAbrir }: { t: Tendencia; onAbrir: () => void })
           <span className="line-clamp-2 min-h-[44px] text-body font-light">{t.descripcion}</span>
         </span>
         <span className="mt-auto flex items-center justify-between gap-3 border-t border-[#e2e8f0] pt-3.5">
-          <span className="flex items-center gap-2 text-small font-bold tracking-[-0.5px] text-[#232734]">
-            <img src={iconoGlobo} alt="" aria-hidden className="size-3.5" /> Global &amp; Colombia
-          </span>
+          {zona ? (
+            <span className="flex items-center gap-2 text-small font-bold tracking-[-0.5px] text-[#232734]">
+              <img src={iconoGlobo} alt="" aria-hidden className="size-3.5" /> {zona}
+            </span>
+          ) : (
+            <span />
+          )}
           <span className="flex items-center gap-2 text-small text-[#4d525c]">
             <img src={iconoCalendario} alt="" aria-hidden className="size-3.5" /> {fechaCorta(t.fecha_publicacion)}
           </span>

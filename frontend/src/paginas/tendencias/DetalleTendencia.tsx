@@ -59,16 +59,21 @@ export function DetalleTendencia({ id, onCerrar, onEditar }: { id: number; onCer
               <p className="whitespace-pre-line text-small font-light text-black">{t.descripcion}</p>
             </SeccionDetalle>
           )}
-          <SeccionDetalle titulo="Tendencia a nivel mundial">
-            <CajaDetalle icono={iconoMundo} tamanoIcono={20}>
-              <span className="font-light text-black">{t.comportamiento_mundo || 'Sin información registrada.'}</span>
-            </CajaDetalle>
-          </SeccionDetalle>
-          <SeccionDetalle titulo="Tendencia a nivel Colombia">
-            <CajaDetalle icono={iconoColombia} tamanoIcono={20}>
-              <span className="font-light text-black">{t.comportamiento_colombia || 'Sin información registrada.'}</span>
-            </CajaDetalle>
-          </SeccionDetalle>
+          {/* Cada nivel aparece solo si tiene información (mundial, Colombia o ambos). */}
+          {t.comportamiento_mundo?.trim() && (
+            <SeccionDetalle titulo="Tendencia a nivel mundial">
+              <CajaDetalle icono={iconoMundo} tamanoIcono={20}>
+                <span className="font-light text-black">{t.comportamiento_mundo}</span>
+              </CajaDetalle>
+            </SeccionDetalle>
+          )}
+          {t.comportamiento_colombia?.trim() && (
+            <SeccionDetalle titulo="Tendencia a nivel Colombia">
+              <CajaDetalle icono={iconoColombia} tamanoIcono={20}>
+                <span className="font-light text-black">{t.comportamiento_colombia}</span>
+              </CajaDetalle>
+            </SeccionDetalle>
+          )}
           {t.fuentes.length > 0 && (
             <SeccionDetalle titulo="Fuentes de la tendencia">
               <VinetasDetalle>
