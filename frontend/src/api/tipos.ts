@@ -5,7 +5,7 @@ export type Modalidad = 'Virtual' | 'Presencial' | 'Hibrido';
 export type TipoEvento = 'Congreso' | 'Hackathon' | 'Foro' | 'Cumbre' | 'Seminario' | 'Taller' | 'Feria' | 'Otro';
 export type TipoFaro = 'Becas' | 'Convocatorias' | 'Cursos' | 'Talleres';
 export type TamanoEmpresa = 'Micro' | 'Pequeña' | 'Mediana' | 'Grande';
-export type FrecuenciaAlertas = 'Inmediata' | 'Diaria' | 'Cada2Dias' | 'Semanal' | 'Ninguna';
+export type FrecuenciaAlertas = 'Diaria' | 'Cada2Dias' | 'Semanal' | 'Ninguna';
 export type TipoContenido = 'Flash' | 'Faro' | 'Empresa' | 'Tendencia' | 'Evento';
 
 export const MODALIDADES: Modalidad[] = ['Virtual', 'Presencial', 'Hibrido'];

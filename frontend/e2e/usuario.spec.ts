@@ -22,14 +22,14 @@ test.describe('Usuario registrado', () => {
     await page.goto('/mi-perfil');
     await page.getByLabel('Ciudad').fill('Medellín');
     await page.getByRole('button', { name: 'Becas' }).click();
-    await page.getByText('En el momento').click();
+    await page.getByText('Cada 2 días', { exact: true }).click();
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(page.getByRole('dialog', { name: 'Perfil actualizado' })).toBeVisible();
     await page.getByRole('button', { name: 'Aceptar' }).click();
     await page.reload();
     await expect(page.getByLabel('Ciudad')).toHaveValue('Medellín');
     await expect(page.getByRole('button', { name: 'Becas' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('radio', { name: /En el momento/ })).toBeChecked();
+    await expect(page.getByRole('radio', { name: /Cada 2 días/ })).toBeChecked();
   });
 
   test('elige el boletín diario y luego silencia todos los correos', async ({ page }) => {

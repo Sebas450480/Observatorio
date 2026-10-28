@@ -34,7 +34,7 @@ describe('Actividad y estadísticas', () => {
 
 describe('Alertas por correo', () => {
   it('envía las novedades según los intereses y registra la apertura', async () => {
-    const interesado = await crearUsuario('Usuario', { frecuencia: 'Inmediata' });
+    const interesado = await crearUsuario('Usuario', { frecuencia: 'Diaria' });
     await db().query("update usuario set fecha_registro = now() - interval '1 hour' where id_usuario = $1", [interesado.id]);
     await db().query(
       "insert into usuario_interes (id_usuario, id_categoria) select $1, id_categoria from categoria where nombre_categoria = 'Finanzas'",
@@ -51,7 +51,7 @@ describe('Alertas por correo', () => {
     await gestor.post('/api/flash').send({ ...base, titulo: 'Foro oculto de finanzas', categorias: [finanzas.id_categoria], estado_fi: 'Inactivo' });
 
     correosDePrueba.length = 0;
-    const resultado = await ejecutarAlertas('Inmediata');
+    const resultado = await ejecutarAlertas('Diaria');
     expect(resultado.errores).toBe(0);
 
     const correo = correosDePrueba.find((c) => c.para === interesado.correo);
@@ -63,7 +63,7 @@ describe('Alertas por correo', () => {
 
     // Una segunda ejecución no repite lo ya enviado.
     correosDePrueba.length = 0;
-    await ejecutarAlertas('Inmediata');
+    await ejecutarAlertas('Diaria');
     expect(correosDePrueba.find((c) => c.para === interesado.correo)).toBeUndefined();
 
     // Apertura del correo con la imagen invisible.
@@ -130,9 +130,9 @@ describe('Alertas por correo', () => {
        values ('BOL-' || floor(random() * 1e9)::text, 'Empresa Nueva S.A.S.', 'Empresa Nueva', 'Comercio', 'Bogotá D.C.', 'Bogotá')`,
     );
     correosDePrueba.length = 0;
-    // Un martes: corre el boletín inmediato, el diario, el de cada 2 días y los recordatorios, pero no el semanal.
+    // Un martes: corre el boletín diario, el de cada 2 días y los recordatorios, pero no el semanal.
     const resultado = await ejecutarEnvioDiario(new Date('2026-10-20T13:00:00Z'));
-    expect(Object.keys(resultado)).toEqual(['Inmediata', 'Diaria', 'Cada2Dias', 'Recordatorios']);
+    expect(Object.keys(resultado)).toEqual(['Diaria', 'Cada2Dias', 'Recordatorios']);
     const correo = correosDePrueba.find((c) => c.para === diario.correo);
     expect(correo?.texto).toContain('Nueva empresa coformadora: Empresa Nueva');
     // Un lunes también corre el semanal.
@@ -149,7 +149,7 @@ describe('Alertas por correo', () => {
   });
 
   it('Vercel Cron ejecuta el envío solo con el secreto correcto', async () => {
-    const ruta = '/api/alertas/cron?frecuencia=Inmediata';
+    const ruta = '/api/alertas/cron?frecuencia=Diaria';
     const r = await invitado().get(ruta).set('Authorization', 'Bearer secreto-cron-de-pruebas-1234');
     expect(r.status).toBe(200);
     expect(r.body).toHaveProperty('enviados');
