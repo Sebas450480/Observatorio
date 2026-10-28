@@ -130,9 +130,9 @@ describe('Alertas por correo', () => {
        values ('BOL-' || floor(random() * 1e9)::text, 'Empresa Nueva S.A.S.', 'Empresa Nueva', 'Comercio', 'Bogotá D.C.', 'Bogotá')`,
     );
     correosDePrueba.length = 0;
-    // Un martes: corre el boletín inmediato, el diario y los recordatorios, pero no el semanal.
+    // Un martes: corre el boletín inmediato, el diario, el de cada 2 días y los recordatorios, pero no el semanal.
     const resultado = await ejecutarEnvioDiario(new Date('2026-10-20T13:00:00Z'));
-    expect(Object.keys(resultado)).toEqual(['Inmediata', 'Diaria', 'Recordatorios']);
+    expect(Object.keys(resultado)).toEqual(['Inmediata', 'Diaria', 'Cada2Dias', 'Recordatorios']);
     const correo = correosDePrueba.find((c) => c.para === diario.correo);
     expect(correo?.texto).toContain('Nueva empresa coformadora: Empresa Nueva');
     // Un lunes también corre el semanal.
