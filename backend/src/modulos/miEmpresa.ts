@@ -48,7 +48,7 @@ const esquema = z.object({
   razon_social: textoObligatorio(150),
   nombre_comercial: textoOpcional(100),
   nit: textoObligatorio(20),
-  sector_economico: textoObligatorio(50),
+  sector_economico: textoObligatorio(100),
   descripcion: textoOpcional(),
   tamano_empresa: z.enum(TAMANOS_EMPRESA).nullish(),
   naturaleza_juridica: textoOpcional(50),

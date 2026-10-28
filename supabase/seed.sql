@@ -156,7 +156,7 @@ values
      'TecnoSoluciones S.A.S. es una empresa líder en el desarrollo de soluciones tecnológicas y software, con más de 10 años de experiencia en el mercado. Nos enfocamos en la innovación, la transformación digital y el acompañamiento a organizaciones en su crecimiento.',
      'Tecnológico', 'Mediana', '7 años', 'https://www.tecnosoluciones.com', 24, 3, 'Privada',
      'Antioquia', 'Medellín', 'Cra 43A # 5-10, Ed. Sede', '(604) 444 1234', 'info@tecnosoluciones.com', 2015),
-    ('900.200.001-1', 'AgroAndes S.A.S.',            'AgroAndes',     'Empresa de ejemplo del sector agroindustrial.',      'Agroindustrial', 'Pequeña', '3 años', null, 8,  1, 'Privada', 'Cundinamarca', 'Chía',         null, null, null, 2012),
+    ('900.200.001-1', 'AgroAndes S.A.S.',            'AgroAndes',     'Empresa de ejemplo del sector agroindustrial.',      'Agricultura, ganadería, caza, silvicultura y pesca', 'Pequeña', '3 años', null, 8,  1, 'Privada', 'Cundinamarca', 'Chía',         null, null, null, 2012),
     ('900.200.002-2', 'Logística Express S.A.S.',    'LogiExpress',   'Empresa de ejemplo de transporte y logística.',     'Logística',      'Mediana', '5 años', null, 15, 0, 'Privada', 'Bogotá D.C.',  'Bogotá',       null, null, null, 2010),
     ('900.200.003-3', 'Finanzas Claras S.A.',        'Finanzas Claras','Empresa de ejemplo de servicios financieros.',     'Financiero',     'Grande',  '10 años',null, 40, 5, 'Privada', 'Bogotá D.C.',  'Bogotá',       null, null, null, 1998),
     ('900.200.004-4', 'Salud Integral IPS S.A.S.',   'Salud Integral','Empresa de ejemplo del sector salud.',              'Salud',          'Mediana', '4 años', null, 12, 1, 'Privada', 'Valle del Cauca','Cali',       null, null, null, 2008),

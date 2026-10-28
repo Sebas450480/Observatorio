@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { CampoSector } from '../../componentes/ui/CampoSector';
 import { useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { enlaceValido, normalizarEnlace } from '../../utilidades/formato';
@@ -16,7 +17,6 @@ import { AreaTexto, Entrada, Selector } from '../../componentes/ui/Campos';
 import { Cargando, MensajeError } from '../../componentes/ui/Elementos';
 import { Aviso, Confirmacion } from '../../componentes/ui/Modal';
 import { DEPARTAMENTOS } from '../../utilidades/colombia';
-import { useResumenEmpresas } from './DirectorioEmpresas';
 import { Migas, TARJETA } from './PerfilEmpresa';
 
 const NATURALEZAS = ['Privada', 'Pública', 'Mixta', 'Sin ánimo de lucro'].map((n) => ({ valor: n, texto: n }));
@@ -28,7 +28,7 @@ const esquema = z.object({
   razon_social: z.string().trim().min(1, 'Escribe la razón social').max(150),
   nombre_comercial: z.string().trim().max(100),
   nit: z.string().trim().min(1, 'Escribe el NIT').max(20),
-  sector_economico: z.string().trim().min(1, 'Escribe el sector').max(50),
+  sector_economico: z.string().trim().min(1, 'Elige o escribe el sector').max(100),
   naturaleza_juridica: z.string(),
   tamano_empresa: z.string(),
   departamento: z.string().min(1, 'Elige el departamento'),
@@ -92,7 +92,6 @@ export function FormularioEmpresa() {
 function Formulario({ empresa }: { empresa?: Empresa }) {
   const navegar = useNavigate();
   const cliente = useQueryClient();
-  const { data: resumen } = useResumenEmpresas();
   const guardarApi = useGuardar<Empresa>('/empresas');
   const subirImagen = useSubirImagen('/empresas');
   const [portada, setPortada] = useState<File | null>(null);
@@ -108,7 +107,7 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
   const [creada, setCreada] = useState<number | undefined>(undefined);
   const vistaPortada = useVistaPrevia(portada);
 
-  const { register, handleSubmit, getValues, setError, formState } = useForm<Datos>({
+  const { register, handleSubmit, getValues, setError, formState, control } = useForm<Datos>({
     resolver: zodResolver(esquema),
     defaultValues: valoresIniciales(empresa),
   });
@@ -229,7 +228,11 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
             <Entrada etiqueta="Razón social" obligatorio placeholder="Ej. TecnoSoluciones S.A.S." error={e.razon_social?.message} {...register('razon_social')} />
             <Entrada etiqueta="Nombre comercial" placeholder="Ej. TecnoSoluciones" {...register('nombre_comercial')} />
             <Entrada etiqueta="NIT" obligatorio placeholder="900.000.000-0" error={e.nit?.message} {...register('nit')} />
-            <Entrada etiqueta="Sector" obligatorio placeholder="Selecciona el sector" list="sectores" error={e.sector_economico?.message} {...register('sector_economico')} />
+            <Controller
+              control={control}
+              name="sector_economico"
+              render={({ field }) => <CampoSector valor={field.value} onCambiar={field.onChange} error={e.sector_economico?.message} />}
+            />
             <Selector etiqueta="Tipo de empresa" vacio="Selecciona el tipo" opciones={NATURALEZAS} {...register('naturaleza_juridica')} />
             <Selector etiqueta="Tamaño" vacio="Selecciona el tamaño" opciones={TAMANOS.map((t) => ({ valor: t, texto: t }))} {...register('tamano_empresa')} />
             <Selector etiqueta="Departamento" obligatorio vacio="Selecciona el departamento" opciones={DEPARTAMENTOS} error={e.departamento?.message} {...register('departamento')} />
@@ -251,11 +254,6 @@ function Formulario({ empresa }: { empresa?: Empresa }) {
             <Entrada etiqueta="Premios recibidos" inputMode="numeric" placeholder="Ej. 3" error={e.premios_recibidos?.message} {...register('premios_recibidos')} />
             <Entrada etiqueta="Tiempo como coformadora" placeholder="Ej. 7 años" {...register('tiempo_coformadora')} />
           </div>
-          <datalist id="sectores">
-            {(resumen?.por_sector ?? []).map((s) => (
-              <option key={s.sector} value={s.sector} />
-            ))}
-          </datalist>
           <CampoImagen etiqueta="Logo de la empresa" actual={empresa?.logo_ec} archivo={logo} onCambiar={setLogo} />
         </section>
 

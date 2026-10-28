@@ -17,17 +17,17 @@ const TIPOS_FARO = ['becas', 'convocatorias', 'cursos', 'talleres'];
 
 /** Sector escrito por el gestor → foto del grupo de sectores que más se parece. */
 const SECTORES: [RegExp, string][] = [
-  [/tecnolog|software|informatic|sistemas|digital|telecom/, 'tecnologia'],
+  [/tecnolog|software|informatic|sistemas|digital|telecom|informacion y comunicac/, 'tecnologia'],
   [/salud|medic|clinic|farmac|hospital|odonto/, 'salud'],
   [/educa|formaci|universi|colegio|academ|capacita/, 'educacion'],
   [/construc|inmobili|arquitect|obra|ingenier/, 'construccion'],
   [/agro|agric|ganad|pecuar|flor|cafe|campo/, 'agro'],
   [/financ|banc|seguro|contab|credito|inversi/, 'finanzas'],
-  [/turism|hotel|restaur|gastronom|viaje|alimento|bebida/, 'turismo'],
+  [/turism|hotel|restaur|gastronom|viaje|alimento|bebida|alojamiento|comida/, 'turismo'],
   [/transport|logist|distribu|almacen|envio/, 'transporte'],
-  [/industr|manufactur|fabric|metal|quimic|textil|plastic|producci/, 'industria'],
+  [/industr|manufactur|fabric|metal|quimic|textil|plastic|producci|mina|cantera|electricidad|saneamiento/, 'industria'],
   [/comerci|tienda|venta|retail|almacenes|mayorista|minorista/, 'comercio'],
-  [/servicio|consultor|asesor|outsourc|marketing|publicidad|legal/, 'servicios'],
+  [/servicio|consultor|asesor|outsourc|marketing|publicidad|legal|profesional|administraci|hogares/, 'servicios'],
 ];
 
 export function imagenFlash(f: Pick<Flash, 'imagen' | 'tipo_evento'>): string {

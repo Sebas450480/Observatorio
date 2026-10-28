@@ -14,7 +14,7 @@ import { rutasAlertas } from './modulos/alertas.js';
 import { rutasAuth } from './modulos/auth.js';
 import { rutasBuscar } from './modulos/buscar.js';
 import { rutasCalendario } from './modulos/calendario.js';
-import { rutasCategorias, rutasRoles } from './modulos/catalogos.js';
+import { rutasCategorias, rutasRoles, rutasSectores } from './modulos/catalogos.js';
 import { rutasEmpresas } from './modulos/empresas.js';
 import { rutasActividad, rutasEstadisticas } from './modulos/estadisticas.js';
 import { rutasFaro } from './modulos/faro.js';
@@ -83,6 +83,7 @@ export function crearApp() {
   app.use('/api/usuarios', rutasUsuarios);
   app.use('/api/roles', rutasRoles);
   app.use('/api/categorias', rutasCategorias);
+  app.use('/api/sectores', rutasSectores);
   app.use('/api/flash', rutasFlash);
   app.use('/api/faro', rutasFaro);
   app.use('/api/empresas', rutasEmpresas);

@@ -75,6 +75,17 @@ export function useCategorias() {
   });
 }
 
+export interface SectorEconomico {
+  seccion: string;
+  nombre: string;
+  foto: string;
+}
+
+/** Los 21 sectores económicos (secciones CIIU) de la ficha de la empresa. */
+export function useSectores() {
+  return useQuery({ queryKey: ['/sectores'], queryFn: () => api<SectorEconomico[]>('/sectores'), staleTime: 60 * 60 * 1000 });
+}
+
 export function useRoles() {
   return useQuery({ queryKey: ['/roles'], queryFn: () => api<Rol[]>('/roles'), staleTime: 10 * 60 * 1000 });
 }

@@ -14,6 +14,15 @@ rutasRoles.get('/', async (req, res) => {
   res.json(roles);
 });
 
+/** Sectores económicos (secciones CIIU) para la ficha de la empresa; "Otro" se escribe a mano y no se guarda aquí. */
+export const rutasSectores = Router();
+
+rutasSectores.get('/', async (req, res) => {
+  const sectores = await conRol(req.sesion, async (c) =>
+    (await c.query('select seccion, nombre, foto from sector_economico order by nombre')).rows);
+  res.json(sectores);
+});
+
 export const rutasCategorias = Router();
 
 rutasCategorias.get('/', async (req, res) => {

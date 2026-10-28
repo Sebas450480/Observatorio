@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import { CampoSector } from '../../componentes/ui/CampoSector';
 import { Link } from 'react-router';
 import { z } from 'zod';
 import { ErrorApi, mensajeDeError } from '../../api/cliente';
@@ -22,7 +23,7 @@ const esquema = z.object({
   razon_social: z.string().trim().min(1, 'Escribe la razón social').max(150),
   nombre_comercial: z.string().trim().max(100),
   nit: z.string().trim().min(1, 'Escribe el NIT').max(20),
-  sector_economico: z.string().trim().min(1, 'Escribe el sector').max(50),
+  sector_economico: z.string().trim().min(1, 'Elige o escribe el sector').max(100),
   descripcion: z.string().trim().max(5000),
   tamano_empresa: z.string(),
   anio_constitucion: z.string().regex(/^(\d{4})?$/, 'Escribe un año de 4 dígitos'),
@@ -155,7 +156,11 @@ function Formulario({ empresa }: { empresa: Empresa }) {
         <Entrada etiqueta="Razón social" obligatorio error={e.razon_social?.message} {...register('razon_social')} />
         <Entrada etiqueta="Nombre comercial" {...register('nombre_comercial')} />
         <Entrada etiqueta="NIT" obligatorio error={e.nit?.message} {...register('nit')} />
-        <Entrada etiqueta="Sector" obligatorio error={e.sector_economico?.message} {...register('sector_economico')} />
+        <Controller
+          control={control}
+          name="sector_economico"
+          render={({ field }) => <CampoSector valor={field.value} onCambiar={field.onChange} error={e.sector_economico?.message} />}
+        />
         <Selector etiqueta="Tamaño" vacio="Selecciona el tamaño" opciones={TAMANOS.map((t) => ({ valor: t, texto: t }))} {...register('tamano_empresa')} />
         <Entrada etiqueta="Año de constitución" inputMode="numeric" placeholder="Ej. 2015" error={e.anio_constitucion?.message} {...register('anio_constitucion')} />
         <Entrada etiqueta="Sitio web" placeholder="https://www.empresa.com" error={e.link?.message} {...register('link')} />

@@ -16,7 +16,7 @@ const esquema = z.object({
   razon_social: textoObligatorio(150),
   nombre_comercial: textoOpcional(100),
   descripcion: textoOpcional(),
-  sector_economico: textoObligatorio(50),
+  sector_economico: textoObligatorio(100),
   tamano_empresa: z.enum(TAMANOS_EMPRESA).nullish(),
   tiempo_coformadora: textoOpcional(20),
   link: enlace.nullish(),
@@ -43,7 +43,7 @@ const esquemaContacto = z.object({
 
 const esquemaFiltros = z.object({
   q: z.string().trim().min(1).max(100).optional(),
-  sector: z.string().trim().max(50).optional(),
+  sector: z.string().trim().max(100).optional(),
   tamano: z.enum(TAMANOS_EMPRESA).optional(),
   departamento: z.string().trim().max(50).optional(),
   municipio: z.string().trim().max(60).optional(),
@@ -62,7 +62,7 @@ const esquemaCarga = z.object({
   nombre_comercial: textoOpcional(100),
   nit: textoOpcional(20),
   descripcion: textoOpcional(),
-  sector_economico: textoOpcional(50),
+  sector_economico: textoOpcional(100),
   codigo_ciiu: textoOpcional(30),
   naturaleza_juridica: textoOpcional(50),
   tamano_empresa: z.enum(TAMANOS_EMPRESA).nullish(),
@@ -105,7 +105,7 @@ const cargaEmpresas = cargaRecurso<FilaEmpresa>({
     { clave: 'nombre_comercial', titulo: 'Nombre comercial', ayuda: 'Nombre con el que se conoce.', ejemplo: 'Meltec' },
     { clave: 'nit', titulo: 'NIT', ayuda: 'Sin dígito de verificación ni puntos.', ejemplo: '830079015' },
     { clave: 'descripcion', titulo: 'Actividad económica', ayuda: 'A qué se dedica la empresa.', ejemplo: 'Comercio al por mayor de equipos de telecomunicaciones.', ancho: 40 },
-    { clave: 'sector_economico', titulo: 'Sector económico', ayuda: 'Sector o clúster (máx. 50 caracteres).', ejemplo: 'Software y TI' },
+    { clave: 'sector_economico', titulo: 'Sector económico', ayuda: 'Uno de los 21 sectores CIIU (ej. «Información y comunicaciones») o, si ninguno aplica, el sector de la empresa (máx. 100 caracteres).', ejemplo: 'Información y comunicaciones', ancho: 34 },
     { clave: 'codigo_ciiu', titulo: 'Código CIIU', ayuda: 'Código de la actividad económica.', ejemplo: '4652' },
     { clave: 'naturaleza_juridica', titulo: 'Tipo de sociedad', ayuda: 'Privada, Pública, Mixta, S.A.S., etc.', ejemplo: 'Privada' },
     { clave: 'tamano_empresa', titulo: 'Tamaño', tipo: 'lista', opciones: [...TAMANOS_EMPRESA.map((t) => ({ texto: t })), { texto: 'Microempresa', valor: 'Micro' }], ayuda: 'Tamaño de la empresa.', ejemplo: 'Grande' },
@@ -258,7 +258,9 @@ export const rutasEmpresas = crearRecurso({
   esquemaFiltros,
   aplicarFiltros: (f, v) => {
     if (v.q) f.texto(['t.razon_social', 't.nombre_comercial', 't.nit', 't.descripcion'], v.q as string);
-    if (v.sector) f.y(`t.sector_economico ilike ${f.param(v.sector)}`);
+    // "Otro": las empresas cuyo sector no es uno de los 21 de la lista.
+    if (v.sector === 'Otro') f.y("t.sector_economico not in (select nombre from sector_economico) and t.sector_economico <> 'Por definir'");
+    else if (v.sector) f.y(`t.sector_economico ilike ${f.param(v.sector)}`);
     if (v.tamano) f.y(`t.tamano_empresa = ${f.param(v.tamano)}`);
     if (v.departamento) f.y(`t.departamento ilike ${f.param(v.departamento)}`);
     if (v.municipio) f.y(`t.municipio ilike ${f.param(v.municipio)}`);
