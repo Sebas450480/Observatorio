@@ -183,6 +183,26 @@ rutasAuth.get('/yo', async (req, res) => {
 // ---------------------------------------------------------------------- Recuperar contraseña
 const VIGENCIA_CODIGO_MINUTOS = 60;
 
+/** Correo para restablecer la contraseña (también se usa en los correos de prueba). */
+export function correoRecuperacion(nombre: string, enlace: string) {
+  return {
+    asunto: 'Restablece tu contraseña del Observatorio Empresarial',
+    texto: `Hola ${nombre}:\n\nPara crear una nueva contraseña abre este enlace (vence en ${VIGENCIA_CODIGO_MINUTOS} minutos):\n${enlace}\n\nSi no lo solicitaste, ignora este correo.`,
+    html: plantillaCorreo(
+      'Restablece tu contraseña',
+      `<p style="margin:0 0 12px">Hola ${escaparHtml(nombre)}:</p>
+       <p style="margin:0 0 12px">Recibimos una solicitud para restablecer la contraseña de tu cuenta del Observatorio Empresarial.</p>
+       ${recuadroCorreo(`<strong>Vigencia:</strong> el enlace vence en ${VIGENCIA_CODIGO_MINUTOS} minutos y solo se puede usar una vez.`)}
+       ${botonCorreo('Crear nueva contraseña', enlace)}
+       <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Si no lo solicitaste, ignora este correo: tu contraseña actual sigue funcionando.</p>`,
+      {
+        motivo: 'Recibes este correo porque se pidió restablecer la contraseña de tu cuenta en el Observatorio Empresarial.',
+        resumen: 'Crea una nueva contraseña para tu cuenta.',
+      },
+    ),
+  };
+}
+
 rutasAuth.post('/recuperar', limiteIntentos, async (req, res) => {
   const datos = z.object({ correo }).parse(req.body);
 
@@ -209,23 +229,7 @@ rutasAuth.post('/recuperar', limiteIntentos, async (req, res) => {
     // Si el correo falla se registra el motivo; la respuesta sigue siendo la misma para no revelar qué cuentas existen.
     const enlace = `${config.frontendUrl}/restablecer-contrasena?codigo=${encodeURIComponent(envio.codigo)}`;
     try {
-      await enviarCorreo({
-        para: envio.correo,
-        asunto: 'Restablece tu contraseña del Observatorio Empresarial',
-        texto: `Hola ${envio.nombre_usuario}:\n\nPara crear una nueva contraseña abre este enlace (vence en ${VIGENCIA_CODIGO_MINUTOS} minutos):\n${enlace}\n\nSi no lo solicitaste, ignora este correo.`,
-        html: plantillaCorreo(
-          'Restablece tu contraseña',
-          `<p style="margin:0 0 12px">Hola ${escaparHtml(envio.nombre_usuario)}:</p>
-           <p style="margin:0 0 12px">Recibimos una solicitud para restablecer la contraseña de tu cuenta del Observatorio Empresarial.</p>
-           ${recuadroCorreo(`<strong>Vigencia:</strong> el enlace vence en ${VIGENCIA_CODIGO_MINUTOS} minutos y solo se puede usar una vez.`)}
-           ${botonCorreo('Crear nueva contraseña', enlace)}
-           <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Si no lo solicitaste, ignora este correo: tu contraseña actual sigue funcionando.</p>`,
-          {
-            motivo: 'Recibes este correo porque se pidió restablecer la contraseña de tu cuenta en el Observatorio Empresarial.',
-            resumen: 'Crea una nueva contraseña para tu cuenta.',
-          },
-        ),
-      });
+      await enviarCorreo({ para: envio.correo, ...correoRecuperacion(envio.nombre_usuario, enlace) });
     } catch (error) {
       console.error('[correo] No se pudo enviar el enlace de recuperación:', error instanceof Error ? error.message : error);
     }

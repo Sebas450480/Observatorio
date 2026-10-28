@@ -4,7 +4,11 @@ import { config } from '../config.js';
 import { z } from 'zod';
 import { verificarFirmaEnvio } from '../auth/tokens.js';
 import { requiereSuperAdmin } from '../middlewares/sesion.js';
-import { TIPOS_REGISTRO, enlaceRegistro, ejecutarEnvioDiario, ejecutarTarea, marcarAbierto, registrarClicCorreo } from '../servicios/alertas.js';
+import { comoSistema } from '../db/contexto.js';
+import { TIPOS_REGISTRO, correosDePrueba, enlaceRegistro, ejecutarEnvioDiario, ejecutarTarea, marcarAbierto, registrarClicCorreo } from '../servicios/alertas.js';
+import { enviarCorreo } from '../servicios/correo.js';
+import { correoRecuperacion } from './auth.js';
+import { correoInvitacion } from './invitaciones.js';
 
 const TAREAS = ['Inmediata', 'Diaria', 'Cada2Dias', 'Semanal', 'Recordatorios'] as const;
 
@@ -63,4 +67,37 @@ rutasAlertas.get('/cron', async (req, res) => {
 rutasAlertas.post('/ejecutar', requiereSuperAdmin, async (req, res) => {
   const { frecuencia } = z.object({ frecuencia: z.enum(TAREAS) }).parse(req.body);
   res.json(await ejecutarTarea(frecuencia));
+});
+
+/**
+ * Correos de prueba: envía al correo del SuperAdmin que lo pide un ejemplo de cada correo de
+ * la plataforma (boletín, recordatorios, invitación a empresa y recuperación de contraseña),
+ * con "[Prueba]" en el asunto. Los enlaces de invitación y de contraseña no funcionan.
+ */
+rutasAlertas.post('/prueba', requiereSuperAdmin, async (req, res) => {
+  const { rows } = await comoSistema((c) =>
+    c.query<{ id_usuario: number; nombre_usuario: string; correo: string }>(
+      'select id_usuario, nombre_usuario, correo from usuario where id_usuario = $1',
+      [req.sesion.idUsuario],
+    ),
+  );
+  const usuario = rows[0]!;
+  const correos = [
+    ...(await correosDePrueba(usuario.id_usuario, usuario.nombre_usuario)),
+    correoInvitacion({ nombre_contacto: usuario.nombre_usuario, correo: usuario.correo, nombre_empresa: 'Empresa de ejemplo S.A.S.' }, 'prueba'),
+    correoRecuperacion(usuario.nombre_usuario, `${config.frontendUrl}/restablecer-contrasena?codigo=prueba`),
+  ];
+  const enviados: string[] = [];
+  const fallidos: string[] = [];
+  for (const correo of correos) {
+    const asunto = `[Prueba] ${correo.asunto}`;
+    try {
+      await enviarCorreo({ para: usuario.correo, ...correo, asunto });
+      enviados.push(asunto);
+    } catch (error) {
+      console.error('[correo] No se pudo enviar el correo de prueba:', error instanceof Error ? error.message : error);
+      fallidos.push(asunto);
+    }
+  }
+  res.json({ correo: usuario.correo, enviados, fallidos });
 });

@@ -36,27 +36,31 @@ interface DatosCorreo {
   nombre_empresa: string | null;
 }
 
-export async function enviarInvitacion(datos: DatosCorreo, codigo: string): Promise<boolean> {
+/** Correo de invitación a una empresa coformadora (también se usa en los correos de prueba). */
+export function correoInvitacion(datos: DatosCorreo, codigo: string) {
   const enlace = `${config.frontendUrl}/registro-empresa?codigo=${encodeURIComponent(codigo)}`;
   const empresa = datos.nombre_empresa ? ` de ${datos.nombre_empresa}` : '';
+  return {
+    asunto: ASUNTO_INVITACION,
+    texto: `Hola ${datos.nombre_contacto}:\n\n${ASUNTO_INVITACION}.\n\nTe invitamos a registrar la información${empresa} como empresa coformadora de Uniempresarial. En el formulario crearás tu contraseña y completarás los datos de la empresa.\n\nAbre este enlace (vence en ${VIGENCIA_DIAS} días):\n${enlace}`,
+    html: plantillaCorreo(
+      ASUNTO_INVITACION,
+      `<p style="margin:0 0 12px">Hola ${escaparHtml(datos.nombre_contacto)}:</p>
+       <p style="margin:0 0 12px">Te invitamos a registrar la información${escaparHtml(empresa)} como <strong>empresa coformadora de Uniempresarial</strong>
+          en el Observatorio Empresarial. En el formulario crearás tu contraseña y completarás los datos de la empresa.</p>
+       ${recuadroCorreo(`<strong>Vigencia:</strong> el enlace vence en ${VIGENCIA_DIAS} días.<br>Al registrarte autorizas el uso del nombre y la marca de la empresa en el Observatorio.`)}
+       ${botonCorreo('Completar el registro', enlace)}`,
+      {
+        motivo: 'Recibes este correo porque Uniempresarial te invitó a registrar tu empresa en el Observatorio Empresarial. Si no esperabas esta invitación, puedes ignorarla.',
+        resumen: `Registra${empresa} como empresa coformadora de Uniempresarial.`,
+      },
+    ),
+  };
+}
+
+export async function enviarInvitacion(datos: DatosCorreo, codigo: string): Promise<boolean> {
   try {
-    await enviarCorreo({
-      para: datos.correo,
-      asunto: ASUNTO_INVITACION,
-      texto: `Hola ${datos.nombre_contacto}:\n\n${ASUNTO_INVITACION}.\n\nTe invitamos a registrar la información${empresa} como empresa coformadora de Uniempresarial. En el formulario crearás tu contraseña y completarás los datos de la empresa.\n\nAbre este enlace (vence en ${VIGENCIA_DIAS} días):\n${enlace}`,
-      html: plantillaCorreo(
-        ASUNTO_INVITACION,
-        `<p style="margin:0 0 12px">Hola ${escaparHtml(datos.nombre_contacto)}:</p>
-         <p style="margin:0 0 12px">Te invitamos a registrar la información${escaparHtml(empresa)} como <strong>empresa coformadora de Uniempresarial</strong>
-            en el Observatorio Empresarial. En el formulario crearás tu contraseña y completarás los datos de la empresa.</p>
-         ${recuadroCorreo(`<strong>Vigencia:</strong> el enlace vence en ${VIGENCIA_DIAS} días.<br>Al registrarte autorizas el uso del nombre y la marca de la empresa en el Observatorio.`)}
-         ${botonCorreo('Completar el registro', enlace)}`,
-        {
-          motivo: 'Recibes este correo porque Uniempresarial te invitó a registrar tu empresa en el Observatorio Empresarial. Si no esperabas esta invitación, puedes ignorarla.',
-          resumen: `Registra${empresa} como empresa coformadora de Uniempresarial.`,
-        },
-      ),
-    });
+    await enviarCorreo({ para: datos.correo, ...correoInvitacion(datos, codigo) });
     return true;
   } catch (error) {
     console.error('[correo] No se pudo enviar la invitación:', error instanceof Error ? error.message : error);
