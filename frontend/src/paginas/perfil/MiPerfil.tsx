@@ -5,9 +5,8 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { ErrorApi, api, mensajeDeError } from '../../api/cliente';
-import { useCategorias } from '../../api/consultas';
 import type { FrecuenciaAlertas, Perfil } from '../../api/tipos';
-import { SelectorIntereses } from '../../componentes/SelectorIntereses';
+import { InteresesPorModulo, type Intereses } from '../../componentes/InteresesPorModulo';
 import { Boton } from '../../componentes/ui/Boton';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso, Modal } from '../../componentes/ui/Modal';
@@ -97,9 +96,16 @@ export function MiPerfil() {
   return <Formulario key={usuario.id_usuario} usuario={usuario} establecerUsuario={establecerUsuario} />;
 }
 
+/** Intereses guardados del perfil, por módulo. */
+const interesesDe = (p: Perfil): Intereses => ({
+  Faro: p.intereses.map((i) => i.id_categoria),
+  Flash: p.preferencias?.Flash ?? [],
+  Empresa: p.preferencias?.Empresa ?? [],
+  Tendencia: p.preferencias?.Tendencia ?? [],
+});
+
 function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establecerUsuario: (p: Perfil) => void }) {
-  const { data: categorias = [] } = useCategorias();
-  const [intereses, setIntereses] = useState(usuario.intereses.map((i) => i.id_categoria));
+  const [intereses, setIntereses] = useState<Intereses>(() => interesesDe(usuario));
   const [modal, setModal] = useState<'contrasena' | 'contrasena-lista' | 'guardado' | null>(null);
   const valores = (p: Perfil): Datos => ({
     nombre_usuario: p.nombre_usuario,
@@ -116,7 +122,8 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
   const guardar = useMutation({
     mutationFn: async (d: Datos) => {
       await api<Perfil>('/perfil', { metodo: 'PATCH', cuerpo: d });
-      return api<Perfil>('/perfil/intereses', { metodo: 'PUT', cuerpo: { intereses } });
+      const { Faro, ...preferencias } = intereses;
+      return api<Perfil>('/perfil/intereses', { metodo: 'PUT', cuerpo: { intereses: Faro, preferencias } });
     },
     onSuccess: (perfil) => {
       establecerUsuario(perfil);
@@ -130,7 +137,7 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
 
   const cancelar = () => {
     reset(valores(usuario));
-    setIntereses(usuario.intereses.map((i) => i.id_categoria));
+    setIntereses(interesesDe(usuario));
   };
 
   const [frecuencia, recordatorios] = useWatch({ control, name: ['frecuencia_alertas', 'recordatorios_eventos'] });
@@ -238,8 +245,8 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
         {panelUsuario && (
           <div className="flex flex-col gap-6">
             <section className={TARJETA} data-recorrido="intereses">
-              <EncabezadoTarjeta titulo="Mis intereses" detalle="Recibirás alertas solo de lo que marques." />
-              <SelectorIntereses categorias={categorias} seleccion={intereses} onCambiar={setIntereses} />
+              <EncabezadoTarjeta titulo="Mis intereses" detalle="Elige hasta 5 en cada módulo. En los módulos sin intereses marcados recibes todo." />
+              <InteresesPorModulo valor={intereses} onCambiar={setIntereses} />
             </section>
             <section className={TARJETA}>
               <EncabezadoTarjeta titulo="Alertas por correo" detalle="Elige qué correos quieres recibir y con qué frecuencia." />

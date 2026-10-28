@@ -24,7 +24,8 @@ import { fechaCorta, numero } from '../../utilidades/formato';
 import { DESDE_SM, useConsultaMedia } from '../../utilidades/medios';
 import { DetalleTendencia } from './DetalleTendencia';
 import { FormularioTendencia } from './FormularioTendencia';
-import { MapaTendencias, todasLasMegatendencias } from './MapaTendencias';
+import { MapaTendencias } from './MapaTendencias';
+import { todasLasMegatendencias } from '../../utilidades/megatendencias';
 import { CasillaFila, CasillaTodos, MenuAcciones, useSeleccion, type Seleccion } from '../../componentes/contenido/AccionesLote';
 import { TARJETA_INTERACTIVA } from '../../componentes/ui/tarjetaInteractiva';
 

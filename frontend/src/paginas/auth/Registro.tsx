@@ -5,9 +5,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { ErrorApi, api, mensajeDeError } from '../../api/cliente';
-import { useCategorias } from '../../api/consultas';
 import type { Perfil } from '../../api/tipos';
-import { SelectorIntereses } from '../../componentes/SelectorIntereses';
+import { InteresesPorModulo, type Intereses } from '../../componentes/InteresesPorModulo';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
 import { CampoCiudad } from '../../componentes/ui/CampoCiudad';
 import { iniciarRecorrido } from '../../componentes/RecorridoGuiado';
@@ -43,13 +42,12 @@ function Progreso({ paso }: { paso: 1 | 2 }) {
 
 export function Registro() {
   const [paso, setPaso] = useState<1 | 2>(1);
-  const [intereses, setIntereses] = useState<number[]>([]);
+  const [intereses, setIntereses] = useState<Intereses>({ Faro: [], Flash: [], Empresa: [], Tendencia: [] });
   const [alertas, setAlertas] = useState(true);
   const [autoriza, setAutoriza] = useState(false);
   const [errorAutoriza, setErrorAutoriza] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
-  const { data: categorias = [] } = useCategorias();
   const { establecerUsuario } = useSesion();
   const navegar = useNavigate();
   const formulario = useForm<Datos>({
@@ -78,7 +76,8 @@ export function Registro() {
           correo: d.correo,
           contrasena: d.contrasena,
           ciudad: d.ciudad,
-          intereses,
+          intereses: intereses.Faro,
+          preferencias: { Flash: intereses.Flash, Empresa: intereses.Empresa, Tendencia: intereses.Tendencia },
           frecuencia_alertas: alertas ? 'Semanal' : 'Ninguna',
           acepta_tratamiento_datos: true,
         },
@@ -143,15 +142,10 @@ export function Registro() {
       ) : (
         <>
           <EncabezadoAuth titulo="¿Qué te interesa?">
-            Elige los temas sobre los que quieres recibir alertas. Puedes cambiarlos cuando quieras en tu perfil.
+            Elige hasta 5 temas por módulo para tus alertas. Puedes cambiarlos cuando quieras en tu perfil.
           </EncabezadoAuth>
           <div className="flex flex-col gap-5">
-            <SelectorIntereses
-              categorias={categorias}
-              seleccion={intereses}
-              onCambiar={setIntereses}
-              titulos={['Contenido que quiero recibir', 'Sectores de interés']}
-            />
+            <InteresesPorModulo valor={intereses} onCambiar={setIntereses} />
             <div className="flex flex-col gap-3">
               <Casilla etiqueta="Quiero recibir alertas y novedades por correo electrónico" checked={alertas} onChange={(ev) => setAlertas(ev.target.checked)} />
               <Casilla

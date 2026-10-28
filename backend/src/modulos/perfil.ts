@@ -6,8 +6,8 @@ import { conRol } from '../db/contexto.js';
 import { ErrorApi } from '../errores.js';
 import { requiereSesion } from '../middlewares/sesion.js';
 import { guardarSesion } from '../auth/tokens.js';
-import { FRECUENCIAS_ALERTA, contrasena, correo, listaIds, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
-import { obtenerPerfil } from './auth.js';
+import { FRECUENCIAS_ALERTA, contrasena, correo, esquemaPreferencias, interesesFaro, textoObligatorio, textoOpcional } from '../utilidades/esquemas.js';
+import { guardarPreferencias, obtenerPerfil } from './auth.js';
 
 /** Mi perfil: cada usuario registrado consulta y edita sus propios datos. */
 export const rutasPerfil = Router();
@@ -43,8 +43,9 @@ rutasPerfil.patch('/', async (req, res) => {
 });
 
 rutasPerfil.put('/intereses', async (req, res) => {
-  const { intereses } = z.object({ intereses: listaIds }).parse(req.body);
+  const { intereses, preferencias } = z.object({ intereses: interesesFaro, preferencias: esquemaPreferencias.default({}) }).parse(req.body);
   await conRol(req.sesion, async (c) => {
+    await guardarPreferencias(c, req.sesion.idUsuario!, preferencias);
     await c.query('delete from usuario_interes where id_usuario = $1', [req.sesion.idUsuario]);
     if (intereses.length) {
       await c.query(
