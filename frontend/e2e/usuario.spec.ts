@@ -96,6 +96,9 @@ test.describe('Perfil de empresa', () => {
   test('el usuario no ve el estado de la empresa', async ({ page }) => {
     await iniciarSesion(page, 'usuario');
     await page.goto('/empresas');
+    // Las empresas van de la más reciente a la más antigua: se filtra para no depender de la página.
+    await page.getByLabel('Sector').selectOption('Agroindustrial');
+    await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await page.getByRole('link', { name: /AgroAndes/ }).first().click();
     await expect(page.getByRole('button', { name: 'Ver contacto principal' })).toBeVisible();
     await expect(page.getByText('Activo', { exact: true })).toHaveCount(0);
@@ -104,6 +107,9 @@ test.describe('Perfil de empresa', () => {
   test('el administrador sí ve el estado de la empresa', async ({ page }) => {
     await iniciarSesion(page, 'superadmin');
     await page.goto('/empresas');
+    // Las empresas van de la más reciente a la más antigua: se filtra para no depender de la página.
+    await page.getByLabel('Sector').selectOption('Agroindustrial');
+    await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await page.getByRole('link', { name: /AgroAndes/ }).first().click();
     await expect(page.getByText('Activo', { exact: true })).toBeVisible();
   });

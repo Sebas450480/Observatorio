@@ -43,6 +43,9 @@ test.describe('Descargas', () => {
     await page.goto('/empresas');
     await expect(page.getByRole('heading', { name: 'Empresas Coformadoras' })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Descargar: / })).toHaveCount(0);
+    // Las empresas van de la más reciente a la más antigua: se filtra para no depender de la página.
+    await page.getByLabel('Sector').selectOption('Agroindustrial');
+    await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await page.getByRole('link', { name: /AgroAndes/ }).first().click();
     await expect(page.getByRole('button', { name: 'Compartir' })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Descargar/ })).toHaveCount(0);

@@ -61,7 +61,7 @@ export function escaparHtml(texto: string): string {
 
 const AZUL = '#1F3A68';
 /** Encabezado: un azul más claro que el de los textos para que el logo resalte. */
-const AZUL_ENCABEZADO = '#2D5AA6';
+const AZUL_ENCABEZADO = '#334394';
 const ROJO = '#C8102E';
 const GRIS = '#6b7280';
 
