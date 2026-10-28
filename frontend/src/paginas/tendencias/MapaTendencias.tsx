@@ -27,6 +27,14 @@ const PALETA = ['#c2185b', '#00838f', '#6d4c41', '#5e35b1', '#2e7d32', '#ef6c00'
 /** Megatendencias del Figma (el formulario las ofrece aunque todavía no tengan registros). */
 export const MEGATENDENCIAS = Object.keys(COLORES);
 
+/**
+ * Todas las megatendencias, en orden alfabético: las del Figma y las que ya existen en la base.
+ * La usan el mapa (chips) y el filtro del listado, para que siempre coincidan.
+ */
+export function todasLasMegatendencias(...registradas: string[][]): string[] {
+  return [...new Set([...MEGATENDENCIAS, ...registradas.flat()])].sort((a, b) => a.localeCompare(b, 'es'));
+}
+
 type Periodo = 'semana' | 'mes' | 'anio';
 /** `corto`: texto en celulares angostos, donde las tres opciones no caben completas. */
 const PERIODOS: { valor: Periodo; texto: string; corto: string; comparacion: string }[] = [
@@ -143,7 +151,7 @@ export function MapaTendencias({ onVerTendencia }: { onVerTendencia: (megatenden
 
   const megas = mapa.data?.megatendencias ?? [];
   // Chips: todas las megatendencias del campo del formulario (las del Figma y las agregadas), tengan o no menciones.
-  const todas = [...new Set([...MEGATENDENCIAS, ...(registradas.data ?? []), ...megas.map((m) => m.megatendencia)])].sort((a, b) => a.localeCompare(b, 'es'));
+  const todas = todasLasMegatendencias(registradas.data ?? [], megas.map((m) => m.megatendencia));
   const nuevas = todas.filter((m) => !COLORES[m]);
   const color = (m: string) => COLORES[m] ?? PALETA[Math.max(0, nuevas.indexOf(m)) % PALETA.length]!;
   const nodos: Nodo[] = mega
