@@ -78,7 +78,7 @@ test.describe('Gestor Empresas Coformadoras', () => {
 
     await page.getByLabel('Razón social').fill('Prueba E2E S.A.S.');
     await page.getByLabel('NIT').fill('901.999.000-1');
-    await page.getByLabel('Sector').fill('Tecnológico');
+    await page.getByLabel('Sector').selectOption('Información y comunicaciones');
     await page.getByLabel('Departamento').selectOption('Antioquia');
     await page.getByLabel('Municipio').fill('Medellín');
     await page.getByLabel('Descripción de la empresa').fill('Empresa creada por las pruebas automáticas.');

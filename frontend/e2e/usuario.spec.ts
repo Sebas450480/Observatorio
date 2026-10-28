@@ -97,7 +97,7 @@ test.describe('Perfil de empresa', () => {
     await iniciarSesion(page, 'usuario');
     await page.goto('/empresas');
     // Las empresas van de la más reciente a la más antigua: se filtra para no depender de la página.
-    await page.getByLabel('Sector').selectOption('Agroindustrial');
+    await page.getByLabel('Sector').selectOption('Agricultura, ganadería, caza, silvicultura y pesca');
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await page.getByRole('link', { name: /AgroAndes/ }).first().click();
     await expect(page.getByRole('button', { name: 'Ver contacto principal' })).toBeVisible();
@@ -108,7 +108,7 @@ test.describe('Perfil de empresa', () => {
     await iniciarSesion(page, 'superadmin');
     await page.goto('/empresas');
     // Las empresas van de la más reciente a la más antigua: se filtra para no depender de la página.
-    await page.getByLabel('Sector').selectOption('Agroindustrial');
+    await page.getByLabel('Sector').selectOption('Agricultura, ganadería, caza, silvicultura y pesca');
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await page.getByRole('link', { name: /AgroAndes/ }).first().click();
     await expect(page.getByText('Activo', { exact: true })).toBeVisible();
