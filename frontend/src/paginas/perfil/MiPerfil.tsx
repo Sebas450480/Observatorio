@@ -12,6 +12,7 @@ import { Boton } from '../../componentes/ui/Boton';
 import { Entrada } from '../../componentes/ui/Campos';
 import { Aviso, Modal } from '../../componentes/ui/Modal';
 import { descripcionRoles, esRolEmpresa, esRolSuperAdmin, useSesion } from '../../sesion/sesion';
+import { CorreosPrueba } from './CorreosPrueba';
 import { MiEmpresa } from './MiEmpresa';
 import { iniciales } from '../../utilidades/formato';
 import { MisFavoritos } from './MisFavoritos';
@@ -310,6 +311,8 @@ function Formulario({ usuario, establecerUsuario }: { usuario: Perfil; establece
           <MiEmpresa />
         </div>
       )}
+
+      {esAdmin && <CorreosPrueba />}
 
       {modal === 'contrasena' && <CambiarContrasena onCerrar={() => setModal(null)} onListo={() => setModal('contrasena-lista')} />}
       <Aviso abierto={modal === 'contrasena-lista'} titulo="Contraseña actualizada" mensaje="Tu contraseña se cambió correctamente." onCerrar={() => setModal(null)} />
