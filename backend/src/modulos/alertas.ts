@@ -4,9 +4,9 @@ import { config } from '../config.js';
 import { z } from 'zod';
 import { verificarFirmaEnvio } from '../auth/tokens.js';
 import { requiereSuperAdmin } from '../middlewares/sesion.js';
-import { ejecutarEnvioDiario, ejecutarTarea, marcarAbierto } from '../servicios/alertas.js';
+import { TIPOS_REGISTRO, enlaceRegistro, ejecutarEnvioDiario, ejecutarTarea, marcarAbierto, registrarClicCorreo } from '../servicios/alertas.js';
 
-const TAREAS = ['Inmediata', 'Diaria', 'Semanal', 'Recordatorios'] as const;
+const TAREAS = ['Inmediata', 'Diaria', 'Cada2Dias', 'Semanal', 'Recordatorios'] as const;
 
 export const rutasAlertas = Router();
 
@@ -19,6 +19,24 @@ rutasAlertas.get('/abierto/:id/:firma', async (req, res) => {
     await marcarAbierto(id).catch(() => undefined);
   }
   res.set('Cache-Control', 'no-store').type('image/gif').send(PIXEL_GIF);
+});
+
+/**
+ * Enlace de un boletín o recordatorio: registra el "Acceder" (cuenta para el top 5) y la
+ * apertura del correo, y lleva al registro. Con una firma inválida solo redirige.
+ */
+rutasAlertas.get('/ir/:id/:firma/:tipo/:registro', async (req, res) => {
+  const id = Number(req.params.id);
+  const registro = Number(req.params.registro);
+  const tipo = TIPOS_REGISTRO.find((t) => t === req.params.tipo);
+  if (!tipo || !Number.isInteger(registro) || registro <= 0) {
+    res.redirect(302, `${config.frontendUrl}/inicio`);
+    return;
+  }
+  if (Number.isInteger(id) && id > 0 && verificarFirmaEnvio(id, req.params.firma)) {
+    await registrarClicCorreo(id, tipo, registro).catch((e) => console.error('No se pudo registrar el clic del correo:', e));
+  }
+  res.set('Cache-Control', 'no-store').redirect(302, enlaceRegistro(tipo, registro));
 });
 
 /**

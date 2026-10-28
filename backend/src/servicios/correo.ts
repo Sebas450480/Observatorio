@@ -60,6 +60,8 @@ export function escaparHtml(texto: string): string {
 }
 
 const AZUL = '#1F3A68';
+/** Encabezado: un azul más claro que el de los textos para que el logo resalte. */
+const AZUL_ENCABEZADO = '#334394';
 const ROJO = '#C8102E';
 const GRIS = '#6b7280';
 
@@ -106,22 +108,22 @@ export function plantillaCorreo(titulo: string, cuerpoHtml: string, opciones: Op
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 <title>${escaparHtml(titulo)}</title>
 <style>
-  @media (max-width:620px){ .contenedor{width:100%!important} .relleno{padding-left:20px!important;padding-right:20px!important} h1{font-size:20px!important} }
+  @media (max-width:740px){ .contenedor{width:100%!important} .relleno{padding-left:20px!important;padding-right:20px!important} h1{font-size:20px!important} }
 </style>
 </head>
 <body style="margin:0;padding:0;background:#eef1f6;font-family:Arial,Helvetica,sans-serif;color:#1f293d;-webkit-text-size-adjust:100%">
   ${opciones.resumen ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${escaparHtml(opciones.resumen)}</div>` : ''}
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#eef1f6"><tr><td align="center" style="padding:24px 12px">
-    <table role="presentation" class="contenedor" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden">
-      <tr><td bgcolor="${AZUL}" align="center" style="background:${AZUL};padding:26px 24px">
-        <a href="${escaparHtml(sitio)}" target="_blank"><img src="${escaparHtml(logo)}" width="240" alt="Uniempresarial · Observatorio Empresarial" style="display:block;width:240px;max-width:80%;height:auto;border:0;color:#ffffff;font-size:18px;font-weight:bold"></a>
+    <table role="presentation" class="contenedor" width="720" cellspacing="0" cellpadding="0" border="0" style="width:720px;max-width:720px;background:#ffffff;border-radius:12px;overflow:hidden">
+      <tr><td bgcolor="${AZUL_ENCABEZADO}" align="center" style="background:${AZUL_ENCABEZADO};padding:28px 24px">
+        <a href="${escaparHtml(sitio)}" target="_blank"><img src="${escaparHtml(logo)}" width="260" alt="Uniempresarial · Observatorio Empresarial" style="display:block;width:260px;max-width:80%;height:auto;border:0;color:#ffffff;font-size:18px;font-weight:bold"></a>
       </td></tr>
       <tr><td bgcolor="${ROJO}" style="height:4px;line-height:4px;font-size:0">&nbsp;</td></tr>
-      <tr><td class="relleno" style="padding:32px 40px 28px;font-size:15px;line-height:24px">
+      <tr><td class="relleno" style="padding:36px 48px 32px;font-size:15px;line-height:24px">
         <h1 style="margin:0 0 16px;font-size:22px;line-height:30px;color:${AZUL}">${escaparHtml(titulo)}</h1>
         ${cuerpoHtml}
       </td></tr>
-      <tr><td class="relleno" style="padding:20px 40px 26px;background:#f7f8fb;border-top:1px solid #e5e8ef;font-size:12px;line-height:18px;color:${GRIS}">
+      <tr><td class="relleno" style="padding:20px 48px 26px;background:#f7f8fb;border-top:1px solid #e5e8ef;font-size:12px;line-height:18px;color:${GRIS}">
         <p style="margin:0 0 8px">${escaparHtml(opciones.motivo ?? PIE_CUENTA)}</p>
         <p style="margin:0"><strong style="color:${AZUL}">Observatorio Empresarial · Uniempresarial</strong><br>
           <a href="${escaparHtml(sitio)}" style="color:${AZUL}">Ir al Observatorio</a> &nbsp;·&nbsp;

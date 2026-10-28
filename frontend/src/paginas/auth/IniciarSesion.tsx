@@ -8,7 +8,7 @@ import { mensajeDeError } from '../../api/cliente';
 import { pasarConCortina } from '../../componentes/estructura/Cortina';
 import { Casilla, Entrada } from '../../componentes/ui/Campos';
 import { ModalElegirRol } from '../../componentes/ModalElegirRol';
-import { rolesDe, useSesion } from '../../sesion/sesion';
+import { mismoRol, rolesDe, SUPER_ADMIN, useSesion } from '../../sesion/sesion';
 import { BOTON_AUTH, EncabezadoAuth, ErrorAuth, PantallaAuth } from './PantallaAuth';
 
 const esquema = z.object({
@@ -23,7 +23,7 @@ export function IniciarSesion() {
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const [error, setError] = useState<string | null>(null);
-  /** Cuentas con varios roles: antes de entrar eligen con cuál. */
+  /** Cuentas con varios roles: antes de entrar eligen con cuál (el Super Admin entra siempre como Super Admin y cambia desde su menú). */
   const [elegirRol, setElegirRol] = useState(false);
   const destino = (ubicacion.state as { desde?: string } | null)?.desde ?? '/inicio';
   const { register, handleSubmit, formState } = useForm<Datos>({
@@ -37,7 +37,8 @@ export function IniciarSesion() {
     setError(null);
     try {
       const perfil = await iniciarSesion(datos.correo, datos.contrasena, datos.recordar);
-      if (rolesDe(perfil).length > 1) setElegirRol(true);
+      const roles = rolesDe(perfil);
+      if (roles.length > 1 && !roles.some((r) => mismoRol(r, SUPER_ADMIN))) setElegirRol(true);
       else await entrar();
     } catch (e) {
       setError(mensajeDeError(e));

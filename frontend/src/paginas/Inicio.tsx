@@ -151,7 +151,7 @@ export function Inicio() {
   const desde = hoy();
   const eventos = useListado<Evento>('/calendario', { desde, limite: 4 });
   const noticias = useListado<Flash>('/flash', { desde, limite: 3 });
-  const faro = useListado<Faro>('/faro', { limite: 3, orden: 'cierre' });
+  const faro = useListado<Faro>('/faro', { limite: 3 });
   const listaEventos = eventos.data?.datos ?? [];
 
   return (
