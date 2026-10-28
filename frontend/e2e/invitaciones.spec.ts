@@ -75,7 +75,7 @@ test.describe('Empresas por invitación', () => {
     await expect(miEmpresa.getByRole('link', { name: 'Ver ficha pública' })).toHaveCount(0);
     await expect(miEmpresa.getByLabel('Razón social')).toHaveValue('Invitada E2E S.A.S.');
     await miEmpresa.getByLabel('NIT').fill('901.234.567-8');
-    await miEmpresa.getByLabel('Sector').fill('Tecnología');
+    await miEmpresa.getByLabel('Sector').selectOption('Información y comunicaciones');
     await miEmpresa.getByLabel('Descripción').fill('Empresa de software registrada por invitación.');
     await miEmpresa.getByLabel('Estudiantes recibidos').fill('15');
     await miEmpresa.getByLabel('Departamento').selectOption('Antioquia');

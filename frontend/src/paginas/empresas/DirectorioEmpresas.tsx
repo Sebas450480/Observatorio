@@ -6,7 +6,7 @@ import { api, mensajeDeError } from '../../api/cliente';
 import iconoEncabezado from '../../assets/figma/iconos/empresas-encabezado.svg';
 import iconoNit from '../../assets/figma/iconos/nit.svg';
 import iconoSector from '../../assets/figma/iconos/sector.svg';
-import { useListado } from '../../api/consultas';
+import { useListado, useSectores } from '../../api/consultas';
 import type { Empresa } from '../../api/tipos';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { BarraFiltros, contarActivos } from '../../componentes/contenido/Controles';
@@ -92,7 +92,7 @@ const FILTROS_INICIALES = { sector: '', departamento: '', estado: '', q: '' };
 export function DirectorioEmpresas() {
   const { puedeGestionar } = useSesion();
   const gestiona = puedeGestionar('empresas');
-  const { data: resumen } = useResumenEmpresas();
+  const { data: sectores = [] } = useSectores();
 
   const [borrador, setBorrador] = useState(FILTROS_INICIALES);
   const [filtros, setFiltros] = useState(borrador);
@@ -137,7 +137,7 @@ export function DirectorioEmpresas() {
           etiqueta="Sector"
           todos="Todos los sectores"
           className="xl:w-[240px]"
-          opciones={(resumen?.por_sector ?? []).map((s) => ({ valor: s.sector, texto: s.sector }))}
+          opciones={[...sectores.map((s) => ({ valor: s.nombre, texto: s.nombre })), { valor: 'Otro', texto: 'Otro' }]}
           valor={borrador.sector}
           onChange={(v) => setBorrador({ ...borrador, sector: v })}
         />
