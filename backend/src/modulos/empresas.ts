@@ -264,7 +264,9 @@ export const rutasEmpresas = crearRecurso({
     if (v.municipio) f.y(`t.municipio ilike ${f.param(v.municipio)}`);
   },
   ordenes: { nombre: 'coalesce(t.nombre_comercial, t.razon_social)', creacion: 't.fecha_creacion', estudiantes: 't.estudiantes_recibidos' },
-  ordenDefecto: 'nombre',
+  // De la empresa registrada más recientemente a la más antigua.
+  ordenDefecto: 'creacion',
+  direccionDefecto: 'desc',
   camposImagen: ['logo_ec', 'imagen_portada'],
   // Datos sensibles de las empresas y sus contactos: no se descargan.
   sinDescargas: true,

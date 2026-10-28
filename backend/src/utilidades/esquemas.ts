@@ -6,7 +6,7 @@ export const ESTADOS = ['Activo', 'Inactivo'] as const;
 export const TIPOS_EVENTO = ['Congreso', 'Hackathon', 'Foro', 'Cumbre', 'Seminario', 'Taller', 'Feria', 'Otro'] as const;
 export const TIPOS_FARO = ['Becas', 'Convocatorias', 'Cursos', 'Talleres'] as const;
 export const TAMANOS_EMPRESA = ['Micro', 'Pequeña', 'Mediana', 'Grande'] as const;
-export const FRECUENCIAS_ALERTA = ['Inmediata', 'Diaria', 'Semanal', 'Ninguna'] as const;
+export const FRECUENCIAS_ALERTA = ['Inmediata', 'Diaria', 'Cada2Dias', 'Semanal', 'Ninguna'] as const;
 export const TIPOS_CONTENIDO = ['Flash', 'Faro', 'Empresa', 'Tendencia', 'Evento'] as const;
 export const ACCIONES = ['Vista', 'Clic_acceder', 'Compartir'] as const;
 

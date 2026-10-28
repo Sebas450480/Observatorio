@@ -11,6 +11,7 @@ import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo
  *    según la frecuencia elegida:
  *    - Inmediata: cada 15 minutos se envía lo publicado desde el último boletín.
  *    - Diaria:    todos los días a las 8:00 (hora de Bogotá) con lo publicado en el día.
+ *    - Cada2Dias: a las 8:00, un día sí y otro no, con lo publicado en esos dos días.
  *    - Semanal:   los lunes a las 8:00 con lo publicado en la semana.
  *    - Ninguna:   no recibe boletines.
  *    Se incluyen Flash, Faro y Tendencias que coincidan con sus intereses (si no marcó
@@ -22,7 +23,7 @@ import { botonCorreo, enviarCorreo, escaparHtml, plantillaCorreo, recuadroCorreo
  * Cada envío queda en la tabla envio_alerta, y una imagen invisible en el correo marca
  * cuándo se abrió.
  */
-export type FrecuenciaEnvio = 'Inmediata' | 'Diaria' | 'Semanal';
+export type FrecuenciaEnvio = 'Inmediata' | 'Diaria' | 'Cada2Dias' | 'Semanal';
 /** Tareas que se pueden ejecutar: un boletín o los recordatorios. */
 export type TareaAlertas = FrecuenciaEnvio | 'Recordatorios';
 
@@ -52,7 +53,17 @@ const ETIQUETA: Record<Novedad['tipo'], string> = {
 /** Fotos de ejemplo (las mismas de la plataforma) para los registros sin imagen. */
 const EJEMPLOS = 'https://brobinraqmjepzqnumrq.supabase.co/storage/v1/object/public/imagenes/ejemplos';
 
-/** Contenidos activos publicados después de `desde` que le interesan al usuario. */
+/** Máximo de publicaciones por boletín. */
+const MAXIMO_BOLETIN = 5;
+
+/** Veces que se le dio "Acceder" a un registro (en la plataforma o desde un correo). */
+const clics = (tipo: Novedad['tipo'], columna: string) =>
+  `(select count(*) from actividad a where a.tipo_contenido = '${tipo}' and a.id_contenido = ${columna} and a.accion = 'Clic_acceder')::int`;
+
+/**
+ * Top 5 de lo publicado después de `desde` que le interesa al usuario: primero lo que más
+ * veces se abrió con "Acceder" y, a igualdad (o si aún nadie lo abrió), lo más reciente.
+ */
 async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Promise<Novedad[]> {
   // Coincide con los intereses del usuario, o con todo si no marcó intereses.
   const coincide = (puente: string, columna: string, alias: string) => `
@@ -61,22 +72,32 @@ async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Prom
                  where p.${columna} = ${alias}.${columna} and ui.id_usuario = $1))`;
 
   const { rows } = await c.query<Novedad>(
-    `select 'Flash' as tipo, f.id_fi as id, f.titulo, coalesce(f.imagen, '${EJEMPLOS}/flash-' || lower(f.tipo_evento::text) || '.jpg?v=2') as imagen from flash_informativo f
-      where f.estado_fi = 'Activo' and f.fecha_creacion > $2 and ${coincide('flash_informativo_categoria', 'id_fi', 'f')}
-     union all
-     select 'Faro', fe.id_fe, fe.titulo, coalesce(fe.imagen, '${EJEMPLOS}/faro-' || lower(fe.tipo::text) || '.jpg?v=2') from faro_empresarial fe
-      where fe.estado_fe = 'Activo' and fe.fecha_creacion > $2 and ${coincide('faro_empresarial_categoria', 'id_fe', 'fe')}
-     union all
-     select 'Tendencia', t.id_te, t.tendencia, null from tendencia_empresarial t
-      where t.estado_te = 'Activo' and t.fecha_creacion > $2 and ${coincide('tendencia_categoria', 'id_te', 't')}
-     union all
-     select 'Evento', e.id_evento, e.titulo, null from calendario_eventos e
-      where e.fecha_creacion > $2
-     union all
-     select 'Empresa', ec.id_ec, coalesce(ec.nombre_comercial, ec.razon_social), coalesce(ec.imagen_portada, '${EJEMPLOS}/empresa-general.jpg?v=2') from empresa_coformadora ec
-      where ec.estado_ec = 'Activo' and ec.fecha_creacion > $2
-     order by 1, 3
-     limit 50`,
+    `select tipo, id, titulo, imagen from (
+       select 'Flash' as tipo, f.id_fi as id, f.titulo, coalesce(f.imagen, '${EJEMPLOS}/flash-' || lower(f.tipo_evento::text) || '.jpg?v=2') as imagen,
+              ${clics('Flash', 'f.id_fi')} as clics, f.fecha_creacion as fecha
+         from flash_informativo f
+        where f.estado_fi = 'Activo' and f.fecha_creacion > $2 and ${coincide('flash_informativo_categoria', 'id_fi', 'f')}
+       union all
+       select 'Faro', fe.id_fe, fe.titulo, coalesce(fe.imagen, '${EJEMPLOS}/faro-' || lower(fe.tipo::text) || '.jpg?v=2'),
+              ${clics('Faro', 'fe.id_fe')}, fe.fecha_creacion
+         from faro_empresarial fe
+        where fe.estado_fe = 'Activo' and fe.fecha_creacion > $2 and ${coincide('faro_empresarial_categoria', 'id_fe', 'fe')}
+       union all
+       select 'Tendencia', t.id_te, t.tendencia, null, ${clics('Tendencia', 't.id_te')}, t.fecha_creacion
+         from tendencia_empresarial t
+        where t.estado_te = 'Activo' and t.fecha_creacion > $2 and ${coincide('tendencia_categoria', 'id_te', 't')}
+       union all
+       select 'Evento', e.id_evento, e.titulo, null, ${clics('Evento', 'e.id_evento')}, e.fecha_creacion
+         from calendario_eventos e
+        where e.fecha_creacion > $2
+       union all
+       select 'Empresa', ec.id_ec, coalesce(ec.nombre_comercial, ec.razon_social), coalesce(ec.imagen_portada, '${EJEMPLOS}/empresa-general.jpg?v=2'),
+              ${clics('Empresa', 'ec.id_ec')}, ec.fecha_creacion
+         from empresa_coformadora ec
+        where ec.estado_ec = 'Activo' and ec.fecha_creacion > $2
+     ) x
+     order by clics desc, fecha desc
+     limit ${MAXIMO_BOLETIN}`,
     [idUsuario, desde],
   );
   return rows;
@@ -89,43 +110,65 @@ function urlImagen(ruta: string | null): string | null {
   return ruta.startsWith('/') ? `${config.apiUrlPublica}${ruta}` : null;
 }
 
+/** Enlace del correo que pasa por la API: cuenta el "Acceder" y lleva al registro. */
+const enlaceSeguido = (idEnvio: number, tipo: Novedad['tipo'], id: number) =>
+  `${config.apiUrlPublica}/api/alertas/ir/${idEnvio}/${firmarIdEnvio(idEnvio)}/${tipo}/${id}`;
+
+/** Dirección del registro en la plataforma. */
+export const enlaceRegistro = (tipo: Novedad['tipo'], id: number) => `${config.frontendUrl}/${RUTA_FRONTEND[tipo]}/${id}`;
+
+/** Tipos de registro a los que lleva un enlace del correo. */
+export const TIPOS_REGISTRO = Object.keys(RUTA_FRONTEND) as Novedad['tipo'][];
+
 function armarCorreo(nombre: string, novedades: Novedad[], idEnvio: number) {
-  const enlace = (n: Novedad) => `${config.frontendUrl}/${RUTA_FRONTEND[n.tipo]}/${n.id}`;
   const pixel = `${config.apiUrlPublica}/api/alertas/abierto/${idEnvio}/${firmarIdEnvio(idEnvio)}`;
-  // Tarjetas agrupadas por módulo (las novedades ya vienen ordenadas por tipo).
-  const grupos = new Map<Novedad['tipo'], Novedad[]>();
-  for (const n of novedades) grupos.set(n.tipo, [...(grupos.get(n.tipo) ?? []), n]);
+  const etiqueta = (n: Novedad) =>
+    `<span style="display:inline-block;margin-bottom:4px;font-size:11px;font-weight:bold;letter-spacing:.06em;text-transform:uppercase;color:#6b7280">${ETIQUETA[n.tipo]}</span>`;
+
+  // La primera publicación va destacada: foto grande a todo el ancho y título más grande.
+  const destacada = (n: Novedad) => {
+    const url = escaparHtml(enlaceSeguido(idEnvio, n.tipo, n.id));
+    const imagen = urlImagen(n.imagen);
+    return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:18px 0 16px;border:1px solid #e5e8ef;border-radius:12px;overflow:hidden">
+      ${imagen ? `<tr><td style="padding:0"><a href="${url}"><img src="${escaparHtml(imagen)}" width="640" alt="" style="display:block;width:100%;max-width:640px;height:auto;max-height:300px;object-fit:cover;border:0"></a></td></tr>` : ''}
+      <tr><td style="padding:18px 22px 20px">
+        ${etiqueta(n)}<br>
+        <a href="${url}" style="font-size:20px;line-height:27px;font-weight:bold;color:#1F3A68;text-decoration:none">${escaparHtml(n.titulo)}</a>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px"><tr><td bgcolor="#C8102E" style="border-radius:8px">
+          <a href="${url}" style="display:inline-block;padding:10px 20px;font-size:14px;font-weight:bold;color:#ffffff;text-decoration:none">Ver más →</a>
+        </td></tr></table>
+      </td></tr></table>`;
+  };
   const tarjeta = (n: Novedad) => {
-    const url = escaparHtml(enlace(n));
+    const url = escaparHtml(enlaceSeguido(idEnvio, n.tipo, n.id));
     const imagen = urlImagen(n.imagen);
     return `<tr><td style="padding:0 0 12px">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e5e8ef;border-radius:10px;overflow:hidden"><tr>
-        ${imagen ? `<td width="112" valign="top" style="width:112px;padding:0"><a href="${url}"><img src="${escaparHtml(imagen)}" width="112" height="84" alt="" style="display:block;width:112px;height:84px;object-fit:cover;border:0"></a></td>` : ''}
-        <td valign="middle" style="padding:12px 16px">
+        ${imagen ? `<td width="124" valign="top" style="width:124px;padding:0"><a href="${url}"><img src="${escaparHtml(imagen)}" width="124" height="92" alt="" style="display:block;width:124px;height:92px;object-fit:cover;border:0"></a></td>` : ''}
+        <td valign="middle" style="padding:12px 18px">
+          ${etiqueta(n)}<br>
           <a href="${url}" style="font-size:15px;line-height:21px;font-weight:bold;color:#1F3A68;text-decoration:none">${escaparHtml(n.titulo)}</a><br>
           <a href="${url}" style="font-size:13px;color:#C8102E;text-decoration:none">Ver más →</a>
         </td></tr></table>
     </td></tr>`;
   };
-  const secciones = [...grupos]
-    .map(([tipo, lista]) => `<p style="margin:20px 0 10px;font-size:12px;font-weight:bold;letter-spacing:.06em;text-transform:uppercase;color:#6b7280">${ETIQUETA[tipo]}</p>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">${lista.map(tarjeta).join('')}</table>`)
-    .join('');
+  const [primera, ...resto] = novedades;
   return {
     asunto: `Novedades del Observatorio Empresarial (${novedades.length})`,
     html: plantillaCorreo(
       'Nuevas publicaciones para ti',
-      `<p style="margin:0 0 4px">Hola ${escaparHtml(nombre)}, esto es lo nuevo en el Observatorio según tus intereses:</p>
-       ${secciones}
+      `<p style="margin:0 0 4px">Hola ${escaparHtml(nombre)}, esto es lo más destacado en el Observatorio según tus intereses:</p>
+       ${primera ? destacada(primera) : ''}
+       ${resto.length ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">${resto.map(tarjeta).join('')}</table>` : ''}
        ${botonCorreo('Ver todo en el Observatorio', `${config.frontendUrl}/inicio`)}`,
       {
         pixelUrl: pixel,
         motivo: 'Recibes este boletín porque tienes una cuenta en el Observatorio Empresarial. Puedes cambiar su frecuencia o desactivarlo en Mi perfil.',
-        resumen: `${novedades.length} ${novedades.length === 1 ? 'publicación nueva' : 'publicaciones nuevas'} para ti.`,
+        resumen: `${novedades.length} ${novedades.length === 1 ? 'publicación destacada' : 'publicaciones destacadas'} para ti.`,
       },
     ),
-    texto: `Hola ${nombre}, esto es lo nuevo en el Observatorio Empresarial:\n\n${novedades
-      .map((n) => `- ${ETIQUETA[n.tipo]}: ${n.titulo}\n  ${enlace(n)}`)
+    texto: `Hola ${nombre}, esto es lo más destacado en el Observatorio Empresarial:\n\n${novedades
+      .map((n) => `- ${ETIQUETA[n.tipo]}: ${n.titulo}\n  ${enlaceSeguido(idEnvio, n.tipo, n.id)}`)
       .join('\n')}\n\nPuedes cambiar la frecuencia de este boletín o desactivarlo en Mi perfil.`,
   };
 }
@@ -140,9 +183,14 @@ export async function ejecutarAlertas(frecuencia: FrecuenciaEnvio): Promise<{ en
                                   where ea.id_usuario = u.id_usuario and ea.tipo_envio = 'Boletin'), '-infinity'),
                        case $1 when 'Semanal' then now() - interval '7 days'
                                when 'Diaria' then now() - interval '1 day'
+                               when 'Cada2Dias' then now() - interval '2 days'
                                else '-infinity' end) as desde
          from usuario u
-        where u.estado_usuario = 'Activo' and u.frecuencia_alertas = $1::frecuencia_alertas`,
+        where u.estado_usuario = 'Activo' and u.frecuencia_alertas = $1::frecuencia_alertas
+          -- Cada 2 días: se salta el día siguiente a un boletín (47 h dan margen a la hora del envío).
+          and ($1 <> 'Cada2Dias' or not exists (
+                select 1 from envio_alerta ea
+                 where ea.id_usuario = u.id_usuario and ea.tipo_envio = 'Boletin' and ea.fecha_envio > now() - interval '47 hours'))`,
       [frecuencia],
     );
     return rows;
@@ -219,7 +267,7 @@ async function buscarRecordatorios(c: Cliente): Promise<Recordatorio[]> {
 }
 
 function armarRecordatorio(r: Recordatorio, idEnvio: number) {
-  const enlace = `${config.frontendUrl}/${RUTA_FRONTEND[r.tipo]}/${r.id}`;
+  const enlace = enlaceSeguido(idEnvio, r.tipo, r.id);
   const pixel = `${config.apiUrlPublica}/api/alertas/abierto/${idEnvio}/${firmarIdEnvio(idEnvio)}`;
   const cuando = r.fecha_inicio.toLocaleString('es-CO', {
     timeZone: config.alertas.zonaHoraria, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -284,7 +332,7 @@ export function ejecutarTarea(tarea: TareaAlertas) {
  */
 export async function ejecutarEnvioDiario(fecha = new Date()): Promise<Partial<Record<TareaAlertas, { enviados: number; errores: number }>>> {
   const dia = fecha.toLocaleDateString('en-US', { timeZone: config.alertas.zonaHoraria, weekday: 'short' });
-  const tareas: TareaAlertas[] = ['Inmediata', 'Diaria', ...(dia === 'Mon' ? (['Semanal'] as const) : []), 'Recordatorios'];
+  const tareas: TareaAlertas[] = ['Inmediata', 'Diaria', 'Cada2Dias', ...(dia === 'Mon' ? (['Semanal'] as const) : []), 'Recordatorios'];
   const resultado: Partial<Record<TareaAlertas, { enviados: number; errores: number }>> = {};
   for (const tarea of tareas) resultado[tarea] = await ejecutarTarea(tarea);
   return resultado;
@@ -294,6 +342,19 @@ export async function ejecutarEnvioDiario(fecha = new Date()): Promise<Partial<R
 export async function marcarAbierto(idEnvio: number): Promise<void> {
   await comoSistema((c) =>
     c.query('update envio_alerta set fecha_apertura = now() where id_envio = $1 and fecha_apertura is null', [idEnvio]));
+}
+
+/** Clic en un enlace del correo: cuenta como "Acceder" del destinatario y marca el correo como abierto. */
+export async function registrarClicCorreo(idEnvio: number, tipo: Novedad['tipo'], id: number): Promise<void> {
+  await comoSistema(async (c) => {
+    const { rows } = await c.query<{ id_usuario: number }>('select id_usuario from envio_alerta where id_envio = $1', [idEnvio]);
+    if (!rows[0]) return;
+    await c.query(
+      `insert into actividad (id_usuario, tipo_contenido, id_contenido, accion) values ($1, $2, $3, 'Clic_acceder')`,
+      [rows[0].id_usuario, tipo, id],
+    );
+    await c.query('update envio_alerta set fecha_apertura = now() where id_envio = $1 and fecha_apertura is null', [idEnvio]);
+  });
 }
 
 /** Programa los envíos automáticos. */
@@ -310,7 +371,7 @@ export function programarAlertas(): ScheduledTask[] {
   };
   return [
     cron.schedule('*/15 * * * *', ejecutar('Inmediata'), opciones),
-    cron.schedule('0 8 * * *', ejecutar('Diaria', 'Recordatorios'), opciones),
+    cron.schedule('0 8 * * *', ejecutar('Diaria', 'Cada2Dias', 'Recordatorios'), opciones),
     cron.schedule('0 8 * * 1', ejecutar('Semanal'), opciones),
   ];
 }

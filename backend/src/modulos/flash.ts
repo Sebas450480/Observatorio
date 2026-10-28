@@ -56,7 +56,9 @@ export const rutasFlash = crearRecurso({
     if (v.hasta) f.y(`t.fecha_inicio < ${f.param(v.hasta)}::date + 1`);
   },
   ordenes: { fecha: 't.fecha_inicio', titulo: 't.titulo', creacion: 't.fecha_creacion' },
-  ordenDefecto: 'fecha',
+  // Del publicado más recientemente al más antiguo.
+  ordenDefecto: 'creacion',
+  direccionDefecto: 'desc',
   camposImagen: ['imagen'],
   cargaMasiva: cargaRecurso({
     archivo: 'plantilla-flash-informativo',
