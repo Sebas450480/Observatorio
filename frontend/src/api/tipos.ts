@@ -58,8 +58,15 @@ export interface Perfil {
   roles: RolRef[];
   /** Cuentas con varios roles: rol con el que entró y actúa (null si tiene un solo rol). */
   rol_activo?: string | null;
+  /** Intereses de Faro (categorías). */
   intereses: CategoriaRef[];
+  /** Intereses de los demás módulos: tipos de evento, sectores y megatendencias (máx. 5 cada uno). */
+  preferencias?: Partial<Preferencias>;
 }
+
+/** Módulos con intereses guardados por valor (Faro usa categorías). */
+export type ModuloPreferencia = 'Flash' | 'Empresa' | 'Tendencia';
+export type Preferencias = Record<ModuloPreferencia, string[]>;
 
 export interface RolRef {
   id_rol: number;

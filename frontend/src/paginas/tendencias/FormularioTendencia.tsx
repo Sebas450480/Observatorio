@@ -9,7 +9,7 @@ import iconoMundo from '../../assets/figma/tendencias/mundo.png';
 import { SelectorCategorias } from '../../componentes/contenido/Controles';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { AreaTexto, Entrada, Selector } from '../../componentes/ui/Campos';
-import { MEGATENDENCIAS } from './MapaTendencias';
+import { MEGATENDENCIAS } from '../../utilidades/megatendencias';
 
 /** Opción del selector que abre el campo para escribir una megatendencia nueva. */
 const NUEVA = '__nueva__';

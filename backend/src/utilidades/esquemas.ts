@@ -35,6 +35,23 @@ export const idPositivo = z.coerce.number().int().positive();
 
 export const listaIds = z.array(z.number().int().positive()).max(50);
 
+/** Máximo de intereses que se eligen en cada módulo. */
+export const MAXIMO_INTERESES = 5;
+
+/** Intereses de Faro (categorías): hasta 5. */
+export const interesesFaro = z.array(z.number().int().positive()).max(MAXIMO_INTERESES, `Elige máximo ${MAXIMO_INTERESES} intereses en Faro`);
+
+const listaPreferencias = (modulo: string) =>
+  z.array(z.string().trim().min(1).max(100)).max(MAXIMO_INTERESES, `Elige máximo ${MAXIMO_INTERESES} intereses en ${modulo}`);
+
+/** Intereses de los demás módulos: tipos de evento (Flash), sectores (Empresa) y megatendencias (Tendencia). */
+export const esquemaPreferencias = z.object({
+  Flash: listaPreferencias('Flash Informativo').optional(),
+  Empresa: listaPreferencias('Empresas coformadoras').optional(),
+  Tendencia: listaPreferencias('Tendencias').optional(),
+});
+export type Preferencias = z.infer<typeof esquemaPreferencias>;
+
 /** Parámetro de consulta que puede venir una o varias veces (?categoria=1&categoria=2). */
 export const listaIdsConsulta = z
   .union([idPositivo, z.array(idPositivo)])
