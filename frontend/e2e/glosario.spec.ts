@@ -39,8 +39,13 @@ test.describe('Glosario y páginas legales', () => {
     await page.goto('/iniciar-sesion');
     await page.getByRole('link', { name: '¿Olvidaste tu contraseña?' }).click();
     await expect(page).toHaveURL(/\/recuperar-contrasena$/);
-    await page.getByLabel('Correo electrónico').fill('usuario.e2e@gmail.com');
+    await expect(page.getByRole('heading', { name: 'Recupera tu contraseña' })).toBeVisible();
+    const campo = page.getByLabel('Correo electrónico');
+    await campo.fill('usuario.e2e@gmail.com');
+    await expect(campo).toHaveValue('usuario.e2e@gmail.com');
+    const respuesta = page.waitForResponse((r) => r.url().endsWith('/api/auth/recuperar') && r.request().method() === 'POST');
     await page.getByRole('button', { name: 'Enviar enlace' }).click();
-    await expect(page.getByRole('dialog', { name: 'Enlace enviado' })).toBeVisible();
+    expect((await respuesta).status()).toBe(200);
+    await expect(page.getByRole('dialog', { name: 'Enlace enviado' })).toBeVisible({ timeout: 10_000 });
   });
 });
