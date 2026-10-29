@@ -20,6 +20,7 @@ import { BotonDescargar } from '../../componentes/contenido/BotonDescargar';
 import { BotonFavorito } from '../../componentes/contenido/BotonFavorito';
 import { EncabezadoPagina, MensajeError } from '../../componentes/ui/Elementos';
 import { Modal } from '../../componentes/ui/Modal';
+import { imagenEvento } from '../../utilidades/imagenesEjemplo';
 import { useSesion } from '../../sesion/sesion';
 import { costo, fechaLarga, modalidadTexto, nombreTipoEvento, rangoHoras } from '../../utilidades/formato';
 import { FormularioEvento } from './FormularioEvento';
@@ -122,6 +123,7 @@ function DetalleEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerra
       ancho={700}
       destacado
       claseCuerpo={CUERPO_DETALLE}
+      imagenFondo={imagenEvento(evento)}
       titulo={<span className="uppercase">{evento.titulo}</span>}
       accion={
         <div className="flex gap-2">
@@ -160,6 +162,7 @@ function PanelEvento({ evento, onCerrar, onEditar }: { evento: Evento; onCerrar:
       <p className="mt-1 text-caption font-medium text-gris-azulado">{codigoDetalle(evento.id_evento, evento.fecha_inicio)}</p>
       <span className="mt-3 block h-1 w-16 rounded-xs bg-rojo" />
       <div className="mt-5 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-1">
+        <img src={imagenEvento(evento)} alt="" className="aspect-[16/9] w-full shrink-0 rounded-xl object-cover" />
         <CuerpoEvento evento={evento} onEditar={onEditar} panel />
       </div>
     </div>

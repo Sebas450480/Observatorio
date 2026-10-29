@@ -1,4 +1,4 @@
-import type { Empresa, Faro, Flash } from '../api/tipos';
+import type { Empresa, Evento, Faro, Flash } from '../api/tipos';
 
 /**
  * Fotos de ejemplo para los registros sin imagen: una por tipo de evento (Flash), por tipo de
@@ -34,6 +34,11 @@ export function imagenFlash(f: Pick<Flash, 'imagen' | 'tipo_evento'>): string {
   if (f.imagen) return f.imagen;
   const tipo = clave(f.tipo_evento);
   return `${BASE}/flash-${TIPOS_EVENTO.includes(tipo) ? tipo : 'otro'}.jpg?v=${VERSION}`;
+}
+
+/** Eventos institucionales: su foto o la de ejemplo de su tipo de evento (las mismas del Flash). */
+export function imagenEvento(e: Pick<Evento, 'imagen' | 'tipo_evento'>): string {
+  return imagenFlash({ imagen: e.imagen ?? null, tipo_evento: e.tipo_evento });
 }
 
 export function imagenFaro(f: Pick<Faro, 'imagen' | 'tipo'>): string {
