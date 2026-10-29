@@ -47,6 +47,7 @@ export const rutasCalendario = crearRecurso({
   },
   ordenes: { fecha: 't.fecha_inicio', titulo: 't.titulo' },
   ordenDefecto: 'fecha',
+  camposImagen: ['imagen'],
   cargaMasiva: cargaRecurso({
     archivo: 'plantilla-eventos-institucionales',
     hoja: 'Eventos institucionales',
@@ -64,6 +65,7 @@ export const rutasCalendario = crearRecurso({
       { clave: 'link_externo', titulo: 'Enlace', tipo: 'enlace', ayuda: 'Página de inscripción o información.', ejemplo: 'https://uniempresarial.edu.co' },
       { clave: 'es_gratuito', titulo: 'Gratuito', tipo: 'sino', ayuda: 'Si la entrada es gratis.', ejemplo: 'Sí' },
       { clave: 'costo', titulo: 'Costo (COP)', tipo: 'numero', ayuda: 'Valor en pesos, si no es gratuito.', ejemplo: '' },
+      { clave: 'imagen', titulo: 'Imagen', tipo: 'imagen', campoImagen: 'imagen', ayuda: 'Foto del evento (opcional).', ejemplo: 'feria-emprendimiento.jpg' },
     ],
     armar: (f) => ({
       ...f,

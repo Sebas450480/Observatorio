@@ -194,6 +194,8 @@ export interface Evento extends Auditoria {
   tipo_otro?: string | null;
   costo: number | null;
   es_gratuito: boolean;
+  /** Foto del evento (sin foto se usa la de ejemplo de su tipo). */
+  imagen?: string | null;
 }
 
 export interface MapaTendencias {

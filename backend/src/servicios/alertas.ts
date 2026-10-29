@@ -96,7 +96,8 @@ async function buscarNovedades(c: Cliente, idUsuario: number, desde: Date): Prom
          from tendencia_empresarial t
         where t.estado_te = 'Activo' and t.fecha_creacion > $2 and ${coincide('Tendencia', 't.megatendencia')}
        union all
-       select 'Evento', e.id_evento, e.titulo, null, ${clics('Evento', 'e.id_evento')}, e.fecha_creacion
+       select 'Evento', e.id_evento, e.titulo, coalesce(e.imagen, '${EJEMPLOS}/flash-' || lower(e.tipo_evento::text) || '.jpg?v=2'),
+              ${clics('Evento', 'e.id_evento')}, e.fecha_creacion
          from calendario_eventos e
         where e.fecha_creacion > $2
        union all
@@ -239,6 +240,7 @@ interface Recordatorio {
   titulo: string;
   fecha_inicio: Date;
   lugar: string | null;
+  imagen?: string | null;
   aviso: 'Semana' | 'Dia';
 }
 
@@ -251,16 +253,20 @@ async function buscarRecordatorios(c: Cliente): Promise<Recordatorio[]> {
     `with hoy as (select (now() at time zone $1)::date as dia),
      pendientes as (
        select u.id_usuario, u.nombre_usuario, u.correo, f.tipo_contenido::text as tipo, f.id_contenido as id,
-              x.titulo, x.fecha_inicio, x.lugar,
+              x.titulo, x.fecha_inicio, x.lugar, x.imagen,
               case when (x.fecha_inicio at time zone $1)::date = hoy.dia then 'Dia' else 'Semana' end as aviso
          from favorito f
          join usuario u on u.id_usuario = f.id_usuario
          cross join hoy
          join lateral (
-           select t.titulo, t.fecha_inicio, t.lugar from flash_informativo t
+           select t.titulo, t.fecha_inicio, t.lugar,
+                  coalesce(t.imagen, '${EJEMPLOS}/flash-' || lower(t.tipo_evento::text) || '.jpg?v=2') as imagen
+             from flash_informativo t
             where f.tipo_contenido = 'Flash' and t.id_fi = f.id_contenido and t.estado_fi = 'Activo'
            union all
-           select t.titulo, t.fecha_inicio, t.lugar from calendario_eventos t
+           select t.titulo, t.fecha_inicio, t.lugar,
+                  coalesce(t.imagen, '${EJEMPLOS}/flash-' || lower(t.tipo_evento::text) || '.jpg?v=2') as imagen
+             from calendario_eventos t
             where f.tipo_contenido = 'Evento' and t.id_evento = f.id_contenido
          ) x on true
         where u.estado_usuario = 'Activo' and u.recordatorios_eventos
@@ -282,12 +288,14 @@ function armarRecordatorio(r: Recordatorio, idEnvio: number) {
     timeZone: config.alertas.zonaHoraria, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit',
   });
   const titulo = r.aviso === 'Dia' ? `Hoy es «${r.titulo}»` : `«${r.titulo}» es en una semana`;
+  const foto = urlImagen(r.imagen ?? null);
   const datos = [`Fecha: ${cuando}`, r.lugar ? `Lugar: ${r.lugar}` : null].filter(Boolean) as string[];
   return {
     asunto: `Recordatorio: ${titulo}`,
     html: plantillaCorreo(
       r.aviso === 'Dia' ? 'Tu evento es hoy' : 'Tu evento es en una semana',
       `<p style="margin:0 0 12px">Hola ${escaparHtml(r.nombre_usuario)}, te recordamos un evento que guardaste en tus favoritos:</p>
+       ${foto ? `<a href="${escaparHtml(enlace)}"><img src="${escaparHtml(foto)}" width="640" alt="" style="display:block;width:100%;max-width:640px;height:auto;max-height:280px;object-fit:cover;border:0;border-radius:12px;margin:4px 0 14px"></a>` : ''}
        ${recuadroCorreo(`<span style="display:block;margin-bottom:6px;font-size:17px;line-height:24px;font-weight:bold;color:#1F3A68">${escaparHtml(r.titulo)}</span>
          <strong>Fecha:</strong> ${escaparHtml(cuando)}${r.lugar ? `<br><strong>Lugar:</strong> ${escaparHtml(r.lugar)}` : ''}`)}
        ${botonCorreo('Ver evento', enlace)}`,
@@ -341,8 +349,10 @@ export async function correosDePrueba(idUsuario: number, nombre: string) {
     const correos: { asunto: string; texto: string; html: string }[] = [];
     const novedades = await buscarNovedades(c, idUsuario, new Date(0));
     if (novedades.length) correos.push(armarCorreo(nombre, novedades, 0));
-    const { rows } = await c.query<{ id: number; titulo: string; fecha_inicio: Date; lugar: string | null }>(
-      `select id_evento as id, titulo, fecha_inicio, lugar from calendario_eventos
+    const { rows } = await c.query<{ id: number; titulo: string; fecha_inicio: Date; lugar: string | null; imagen: string }>(
+      `select id_evento as id, titulo, fecha_inicio, lugar,
+              coalesce(imagen, '${EJEMPLOS}/flash-' || lower(tipo_evento::text) || '.jpg?v=2') as imagen
+         from calendario_eventos
         order by fecha_inicio < now(), abs(extract(epoch from fecha_inicio - now())) limit 1`,
     );
     const evento = rows[0];

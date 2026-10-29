@@ -1,8 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
-import { useEliminar, useGuardar } from '../../api/consultas';
+import { useEliminar, useGuardar, useSubirImagen } from '../../api/consultas';
 import { MODALIDADES, TIPOS_EVENTO, type Evento } from '../../api/tipos';
+import { CampoImagen } from '../../componentes/contenido/Controles';
 import { FormularioCrud } from '../../componentes/contenido/FormularioCrud';
 import { AreaTexto, Casilla, Entrada, Selector } from '../../componentes/ui/Campos';
 import { aEntradaFecha, aEntradaHora, aIsoBogota, enlaceValido, modalidadTexto, normalizarEnlace } from '../../utilidades/formato';
@@ -34,6 +36,8 @@ type Datos = z.infer<typeof esquema>;
 export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Evento; inicio?: Date; onCerrar: () => void }) {
   const guardarApi = useGuardar<Evento>('/calendario');
   const eliminarApi = useEliminar('/calendario');
+  const subirImagen = useSubirImagen('/calendario');
+  const [imagen, setImagen] = useState<File | null>(null);
   const inicioIso = registro?.fecha_inicio ?? inicio?.toISOString();
   const { register, control, trigger, getValues, formState } = useForm<Datos>({
     resolver: zodResolver(esquema),
@@ -59,7 +63,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
 
   const guardar = async () => {
     const d = getValues();
-    await guardarApi.mutateAsync({
+    const guardado = await guardarApi.mutateAsync({
       id: registro?.id_evento,
       datos: {
         titulo: d.titulo,
@@ -75,6 +79,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
         descripcion: d.descripcion,
       },
     });
+    if (imagen) await subirImagen.mutateAsync({ id: guardado.id_evento, campo: 'imagen', archivo: imagen });
   };
 
   return (
@@ -130,6 +135,7 @@ export function FormularioEvento({ registro, inicio, onCerrar }: { registro?: Ev
         <Entrada etiqueta="Lugar de referencia" placeholder="Ingresa la ubicación" {...register('lugar')} />
         <Entrada etiqueta="Link de referencia" placeholder="Ingresa el enlace" error={e.link_externo?.message} {...register('link_externo')} />
       </div>
+      <CampoImagen etiqueta="Foto del evento" actual={registro?.imagen} archivo={imagen} onCambiar={setImagen} />
     </FormularioCrud>
   );
 }
